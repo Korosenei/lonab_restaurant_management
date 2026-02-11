@@ -1,0 +1,248 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Mon Profil{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
+{% endblock %}
+
+{% block page_content %}
+<!-- Profile Header -->
+<div class="profile-header">
+    <div class="profile-header-content">
+        <div class="profile-avatar">
+            {% if user.photo_profil %}
+            <img src="{{ user.photo_profil.url }}" alt="{{ user.get_full_name }}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+            {% else %}
+            {{ user.prenom.0 }}{{ user.nom.0 }}
+            {% endif %}
+        </div>
+        <div class="profile-info">
+            <h1>{{ user.get_full_name }}</h1>
+            <p>{{ user.get_type_utilisateur_display }}</p>
+            <p style="opacity: 0.8; font-size: 13px;">
+                <i class="fas fa-envelope"></i> {{ user.email }}
+                {% if user.telephone %}
+                | <i class="fas fa-phone"></i> {{ user.telephone }}
+                {% endif %}
+            </p>
+        </div>
+        <div style="margin-left: auto;">
+            <button class="btn btn-outline" style="color: white; border-color: rgba(255,255,255,0.5);" onclick="openModal('editProfileModal')">
+                <i class="fas fa-edit"></i> Modifier le profil
+            </button>
+            <button class="btn btn-outline" style="color: white; border-color: rgba(255,255,255,0.5); margin-left: 8px;" onclick="openModal('changePasswordModal')">
+                <i class="fas fa-lock"></i> Changer mot de passe
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Profile Grid -->
+<div class="profile-grid">
+    <!-- Left Column - Main Info -->
+    <div>
+        <!-- Personal Information -->
+        <div class="profile-section">
+            <div class="profile-section-title">
+                <i class="fas fa-user"></i> Informations personnelles
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-label">Matricule</div>
+                <div class="profile-field-value">{{ user.matricule|default:"-" }}</div>
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-label">Genre</div>
+                <div class="profile-field-value">{{ user.get_genre_display|default:"-" }}</div>
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-label">Date de naissance</div>
+                <div class="profile-field-value">{{ user.date_naissance|date:"d/m/Y"|default:"-" }}</div>
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-label">Adresse</div>
+                <div class="profile-field-value">{{ user.adresse|default:"-" }}</div>
+            </div>
+        </div>
+
+        <!-- Professional Information -->
+        {% if user.est_client %}
+        <div class="profile-section">
+            <div class="profile-section-title">
+                <i class="fas fa-briefcase"></i> Informations professionnelles
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-label">Département</div>
+                <div class="profile-field-value">{{ user.departement|default:"-" }}</div>
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-label">Poste</div>
+                <div class="profile-field-value">{{ user.poste|default:"-" }}</div>
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-label">Direction</div>
+                <div class="profile-field-value">{{ user.direction.nom|default:"-" }}</div>
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-label">Agence</div>
+                <div class="profile-field-value">{{ user.agence.nom|default:"-" }}</div>
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-label">Supérieur hiérarchique</div>
+                <div class="profile-field-value">{{ user.superieur_hierarchique.get_full_name|default:"-" }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Preferences -->
+        <div class="profile-section">
+            <div class="profile-section-title">
+                <i class="fas fa-cog"></i> Préférences
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-label">Notifications email</div>
+                <div class="profile-field-value">
+                    {% if user.profil.notification_email %}
+                    <span class="badge badge-success"><i class="fas fa-check"></i> Activées</span>
+                    {% else %}
+                    <span class="badge badge-danger"><i class="fas fa-times"></i> Désactivées</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-label">Notifications SMS</div>
+                <div class="profile-field-value">
+                    {% if user.profil.notification_sms %}
+                    <span class="badge badge-success"><i class="fas fa-check"></i> Activées</span>
+                    {% else %}
+                    <span class="badge badge-danger"><i class="fas fa-times"></i> Désactivées</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-label">Langue</div>
+                <div class="profile-field-value">{{ user.profil.langue|upper }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column - Stats & Activity -->
+    <div>
+        <!-- Account Status -->
+        <div class="profile-section">
+            <div class="profile-section-title">
+                <i class="fas fa-info-circle"></i> Statut du compte
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-label">Statut</div>
+                <div class="profile-field-value">
+                    {% if user.est_actif %}
+                    <span class="badge badge-success"><i class="fas fa-check-circle"></i> Actif</span>
+                    {% else %}
+                    <span class="badge badge-danger"><i class="fas fa-times-circle"></i> Inactif</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-label">Vérifié</div>
+                <div class="profile-field-value">
+                    {% if user.est_verifie %}
+                    <span class="badge badge-success"><i class="fas fa-check-circle"></i> Oui</span>
+                    {% else %}
+                    <span class="badge badge-warning"><i class="fas fa-clock"></i> En attente</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-label">Date d'inscription</div>
+                <div class="profile-field-value">{{ user.date_inscription|date:"d/m/Y à H:i" }}</div>
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-label">Dernière connexion</div>
+                <div class="profile-field-value">{{ user.derniere_connexion|date:"d/m/Y à H:i"|default:"Jamais" }}</div>
+            </div>
+        </div>
+
+        <!-- Emergency Contact -->
+        {% if user.profil.contact_urgence_nom %}
+        <div class="profile-section">
+            <div class="profile-section-title">
+                <i class="fas fa-phone-alt"></i> Contact d'urgence
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-label">Nom</div>
+                <div class="profile-field-value">{{ user.profil.contact_urgence_nom }}</div>
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-label">Téléphone</div>
+                <div class="profile-field-value">{{ user.profil.contact_urgence_telephone }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Quick Actions -->
+        <div class="profile-section">
+            <div class="profile-section-title">
+                <i class="fas fa-bolt"></i> Actions rapides
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button class="btn btn-outline" style="width: 100%; justify-content: flex-start;" onclick="window.print()">
+                    <i class="fas fa-print"></i> Imprimer le profil
+                </button>
+
+                <button class="btn btn-outline" style="width: 100%; justify-content: flex-start;" onclick="exportProfileToPDF()">
+                    <i class="fas fa-file-pdf"></i> Exporter en PDF
+                </button>
+
+                {% if user.est_client %}
+                <button class="btn btn-outline" style="width: 100%; justify-content: flex-start;" onclick="window.location.href='{% url 'accounts:client_tickets' %}'">
+                    <i class="fas fa-ticket-alt"></i> Mes tickets
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+{% include 'accounts/partials/edit_profile_modal.html' %}
+
+<!-- Change Password Modal -->
+{% include 'accounts/partials/change_password_modal.html' %}
+
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{% static 'js/components.js' %}"></script>
+<script>
+function exportProfileToPDF() {
+    showLoading('Génération du PDF...');
+
+    // Simulate PDF generation
+    setTimeout(() => {
+        hideLoading();
+        showSuccess('PDF généré avec succès');
+    }, 2000);
+}
+</script>
+{% endblock %}

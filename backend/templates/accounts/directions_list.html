@@ -1,0 +1,262 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Gestion des Directions{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
+{% endblock %}
+
+{% block sidebar_menu %}
+<div class="nav-section">
+    <div class="nav-section-title">Administration</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="{% url 'accounts:admin_dashboard' %}" class="nav-link">
+                <i class="fas fa-home"></i>
+                <span class="nav-link-text">Tableau de bord</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'accounts:users_list' %}" class="nav-link">
+                <i class="fas fa-users"></i>
+                <span class="nav-link-text">Utilisateurs</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'accounts:directions_list' %}" class="nav-link active">
+                <i class="fas fa-sitemap"></i>
+                <span class="nav-link-text">Directions</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'accounts:agences_list' %}" class="nav-link">
+                <i class="fas fa-building"></i>
+                <span class="nav-link-text">Agences</span>
+            </a>
+        </li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1 class="page-title">Gestion des Directions</h1>
+    <p class="page-subtitle">Liste des directions LONAB</p>
+</div>
+
+<!-- Data Table -->
+<div class="data-table-wrapper">
+    <!-- Header -->
+    <div class="data-table-header">
+        <div class="data-table-title">
+            <i class="fas fa-sitemap"></i>
+            {{ directions.count }} direction{{ directions.count|pluralize }}
+        </div>
+
+        <div class="data-table-actions">
+            <!-- Search -->
+            <div class="data-table-search">
+                <i class="fas fa-search"></i>
+                <input type="text" id="tableSearch" placeholder="Rechercher...">
+            </div>
+
+            <!-- Export Buttons -->
+            <div class="export-group">
+                <button class="export-btn export-btn-pdf" onclick="exportToPDF('directionsTable', 'directions.pdf')" title="Export PDF">
+                    <i class="fas fa-file-pdf"></i>
+                </button>
+                <button class="export-btn export-btn-excel" onclick="exportToExcel('directionsTable', 'directions.xlsx')" title="Export Excel">
+                    <i class="fas fa-file-excel"></i>
+                </button>
+                <button class="export-btn export-btn-csv" onclick="exportToCSV('directionsTable', 'directions.csv')" title="Export CSV">
+                    <i class="fas fa-file-csv"></i>
+                </button>
+            </div>
+
+            <!-- Add Button -->
+            <button class="btn btn-primary btn-sm" onclick="openModal('addDirectionModal')">
+                <i class="fas fa-plus"></i> Nouveau
+            </button>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="data-table-body">
+        <div class="table-responsive">
+            <table class="table" id="directionsTable">
+                <thead>
+                    <tr>
+                        <th data-sortable style="width: 50px;">#</th>
+                        <th data-sortable>Nom</th>
+                        <th data-sortable>Code</th>
+                        <th data-sortable>Directeur</th>
+                        <th data-sortable>Employés</th>
+                        <th data-sortable>Contact</th>
+                        <th data-sortable>Statut</th>
+                        <th style="width: 120px;" class="actions-column">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for direction in directions %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td style="font-weight: 600; font-size: 13px;">{{ direction.nom }}</td>
+                        <td>
+                            <span class="badge badge-success">{{ direction.code }}</span>
+                        </td>
+                        <td style="font-size: 13px;">{{ direction.directeur.get_full_name|default:"-" }}</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: 12px;">
+                                <i class="fas fa-users" style="color: var(--text-muted);"></i>
+                                <span style="font-weight: 600;">{{ direction.employes_actifs }}</span>
+                                <span style="color: var(--text-muted);">/ {{ direction.total_employes }}</span>
+                            </div>
+                        </td>
+                        <td style="font-size: 12px;">
+                            {% if direction.telephone %}
+                            <div><i class="fas fa-phone" style="font-size: 10px;"></i> {{ direction.telephone }}</div>
+                            {% endif %}
+                            {% if direction.email %}
+                            <div><i class="fas fa-envelope" style="font-size: 10px;"></i> {{ direction.email }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge {% if direction.est_active %}badge-success{% else %}badge-danger{% endif %}">
+                                {% if direction.est_active %}<i class="fas fa-check"></i> Active{% else %}<i class="fas fa-times"></i> Inactive{% endif %}
+                            </span>
+                        </td>
+                        <td class="actions-cell">
+                            <button class="action-btn action-btn-view" onclick="viewDirection({{ direction.id }})" title="Voir">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="action-btn action-btn-edit" onclick="editDirection({{ direction.id }})" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-btn action-btn-delete" onclick="confirmDelete({{ direction.id }}, '{{ direction.nom }}', '{% url 'accounts:direction_delete' direction.id %}')" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <i class="fas fa-sitemap"></i>
+                                <p>Aucune direction trouvée</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Direction Modal -->
+<div class="modal-overlay" id="addDirectionModal">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="fas fa-sitemap"></i>
+                <span id="modalTitle">Nouvelle direction</span>
+            </div>
+            <button class="modal-close" onclick="closeModal('addDirectionModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form id="directionForm" method="POST" action="{% url 'accounts:direction_create' %}">
+            {% csrf_token %}
+            <input type="hidden" id="direction_id" name="id" value="">
+
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="nom" class="form-label">Nom <span style="color: var(--accent-red);">*</span></label>
+                        <input type="text" id="nom" name="nom" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="code" class="form-label">Code <span style="color: var(--accent-red);">*</span></label>
+                        <input type="text" id="code" name="code" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="telephone" class="form-label">Téléphone</label>
+                        <input type="tel" id="telephone" name="telephone" class="form-control" placeholder="+226 70 12 34 56">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" id="email" name="email" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="directeur" class="form-label">Directeur</label>
+                        <select id="directeur" name="directeur" class="form-control">
+                            <option value="">Aucun</option>
+                            {% for admin in admins %}
+                            <option value="{{ admin.id }}">{{ admin.get_full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="est_active" name="est_active" value="1" checked style="width: 18px; height: 18px;">
+                            <span>Direction active</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group form-grid-full">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea id="description" name="description" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('addDirectionModal')">
+                    <i class="fas fa-times"></i> Annuler
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{% static 'js/components.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initDataTable('directionsTable');
+});
+
+function viewDirection(id) {
+    window.location.href = `/accounts/directions/${id}/`;
+}
+
+function editDirection(id) {
+    fetch(`/api/accounts/directions/${id}/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('direction_id').value = data.id;
+            document.getElementById('nom').value = data.nom;
+            document.getElementById('code').value = data.code;
+            document.getElementById('telephone').value = data.telephone || '';
+            document.getElementById('email').value = data.email || '';
+            document.getElementById('directeur').value = data.directeur || '';
+            document.getElementById('description').value = data.description || '';
+            document.getElementById('est_active').checked = data.est_active;
+            document.getElementById('modalTitle').textContent = 'Modifier la direction';
+            openModal('addDirectionModal');
+        });
+}
+</script>
+{% endblock %}

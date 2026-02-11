@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Connexion - LONAB MUTRALO{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+
+{% block body %}
+<div class="auth-wrapper">
+    <div class="auth-container">
+        <!-- Section Illustration -->
+        <div class="auth-illustration">
+            <div class="auth-logo">
+                <i class="fas fa-utensils"></i>
+            </div>
+            <h1>LONAB - MUTRALO</h1>
+            <p>Système de Gestion des Tickets de Restauration Subventionnés</p>
+
+            <div class="auth-features">
+                <div class="auth-feature">
+                    <i class="fas fa-check"></i>
+                    <span>Gestion simplifiée des tickets</span>
+                </div>
+                <div class="auth-feature">
+                    <i class="fas fa-check"></i>
+                    <span>QR codes sécurisés</span>
+                </div>
+                <div class="auth-feature">
+                    <i class="fas fa-check"></i>
+                    <span>Suivi en temps réel</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Formulaire -->
+        <div class="auth-form-container">
+            <div class="auth-form-header">
+                <h2>Connexion</h2>
+                <p>Connectez-vous pour accéder à votre espace</p>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" action="{% url 'accounts:login' %}" class="auth-form" id="loginForm">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="email" class="form-label">Adresse email</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        class="form-control"
+                        placeholder="votre.email@lonab.com"
+                        required
+                        autocomplete="email"
+                        value="{{ request.POST.email }}"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">Mot de passe</label>
+                    <div class="password-toggle">
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            class="form-control"
+                            placeholder="••••••••"
+                            required
+                            autocomplete="current-password"
+                        >
+                        <button type="button" class="password-toggle-btn" onclick="togglePassword()">
+                            <i class="fas fa-eye" id="toggleIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="remember-forgot">
+                    <label class="remember-me">
+                        <input type="checkbox" name="remember_me" id="remember_me">
+                        <span>Se souvenir de moi</span>
+                    </label>
+                    <a href="{% url 'accounts:password_reset' %}" class="forgot-link">Mot de passe oublié ?</a>
+                </div>
+
+                <button type="submit" class="auth-submit">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Se connecter
+                </button>
+            </form>
+
+            <div class="auth-loading" id="loadingSpinner">
+                <div class="spinner"></div>
+                <p style="margin-top: 12px; color: var(--text-secondary); font-size: 13px;">Connexion en cours...</p>
+            </div>
+
+            <div class="auth-footer">
+                Besoin d'aide ? <a href="mailto:support@lonab.com">Contactez le support</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function togglePassword() {
+    const passwordInput = document.getElementById('password');
+    const toggleIcon = document.getElementById('toggleIcon');
+
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.classList.remove('fa-eye');
+        toggleIcon.classList.add('fa-eye-slash');
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.classList.remove('fa-eye-slash');
+        toggleIcon.classList.add('fa-eye');
+    }
+}
+
+// Form submission handling
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    loadingSpinner.classList.add('active');
+});
+
+// Auto-hide alerts after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 300);
+        }, 5000);
+    });
+});
+</script>
+{% endblock %}

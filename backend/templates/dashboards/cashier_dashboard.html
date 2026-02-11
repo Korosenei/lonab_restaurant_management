@@ -1,0 +1,236 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Tableau de bord - Caissier{% endblock %}
+
+{% block sidebar_menu %}
+<div class="nav-section">
+    <div class="nav-section-title">Menu Principal</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="{% url 'cashier_dashboard' %}" class="nav-link active">
+                <i class="fas fa-home"></i>
+                <span class="nav-link-text">Tableau de bord</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'cashier_transactions' %}" class="nav-link">
+                <i class="fas fa-cash-register"></i>
+                <span class="nav-link-text">Vente de tickets</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'cashier_clients' %}" class="nav-link">
+                <i class="fas fa-users"></i>
+                <span class="nav-link-text">Clients</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+<div class="nav-section">
+    <div class="nav-section-title">Restaurants</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="{% url 'cashier_restaurants' %}" class="nav-link">
+                <i class="fas fa-utensils"></i>
+                <span class="nav-link-text">Restaurants</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'cashier_schedules' %}" class="nav-link">
+                <i class="fas fa-calendar-alt"></i>
+                <span class="nav-link-text">Programmations</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+<div class="nav-section">
+    <div class="nav-section-title">Rapports</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="{% url 'cashier_reports' %}" class="nav-link">
+                <i class="fas fa-chart-bar"></i>
+                <span class="nav-link-text">Rapports</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'cashier_history' %}" class="nav-link">
+                <i class="fas fa-history"></i>
+                <span class="nav-link-text">Historique</span>
+            </a>
+        </li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1 class="page-title">Tableau de bord - Caissier</h1>
+    <p class="page-subtitle">{{ user.agency.name|default:"Toutes les agences" }}</p>
+    <div class="page-actions">
+        <button class="btn btn-primary" onclick="window.location.href='{% url 'cashier_sell_tickets' %}'">
+            <i class="fas fa-plus"></i> Nouvelle vente
+        </button>
+        <button class="btn btn-outline" onclick="window.location.href='{% url 'cashier_schedule_restaurant' %}'">
+            <i class="fas fa-calendar-plus"></i> Programmer restaurant
+        </button>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+    <!-- Ventes du jour -->
+    <div class="card" style="border-left: 4px solid var(--primary-green);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 4px;">Ventes du jour</div>
+                <div style="font-size: 28px; font-weight: 700; color: var(--primary-green);">{{ today_sales_count }}</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">{{ today_sales_amount }} FCFA</div>
+            </div>
+            <div style="width: 50px; height: 50px; background: var(--light-green); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-cash-register" style="font-size: 22px; color: var(--primary-green);"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ventes du mois -->
+    <div class="card" style="border-left: 4px solid #17a2b8;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 4px;">Ventes du mois</div>
+                <div style="font-size: 28px; font-weight: 700; color: var(--text-primary);">{{ month_sales_count }}</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">{{ month_sales_amount }} FCFA</div>
+            </div>
+            <div style="width: 50px; height: 50px; background: #d1ecf1; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-chart-line" style="font-size: 22px; color: #17a2b8;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tickets vendus -->
+    <div class="card" style="border-left: 4px solid #ffc107;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 4px;">Tickets vendus (mois)</div>
+                <div style="font-size: 28px; font-weight: 700; color: var(--text-primary);">{{ month_tickets_sold }}</div>
+            </div>
+            <div style="width: 50px; height: 50px; background: #fff3cd; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-ticket-alt" style="font-size: 22px; color: #ffc107;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clients actifs -->
+    <div class="card" style="border-left: 4px solid var(--accent-red);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 4px;">Clients actifs</div>
+                <div style="font-size: 28px; font-weight: 700; color: var(--text-primary);">{{ active_clients_count }}</div>
+            </div>
+            <div style="width: 50px; height: 50px; background: var(--red-light); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-users" style="font-size: 22px; color: var(--accent-red);"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Two Column Layout -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--spacing-md);">
+    <!-- Transactions récentes -->
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-receipt"></i> Transactions récentes
+        </div>
+        {% if recent_transactions %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>N° Transaction</th>
+                        <th>Client</th>
+                        <th>Tickets</th>
+                        <th>Montant</th>
+                        <th>Date</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in recent_transactions %}
+                    <tr>
+                        <td style="font-weight: 500; color: var(--text-primary);">{{ transaction.transaction_number }}</td>
+                        <td>{{ transaction.client.get_full_name }}</td>
+                        <td>{{ transaction.number_of_tickets }}</td>
+                        <td>{{ transaction.total_amount }} FCFA</td>
+                        <td>{{ transaction.transaction_date|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            <span class="badge {% if transaction.status == 'COMPLETED' %}badge-success{% else %}badge-warning{% endif %}">
+                                {{ transaction.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div style="text-align: center; padding: var(--spacing-md); border-top: 1px solid var(--border-color);">
+                <a href="{% url 'cashier_transactions' %}" class="btn btn-outline btn-sm">Voir tout</a>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: var(--spacing-xl); color: var(--text-muted);">
+                <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: var(--spacing-md);"></i>
+                <p>Aucune transaction récente</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Actions Rapides & Stats -->
+    <div>
+        <!-- Actions Rapides -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-bolt"></i> Actions rapides
+            </div>
+            <div style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
+                <a href="{% url 'cashier_sell_tickets' %}" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-cash-register"></i>
+                    Vendre des tickets
+                </a>
+                <a href="{% url 'cashier_schedule_restaurant' %}" class="btn btn-outline" style="width: 100%;">
+                    <i class="fas fa-calendar-plus"></i>
+                    Programmer restaurant
+                </a>
+                <a href="{% url 'cashier_reports' %}" class="btn btn-outline" style="width: 100%;">
+                    <i class="fas fa-file-download"></i>
+                    Générer rapport
+                </a>
+            </div>
+        </div>
+
+        <!-- Restaurants actifs -->
+        <div class="card" style="margin-top: var(--spacing-md);">
+            <div class="card-header">
+                <i class="fas fa-utensils"></i> Restaurants actifs
+            </div>
+            {% if active_restaurants %}
+                <div style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
+                    {% for restaurant in active_restaurants %}
+                    <div style="padding: var(--spacing-sm); background: var(--bg-secondary); border-radius: var(--border-radius-sm); display: flex; align-items: center; gap: var(--spacing-sm);">
+                        <div style="width: 32px; height: 32px; background: var(--light-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fas fa-utensils" style="font-size: 14px; color: var(--primary-green);"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ restaurant.name }}</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">{{ restaurant.city }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: var(--spacing-md); color: var(--text-muted); font-size: 13px;">
+                    Aucun restaurant actif
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

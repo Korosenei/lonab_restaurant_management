@@ -1,0 +1,314 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Tableau de bord - Administration{% endblock %}
+
+{% block sidebar_menu %}
+<div class="nav-section">
+    <div class="nav-section-title">Menu Principal</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="{% url 'accounts:admin_dashboard' %}" class="nav-link active">
+                <i class="fas fa-home"></i>
+                <span class="nav-link-text">Tableau de bord</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'accounts:admin_overview'%}" class="nav-link">
+                <i class="fas fa-chart-pie"></i>
+                <span class="nav-link-text">Vue d'ensemble</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+<div class="nav-section">
+    <div class="nav-section-title">Organisation</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="{% url 'accounts:directions_list' %}" class="nav-link">
+                <i class="fas fa-sitemap"></i>
+                <span class="nav-link-text">Directions</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'accounts:agences_list'%}" class="nav-link">
+                <i class="fas fa-building"></i>
+                <span class="nav-link-text">Agences</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'accounts:users_list'%}" class="nav-link">
+                <i class="fas fa-users"></i>
+                <span class="nav-link-text">Utilisateurs</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+<div class="nav-section">
+    <div class="nav-section-title">Gestion</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="#admin_tickets'" class="nav-link">
+                <i class="fas fa-ticket-alt"></i>
+                <span class="nav-link-text">Tickets</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#admin_transactions'" class="nav-link">
+                <i class="fas fa-exchange-alt"></i>
+                <span class="nav-link-text">Transactions</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#'admin_restaurants'" class="nav-link">
+                <i class="fas fa-utensils"></i>
+                <span class="nav-link-text">Restaurants</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="# url 'admin_schedules" class="nav-link">
+                <i class="fas fa-calendar-alt"></i>
+                <span class="nav-link-text">Programmations</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+<div class="nav-section">
+    <div class="nav-section-title">Rapports</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="#admin_reports" class="nav-link">
+                <i class="fas fa-chart-bar"></i>
+                <span class="nav-link-text">Rapports</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#admin_stats" class="nav-link">
+                <i class="fas fa-analytics"></i>
+                <span class="nav-link-text">Statistiques</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#admin_audit" class="nav-link">
+                <i class="fas fa-clipboard-check"></i>
+                <span class="nav-link-text">Audit</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+<div class="nav-section">
+    <div class="nav-section-title">Paramètres</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="#admin_settings" class="nav-link">
+                <i class="fas fa-cog"></i>
+                <span class="nav-link-text">Paramètres système</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#admin_notifications" class="nav-link">
+                <i class="fas fa-bell"></i>
+                <span class="nav-link-text">Notifications</span>
+            </a>
+        </li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1 class="page-title">Administration Générale</h1>
+    <p class="page-subtitle">Vue d'ensemble du système LONAB - MUTRALO</p>
+</div>
+
+<!-- Main Stats Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+    <!-- Total Employés -->
+    <div class="card" style="border-left: 4px solid var(--primary-green);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="color: var(--text-muted); font-size: 11px; margin-bottom: 4px;">EMPLOYÉS</div>
+                <div style="font-size: 24px; font-weight: 700; color: var(--text-primary);">{{ total_employees }}</div>
+                <div style="font-size: 10px; color: var(--primary-green); margin-top: 2px;">+{{ new_employees_month }} ce mois</div>
+            </div>
+            <div style="width: 45px; height: 45px; background: var(--light-green); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-users" style="font-size: 20px; color: var(--primary-green);"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Directions -->
+    <div class="card" style="border-left: 4px solid #6f42c1;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="color: var(--text-muted); font-size: 11px; margin-bottom: 4px;">DIRECTIONS</div>
+                <div style="font-size: 24px; font-weight: 700; color: var(--text-primary);">{{ total_directions }}</div>
+                <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">{{ active_directions }} actives</div>
+            </div>
+            <div style="width: 45px; height: 45px; background: #e7d9ff; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-sitemap" style="font-size: 20px; color: #6f42c1;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agences -->
+    <div class="card" style="border-left: 4px solid #17a2b8;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="color: var(--text-muted); font-size: 11px; margin-bottom: 4px;">AGENCES</div>
+                <div style="font-size: 24px; font-weight: 700; color: var(--text-primary);">{{ total_agencies }}</div>
+                <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">{{ active_agencies }} actives</div>
+            </div>
+            <div style="width: 45px; height: 45px; background: #d1ecf1; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-building" style="font-size: 20px; color: #17a2b8;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Restaurants -->
+    <div class="card" style="border-left: 4px solid #ffc107;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="color: var(--text-muted); font-size: 11px; margin-bottom: 4px;">RESTAURANTS</div>
+                <div style="font-size: 24px; font-weight: 700; color: var(--text-primary);">{{ total_restaurants }}</div>
+                <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">{{ active_restaurants }} actifs</div>
+            </div>
+            <div style="width: 45px; height: 45px; background: #fff3cd; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-utensils" style="font-size: 20px; color: #ffc107;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tickets du mois -->
+    <div class="card" style="border-left: 4px solid var(--accent-red);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="color: var(--text-muted); font-size: 11px; margin-bottom: 4px;">TICKETS (MOIS)</div>
+                <div style="font-size: 24px; font-weight: 700; color: var(--text-primary);">{{ month_tickets_sold }}</div>
+                <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">{{ month_tickets_consumed }} consommés</div>
+            </div>
+            <div style="width: 45px; height: 45px; background: var(--red-light); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-ticket-alt" style="font-size: 20px; color: var(--accent-red);"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenus du mois -->
+    <div class="card" style="border-left: 4px solid #28a745;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="color: var(--text-muted); font-size: 11px; margin-bottom: 4px;">REVENUS (MOIS)</div>
+                <div style="font-size: 24px; font-weight: 700; color: var(--text-primary);">{{ month_revenue|floatformat:0 }}</div>
+                <div style="font-size: 10px; color: var(--primary-green); margin-top: 2px;">FCFA</div>
+            </div>
+            <div style="width: 45px; height: 45px; background: var(--light-green); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-coins" style="font-size: 20px; color: var(--primary-green);"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--spacing-md); margin-bottom: var(--spacing-md);">
+    <!-- Ventes mensuelles -->
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-chart-line"></i> Évolution des ventes (6 derniers mois)
+        </div>
+        <div style="height: 300px; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+            <div style="text-align: center;">
+                <i class="fas fa-chart-line" style="font-size: 48px; margin-bottom: var(--spacing-md);"></i>
+                <p>Graphique des ventes à implémenter</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Répartition par direction -->
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-chart-pie"></i> Par direction
+        </div>
+        <div style="padding: var(--spacing-md);">
+            {% for direction in top_directions %}
+            <div style="margin-bottom: var(--spacing-md);">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                    <span style="font-weight: 500;">{{ direction.name|truncatechars:20 }}</span>
+                    <span style="color: var(--text-muted);">{{ direction.employee_count }}</span>
+                </div>
+                <div style="height: 6px; background: var(--bg-secondary); border-radius: 3px; overflow: hidden;">
+                    <div style="height: 100%; background: var(--primary-green); width: {{ direction.percentage }}%;"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Tables Row -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md);">
+    <!-- Dernières transactions -->
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-exchange-alt"></i> Dernières transactions
+        </div>
+        {% if recent_transactions %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>N° Transaction</th>
+                        <th>Client</th>
+                        <th>Montant</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in recent_transactions|slice:":5" %}
+                    <tr>
+                        <td style="font-size: 11px; font-family: monospace;">{{ transaction.transaction_number|truncatechars:15 }}</td>
+                        <td style="font-size: 12px;">{{ transaction.client.get_full_name|truncatechars:20 }}</td>
+                        <td style="font-size: 12px; font-weight: 600;">{{ transaction.total_amount }} FCFA</td>
+                        <td>
+                            <span class="badge {% if transaction.status == 'COMPLETED' %}badge-success{% else %}badge-warning{% endif %}" style="font-size: 10px;">
+                                {{ transaction.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div style="text-align: center; padding: var(--spacing-lg); color: var(--text-muted); font-size: 13px;">
+                Aucune transaction récente
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Activité récente -->
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-history"></i> Activité système
+        </div>
+        <div style="padding: var(--spacing-md);">
+            {% for activity in recent_activities %}
+            <div style="display: flex; gap: var(--spacing-sm); margin-bottom: var(--spacing-md); padding-bottom: var(--spacing-sm); border-bottom: 1px solid var(--border-color);">
+                <div style="width: 32px; height: 32px; background: var(--light-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <i class="fas fa-{{ activity.icon }}" style="font-size: 14px; color: var(--primary-green);"></i>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: 12px; font-weight: 500; color: var(--text-primary); margin-bottom: 2px;">{{ activity.description }}</div>
+                    <div style="font-size: 10px; color: var(--text-muted);">{{ activity.created_at|timesince }}</div>
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align: center; padding: var(--spacing-lg); color: var(--text-muted); font-size: 13px;">
+                Aucune activité récente
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,161 @@
+<!-- Edit Profile Modal -->
+<div class="modal-overlay" id="editProfileModal">
+    <div class="modal modal-large">
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="fas fa-user-edit"></i>
+                Modifier le profil
+            </div>
+            <button class="modal-close" onclick="closeModal('editProfileModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form id="editProfileForm" method="POST" action="{% url 'accounts:profile_update' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="modal-body">
+                <div class="form-grid">
+                    <!-- Prénom -->
+                    <div class="form-group">
+                        <label for="edit_prenom" class="form-label">Prénom</label>
+                        <input type="text" id="edit_prenom" name="prenom" class="form-control" value="{{ user.prenom }}">
+                    </div>
+
+                    <!-- Nom -->
+                    <div class="form-group">
+                        <label for="edit_nom" class="form-label">Nom</label>
+                        <input type="text" id="edit_nom" name="nom" class="form-control" value="{{ user.nom }}">
+                    </div>
+
+                    <!-- Email (readonly) -->
+                    <div class="form-group">
+                        <label for="edit_email" class="form-label">Email</label>
+                        <input type="email" id="edit_email" class="form-control" value="{{ user.email }}" disabled>
+                        <small style="color: var(--text-muted); font-size: 11px;">
+                            <i class="fas fa-lock"></i> L'email ne peut pas être modifié
+                        </small>
+                    </div>
+
+                    <!-- Téléphone -->
+                    <div class="form-group">
+                        <label for="edit_telephone" class="form-label">Téléphone</label>
+                        <input type="tel" id="edit_telephone" name="telephone" class="form-control" value="{{ user.telephone }}" placeholder="+226 70 12 34 56">
+                    </div>
+
+                    <!-- Genre -->
+                    <div class="form-group">
+                        <label for="edit_genre" class="form-label">Genre</label>
+                        <select id="edit_genre" name="genre" class="form-control">
+                            <option value="">Non spécifié</option>
+                            <option value="M" {% if user.genre == 'M' %}selected{% endif %}>Masculin</option>
+                            <option value="F" {% if user.genre == 'F' %}selected{% endif %}>Féminin</option>
+                        </select>
+                    </div>
+
+                    <!-- Date de naissance -->
+                    <div class="form-group">
+                        <label for="edit_date_naissance" class="form-label">Date de naissance</label>
+                        <input type="date" id="edit_date_naissance" name="date_naissance" class="form-control" value="{{ user.date_naissance|date:'Y-m-d' }}">
+                    </div>
+
+                    <!-- Adresse -->
+                    <div class="form-group form-grid-full">
+                        <label for="edit_adresse" class="form-label">Adresse</label>
+                        <textarea id="edit_adresse" name="adresse" class="form-control" rows="2">{{ user.adresse }}</textarea>
+                    </div>
+
+                    <!-- Photo de profil -->
+                    <div class="form-group form-grid-full">
+                        <label for="edit_photo_profil" class="form-label">Photo de profil</label>
+                        {% if user.photo_profil %}
+                        <div style="margin-bottom: 8px;">
+                            <img src="{{ user.photo_profil.url }}" alt="Photo actuelle" style="max-width: 100px; border-radius: 8px;">
+                        </div>
+                        {% endif %}
+                        <input type="file" id="edit_photo_profil" name="photo_profil" class="form-control" accept="image/*" onchange="previewImage(this, 'editPhotoPreview')">
+                        <img id="editPhotoPreview" style="display: none; max-width: 150px; margin-top: 10px; border-radius: 8px;">
+                    </div>
+
+                    <!-- Préférences de notification -->
+                    <div class="form-group form-grid-full">
+                        <label class="form-label">Préférences de notification</label>
+                        <div style="display: flex; gap: 16px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" name="notification_email" value="1" {% if user.profil.notification_email %}checked{% endif %} style="width: 18px; height: 18px; accent-color: var(--primary-green);">
+                                <span>Notifications email</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" name="notification_sms" value="1" {% if user.profil.notification_sms %}checked{% endif %} style="width: 18px; height: 18px; accent-color: var(--primary-green);">
+                                <span>Notifications SMS</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Contact d'urgence -->
+                    <div class="form-group form-grid-full">
+                        <label class="form-label" style="margin-bottom: 12px;">
+                            <i class="fas fa-phone-alt"></i> Contact d'urgence
+                        </label>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="edit_contact_urgence_nom" class="form-label">Nom</label>
+                                <input type="text" id="edit_contact_urgence_nom" name="contact_urgence_nom" class="form-control" value="{{ user.profil.contact_urgence_nom }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="edit_contact_urgence_telephone" class="form-label">Téléphone</label>
+                                <input type="tel" id="edit_contact_urgence_telephone" name="contact_urgence_telephone" class="form-control" value="{{ user.profil.contact_urgence_telephone }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('editProfileModal')">
+                    <i class="fas fa-times"></i> Annuler
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Form submission
+document.getElementById('editProfileForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    showLoading('Mise à jour en cours...');
+
+    const formData = new FormData(this);
+
+    try {
+        const response = await fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+
+        hideLoading();
+
+        if (response.ok) {
+            showSuccess('Profil mis à jour avec succès');
+            closeModal('editProfileModal');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            const data = await response.json();
+            showError(data.message || 'Erreur lors de la mise à jour');
+            displayFormErrors(this, data.errors);
+        }
+    } catch (error) {
+        hideLoading();
+        showError('Erreur de connexion');
+        console.error(error);
+    }
+});
+</script>

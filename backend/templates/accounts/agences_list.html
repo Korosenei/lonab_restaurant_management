@@ -1,0 +1,368 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Gestion des Agences{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
+{% endblock %}
+
+{% block sidebar_menu %}
+<div class="nav-section">
+    <div class="nav-section-title">Administration</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="{% url 'accounts:admin_dashboard' %}" class="nav-link">
+                <i class="fas fa-home"></i>
+                <span class="nav-link-text">Tableau de bord</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'accounts:users_list' %}" class="nav-link">
+                <i class="fas fa-users"></i>
+                <span class="nav-link-text">Utilisateurs</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'accounts:directions_list' %}" class="nav-link">
+                <i class="fas fa-sitemap"></i>
+                <span class="nav-link-text">Directions</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'accounts:agences_list' %}" class="nav-link active">
+                <i class="fas fa-building"></i>
+                <span class="nav-link-text">Agences</span>
+            </a>
+        </li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1 class="page-title">Gestion des Agences</h1>
+    <p class="page-subtitle">Liste des agences LONAB</p>
+</div>
+
+<!-- Data Table -->
+<div class="data-table-wrapper">
+    <!-- Header -->
+    <div class="data-table-header">
+        <div class="data-table-title">
+            <i class="fas fa-building"></i>
+            {{ agences.count }} agence{{ agences.count|pluralize }}
+        </div>
+
+        <div class="data-table-actions">
+            <!-- Search -->
+            <div class="data-table-search">
+                <i class="fas fa-search"></i>
+                <input type="text" id="tableSearch" placeholder="Rechercher...">
+            </div>
+
+            <!-- Export Buttons -->
+            <div class="export-group">
+                <button class="export-btn export-btn-pdf" onclick="exportToPDF('agencesTable', 'agences.pdf')" title="Export PDF">
+                    <i class="fas fa-file-pdf"></i>
+                </button>
+                <button class="export-btn export-btn-excel" onclick="exportToExcel('agencesTable', 'agences.xlsx')" title="Export Excel">
+                    <i class="fas fa-file-excel"></i>
+                </button>
+                <button class="export-btn export-btn-csv" onclick="exportToCSV('agencesTable', 'agences.csv')" title="Export CSV">
+                    <i class="fas fa-file-csv"></i>
+                </button>
+            </div>
+
+            <!-- Add Button -->
+            <button class="btn btn-primary btn-sm" onclick="openModal('addAgenceModal')">
+                <i class="fas fa-plus"></i> Nouveau
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-bar">
+        <form id="filtersForm">
+            <div class="filter-group">
+                <label class="filter-label">Type</label>
+                <select name="type" class="filter-select" onchange="applyFilters('filtersForm')">
+                    <option value="">Tous</option>
+                    <option value="SIEGE">Siège</option>
+                    <option value="REGIONALE">Régionale</option>
+                    <option value="LOCALE">Locale</option>
+                    <option value="SUCCURSALE">Succursale</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Ville</label>
+                <select name="ville" class="filter-select" onchange="applyFilters('filtersForm')">
+                    <option value="">Toutes</option>
+                    {% for ville in villes %}
+                    <option value="{{ ville }}">{{ ville }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Direction</label>
+                <select name="direction" class="filter-select" onchange="applyFilters('filtersForm')">
+                    <option value="">Toutes</option>
+                    {% for direction in directions %}
+                    <option value="{{ direction.id }}">{{ direction.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Statut</label>
+                <select name="statut" class="filter-select" onchange="applyFilters('filtersForm')">
+                    <option value="">Tous</option>
+                    <option value="active">Actives</option>
+                    <option value="inactive">Inactives</option>
+                </select>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="data-table-body">
+        <div class="table-responsive">
+            <table class="table" id="agencesTable">
+                <thead>
+                    <tr>
+                        <th data-sortable style="width: 50px;">#</th>
+                        <th data-sortable>Nom</th>
+                        <th data-sortable>Code</th>
+                        <th data-sortable>Type</th>
+                        <th data-sortable>Ville</th>
+                        <th data-sortable>Direction</th>
+                        <th data-sortable>Employés</th>
+                        <th data-sortable>Statut</th>
+                        <th style="width: 120px;" class="actions-column">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for agence in agences %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td style="font-weight: 600; font-size: 13px;">{{ agence.nom }}</td>
+                        <td>
+                            <span class="badge badge-success">{{ agence.code }}</span>
+                        </td>
+                        <td>
+                            <span class="badge {% if agence.type_agence == 'SIEGE' %}badge-danger{% elif agence.type_agence == 'REGIONALE' %}badge-warning{% else %}badge-success{% endif %}" style="font-size: 10px;">
+                                {{ agence.get_type_agence_display }}
+                            </span>
+                        </td>
+                        <td style="font-size: 13px;">
+                            <i class="fas fa-map-marker-alt" style="font-size: 11px; color: var(--text-muted);"></i>
+                            {{ agence.ville }}
+                        </td>
+                        <td style="font-size: 12px;">{{ agence.direction.nom|default:"-" }}</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: 12px;">
+                                <i class="fas fa-users" style="color: var(--text-muted);"></i>
+                                <span style="font-weight: 600;">{{ agence.employes_actifs }}</span>
+                                {% if agence.capacite_max_employes %}
+                                <span style="color: var(--text-muted);">/ {{ agence.capacite_max_employes }}</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge {% if agence.est_active %}badge-success{% else %}badge-danger{% endif %}">
+                                {% if agence.est_active %}<i class="fas fa-check"></i>{% else %}<i class="fas fa-times"></i>{% endif %}
+                            </span>
+                        </td>
+                        <td class="actions-cell">
+                            <button class="action-btn action-btn-view" onclick="viewAgence({{ agence.id }})" title="Voir">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="action-btn action-btn-edit" onclick="editAgence({{ agence.id }})" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-btn action-btn-delete" onclick="confirmDelete({{ agence.id }}, '{{ agence.nom }}', '{% url 'accounts:agence_delete' agence.id %}')" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9">
+                            <div class="empty-state">
+                                <i class="fas fa-building"></i>
+                                <p>Aucune agence trouvée</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Agence Modal -->
+<div class="modal-overlay" id="addAgenceModal">
+    <div class="modal modal-large">
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="fas fa-building"></i>
+                <span id="modalTitle">Nouvelle agence</span>
+            </div>
+            <button class="modal-close" onclick="closeModal('addAgenceModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form id="agenceForm" method="POST" action="{% url 'accounts:agence_create' %}">
+            {% csrf_token %}
+            <input type="hidden" id="agence_id" name="id" value="">
+
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="nom" class="form-label">Nom <span style="color: var(--accent-red);">*</span></label>
+                        <input type="text" id="nom" name="nom" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="code" class="form-label">Code <span style="color: var(--accent-red);">*</span></label>
+                        <input type="text" id="code" name="code" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="type_agence" class="form-label">Type <span style="color: var(--accent-red);">*</span></label>
+                        <select id="type_agence" name="type_agence" class="form-control" required>
+                            <option value="LOCALE">Agence Locale</option>
+                            <option value="REGIONALE">Agence Régionale</option>
+                            <option value="SIEGE">Siège</option>
+                            <option value="SUCCURSALE">Succursale</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ville" class="form-label">Ville <span style="color: var(--accent-red);">*</span></label>
+                        <input type="text" id="ville" name="ville" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="region" class="form-label">Région</label>
+                        <input type="text" id="region" name="region" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="code_postal" class="form-label">Code postal</label>
+                        <input type="text" id="code_postal" name="code_postal" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="telephone" class="form-label">Téléphone <span style="color: var(--accent-red);">*</span></label>
+                        <input type="tel" id="telephone" name="telephone" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" id="email" name="email" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="direction" class="form-label">Direction</label>
+                        <select id="direction" name="direction" class="form-control">
+                            <option value="">Aucune</option>
+                            {% for direction in directions %}
+                            <option value="{{ direction.id }}">{{ direction.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="agence_parente" class="form-label">Agence parente</label>
+                        <select id="agence_parente" name="agence_parente" class="form-control">
+                            <option value="">Aucune</option>
+                            {% for agence in agences %}
+                            <option value="{{ agence.id }}">{{ agence.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="responsable" class="form-label">Responsable</label>
+                        <select id="responsable" name="responsable" class="form-control">
+                            <option value="">Aucun</option>
+                            {% for manager in managers %}
+                            <option value="{{ manager.id }}">{{ manager.get_full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="capacite_max_employes" class="form-label">Capacité max employés</label>
+                        <input type="number" id="capacite_max_employes" name="capacite_max_employes" class="form-control" min="1">
+                    </div>
+
+                    <div class="form-group form-grid-full">
+                        <label for="adresse" class="form-label">Adresse <span style="color: var(--accent-red);">*</span></label>
+                        <textarea id="adresse" name="adresse" class="form-control" rows="2" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="est_active" name="est_active" value="1" checked style="width: 18px; height: 18px;">
+                            <span>Agence active</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('addAgenceModal')">
+                    <i class="fas fa-times"></i> Annuler
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{% static 'js/components.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initDataTable('agencesTable');
+});
+
+function viewAgence(id) {
+    window.location.href = `/accounts/agences/${id}/`;
+}
+
+function editAgence(id) {
+    fetch(`/api/accounts/agences/${id}/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('agence_id').value = data.id;
+            document.getElementById('nom').value = data.nom;
+            document.getElementById('code').value = data.code;
+            document.getElementById('type_agence').value = data.type_agence;
+            document.getElementById('ville').value = data.ville;
+            document.getElementById('region').value = data.region || '';
+            document.getElementById('code_postal').value = data.code_postal || '';
+            document.getElementById('telephone').value = data.telephone;
+            document.getElementById('email').value = data.email || '';
+            document.getElementById('direction').value = data.direction || '';
+            document.getElementById('agence_parente').value = data.agence_parente || '';
+            document.getElementById('responsable').value = data.responsable || '';
+            document.getElementById('capacite_max_employes').value = data.capacite_max_employes || '';
+            document.getElementById('adresse').value = data.adresse;
+            document.getElementById('est_active').checked = data.est_active;
+            document.getElementById('modalTitle').textContent = 'Modifier l\'agence';
+            openModal('addAgenceModal');
+        });
+}
+</script>
+{% endblock %}

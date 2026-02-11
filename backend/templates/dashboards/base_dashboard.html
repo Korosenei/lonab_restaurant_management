@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% block dashboard_css %}{% endblock %}
+{% endblock %}
+
+{% block body %}
+<div class="dashboard-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <!-- Logo -->
+        <div class="sidebar-logo">
+            <div class="sidebar-logo-icon">
+                <i class="fas fa-utensils"></i>
+            </div>
+            <div class="sidebar-logo-text">
+                <span class="brand-name">LONAB</span>
+                <span class="brand-subtitle">MUTRALO</span>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
+            {% block sidebar_menu %}
+            <!-- Menu items will be inserted here by child templates -->
+            {% endblock %}
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="fas fa-chevron-left"></i>
+                <span class="sidebar-toggle-text">Réduire</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Navbar -->
+        <header class="navbar">
+            <!-- Search -->
+            <div class="navbar-search">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Rechercher..." id="globalSearch">
+            </div>
+
+            <!-- Right Section -->
+            <div class="navbar-right">
+                <!-- Notifications -->
+                <div class="dropdown" id="notificationDropdown">
+                    <button class="navbar-icon" onclick="toggleDropdown('notificationDropdown')">
+                        <i class="fas fa-bell"></i>
+                        {% if unread_notifications_count > 0 %}
+                        <span class="notification-badge">{{ unread_notifications_count }}</span>
+                        {% endif %}
+                    </button>
+
+                    <div class="dropdown-menu">
+                        <div class="dropdown-item" style="font-weight: 600; color: var(--text-primary);">
+                            Notifications
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        {% if notifications %}
+                            {% for notification in notifications|slice:":5" %}
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-info-circle"></i>
+                                <div>
+                                    <div style="font-weight: 500;">{{ notification.title }}</div>
+                                    <div style="font-size: 11px; color: var(--text-muted);">{{ notification.created_at|timesince }}</div>
+                                </div>
+                            </a>
+                            {% endfor %}
+                            <div class="dropdown-divider"></div>
+                            <a href="{% url 'accounts:notifications_list' %}" class="dropdown-item" style="text-align: center; color: var(--primary-green);">
+                                Voir tout
+                            </a>
+                        {% else %}
+                            <div class="dropdown-item" style="color: var(--text-muted); text-align: center;">
+                                Aucune notification
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- User Profile -->
+                <div class="dropdown" id="userDropdown">
+                    <div class="navbar-user" onclick="toggleDropdown('userDropdown')">
+                        <div class="navbar-user-avatar">
+                            {{ user.first_name.0 }}{{ user.last_name.0 }}
+                        </div>
+                        <div class="navbar-user-info">
+                            <span class="navbar-user-name">{{ user.get_full_name }}</span>
+                            <span class="navbar-user-role">{{ user.get_user_type_display }}</span>
+                        </div>
+                        <i class="fas fa-chevron-down" style="font-size: 12px; color: var(--text-muted);"></i>
+                    </div>
+
+                    <div class="dropdown-menu">
+                        <a href="{% url 'accounts:profile' %}" class="dropdown-item">
+                            <i class="fas fa-user"></i>
+                            Mon profil
+                        </a>
+                        <a href="{% url 'accounts:settings' %}" class="dropdown-item">
+                            <i class="fas fa-cog"></i>
+                            Paramètres
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="{% url 'accounts:logout' %}" class="dropdown-item" style="color: var(--accent-red);">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Déconnexion
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <main class="page-content">
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}" style="animation: fadeIn 0.3s ease;">
+                    <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
+                    {{ message }}
+                    <button onclick="this.parentElement.remove()" style="margin-left: auto; padding: 4px 8px; background: none; border: none; color: inherit; cursor: pointer;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            {% block page_content %}
+            <!-- Page content will be inserted here -->
+            {% endblock %}
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div>&copy; {{ current_year }} LONAB - MUTRALO. Tous droits réservés.</div>
+            <div class="footer-links">
+                <a href="#" class="footer-link">Aide</a>
+                <a href="#" class="footer-link">Confidentialité</a>
+                <a href="#" class="footer-link">Conditions</a>
+            </div>
+        </footer>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/dashboard.js' %}"></script>
+{% block dashboard_js %}{% endblock %}
+{% endblock %}
