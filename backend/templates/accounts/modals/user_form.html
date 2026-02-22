@@ -1,0 +1,218 @@
+<!-- User Form Modal -->
+<div class="modal-overlay" id="userFormModal">
+    <div class="modal modal-large">
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="fas fa-user-plus"></i>
+                <span id="userModalTitle" data-default-title="Nouvel utilisateur">Nouvel utilisateur</span>
+            </div>
+            <button class="modal-close" type="button" onclick="closeModal('userFormModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form id="userFormEl" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" id="user_id" name="id">
+
+            <div class="modal-body">
+                <div class="form-grid">
+                    <!-- Prénom -->
+                    <div class="form-group">
+                        <label class="form-label">Prénom <span>*</span></label>
+                        <input type="text" id="u_prenom" name="prenom" class="form-control" required placeholder="Prénom">
+                    </div>
+                    <!-- Nom -->
+                    <div class="form-group">
+                        <label class="form-label">Nom <span>*</span></label>
+                        <input type="text" id="u_nom" name="nom" class="form-control" required placeholder="Nom de famille">
+                    </div>
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label class="form-label">Email <span>*</span></label>
+                        <input type="email" id="u_email" name="email" class="form-control" required placeholder="email@lonab.bf">
+                    </div>
+                    <!-- Téléphone -->
+                    <div class="form-group">
+                        <label class="form-label">Téléphone</label>
+                        <input type="tel" id="u_telephone" name="telephone" class="form-control" placeholder="+226 XX XX XX XX">
+                    </div>
+                    <!-- Type utilisateur -->
+                    <div class="form-group">
+                        <label class="form-label">Type <span>*</span></label>
+                        <select id="u_type_utilisateur" name="type_utilisateur" class="form-control" required
+                                onchange="toggleUserFields(this.value)">
+                            <option value="">Sélectionner...</option>
+                            <option value="CLIENT">Client (Employé)</option>
+                            <option value="CAISSIER">Caissier</option>
+                            <option value="GESTIONNAIRE_RESTAURANT">Gestionnaire Restaurant</option>
+                            <option value="SUPER_ADMIN">Super Administrateur</option>
+                        </select>
+                    </div>
+                    <!-- Genre -->
+                    <div class="form-group">
+                        <label class="form-label">Genre</label>
+                        <select id="u_genre" name="genre" class="form-control">
+                            <option value="">Non spécifié</option>
+                            <option value="M">Masculin</option>
+                            <option value="F">Féminin</option>
+                        </select>
+                    </div>
+                    <!-- Matricule — obligatoire pour CLIENT, optionnel sinon -->
+                    <div class="form-group" id="field_matricule">
+                        <label class="form-label" id="label_matricule">Matricule <span id="matricule_required">*</span></label>
+                        <input type="text" id="u_matricule" name="matricule" class="form-control" placeholder="EMP-001">
+                        <div class="form-helper">
+                            <i class="fas fa-info-circle"></i>
+                            Sera utilisé comme nom d'utilisateur pour la connexion
+                        </div>
+                    </div>
+                    <!-- Département (CLIENT only) -->
+                    <div class="form-group" id="field_departement" style="display:none;">
+                        <label class="form-label">Département</label>
+                        <input type="text" id="u_departement" name="departement" class="form-control" placeholder="RH, Finance...">
+                    </div>
+                    <!-- Poste (CLIENT only) -->
+                    <div class="form-group" id="field_poste" style="display:none;">
+                        <label class="form-label">Poste</label>
+                        <input type="text" id="u_poste" name="poste" class="form-control" placeholder="Comptable, Chargé...">
+                    </div>
+                    <!-- Direction -->
+                    <div class="form-group">
+                        <label class="form-label">Direction</label>
+                        <select id="u_direction" name="direction" class="form-control">
+                            <option value="">Aucune</option>
+                            {% for direction in directions %}
+                            <option value="{{ direction.id }}">{{ direction.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <!-- Agence -->
+                    <div class="form-group">
+                        <label class="form-label">Agence</label>
+                        <select id="u_agence" name="agence" class="form-control">
+                            <option value="">Aucune</option>
+                            {% for agence in agences %}
+                            <option value="{{ agence.id }}">{{ agence.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <!-- Restaurant (GESTIONNAIRE only) -->
+                    <div class="form-group" id="field_restaurant" style="display:none;">
+                        <label class="form-label">Restaurant géré</label>
+                        <select id="u_restaurant" name="restaurant_gere" class="form-control">
+                            <option value="">Aucun</option>
+                            {% for r in restaurants %}
+                            <option value="{{ r.id }}">{{ r.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <!-- Adresse -->
+                    <div class="form-group form-grid-full">
+                        <label class="form-label">Adresse</label>
+                        <input type="text" id="u_adresse" name="adresse" class="form-control" placeholder="Adresse complète">
+                    </div>
+                </div>
+
+                <!-- Info mot de passe -->
+                <div id="password_info_box" style="
+                    margin-top:12px;
+                    background:linear-gradient(135deg,#e8f5e9,#f0fff4);
+                    border:1px solid #c8e6c9;
+                    border-radius:8px;
+                    padding:10px 14px;
+                    display:flex;
+                    align-items:flex-start;
+                    gap:10px;
+                    font-size:12px;
+                    color:#2d6a4f;
+                ">
+                    <i class="fas fa-shield-alt" style="color:#28a745;font-size:16px;margin-top:1px;flex-shrink:0;"></i>
+                    <div>
+                        <strong>Mot de passe automatique</strong><br>
+                        Un mot de passe sécurisé sera généré et envoyé par email à l'utilisateur avec ses identifiants de connexion.
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('userFormModal')">
+                    <i class="fas fa-times"></i> Annuler
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Affichage conditionnel des champs selon le type
+function toggleUserFields(type) {
+    var isClient     = type === 'CLIENT';
+    var isGestionnaire = type === 'GESTIONNAIRE_RESTAURANT';
+    var needsMatricule = isClient || type === 'CAISSIER' || type === 'SUPER_ADMIN';
+
+    // Champs CLIENT uniquement
+    document.getElementById('field_departement').style.display = isClient ? 'block' : 'none';
+    document.getElementById('field_poste').style.display       = isClient ? 'block' : 'none';
+
+    // Restaurant uniquement pour gestionnaire
+    document.getElementById('field_restaurant').style.display  = isGestionnaire ? 'block' : 'none';
+
+    // Matricule : visible pour tous, requis seulement pour CLIENT
+    var reqSpan  = document.getElementById('matricule_required');
+    var matInput = document.getElementById('u_matricule');
+    if (isClient) {
+        reqSpan.style.display = 'inline';
+        matInput.required = true;
+        matInput.placeholder = 'EMP-001 (obligatoire)';
+    } else {
+        reqSpan.style.display = 'none';
+        matInput.required = false;
+        matInput.placeholder = isGestionnaire ? 'Optionnel' : 'Optionnel';
+    }
+
+    // Masquer la box mot de passe en mode édition
+    var userId = document.getElementById('user_id').value;
+    var infoBox = document.getElementById('password_info_box');
+    if (infoBox) infoBox.style.display = userId ? 'none' : 'flex';
+}
+
+// Soumission AJAX — les URLs sont résolues via data-attributes (voir users_list.html)
+document.getElementById('userFormEl').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var userId = document.getElementById('user_id').value.trim();
+    var urls   = document.getElementById('user-urls');
+    var url    = userId
+        ? urls.dataset.editBase.replace('/0/', '/' + userId + '/')
+        : urls.dataset.create;
+
+    var btn  = this.querySelector('[type="submit"]');
+    var orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
+
+    fetch(url, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        body: new FormData(this),
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+        btn.disabled = false; btn.innerHTML = orig;
+        if (data.success) {
+            showToast(data.message || 'Utilisateur enregistré', 'success');
+            closeModal('userFormModal');
+            setTimeout(function () { window.location.reload(); }, 800);
+        } else {
+            showToast(data.error || 'Erreur', 'error');
+        }
+    })
+    .catch(function () {
+        btn.disabled = false; btn.innerHTML = orig;
+        showToast('Erreur réseau', 'error');
+    });
+});
+</script>

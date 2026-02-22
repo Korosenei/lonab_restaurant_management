@@ -7,209 +7,177 @@
 <link rel="stylesheet" href="{% static 'css/components.css' %}">
 {% endblock %}
 
+{% block sidebar_menu %}
+{% include 'dashboards/sidebars/admin_sidebar.html' %}
+{% endblock %}
+
 {% block page_content %}
-<div class="page-header">
-    <h1 class="page-title">Gestion des Utilisateurs</h1>
-    <p class="page-subtitle">Liste et gestion des utilisateurs du système</p>
+{# URLs résolues par Django #}
+<div id="user-urls"
+     data-create="{% url 'accounts:user_create' %}"
+     data-edit-base="{% url 'accounts:user_edit' pk=0 %}"
+     data-detail-base="{% url 'accounts:user_detail' pk=0 %}"
+     style="display:none;"></div>
+
+<div class="page-header-with-actions">
+    <div class="page-header">
+        <h1 class="page-title">Gestion des Utilisateurs</h1>
+        <p class="page-subtitle">{{ users.paginator.count }} utilisateur{{ users.paginator.count|pluralize }}</p>
+    </div>
+    <div class="page-header-actions">
+        <button class="export-btn export-btn-pdf" onclick="exportToPDF('usersTable','utilisateurs.pdf')" title="PDF">
+            <i class="fas fa-file-pdf"></i>
+        </button>
+        <button class="export-btn export-btn-excel" onclick="exportToExcel('usersTable','utilisateurs.xlsx')" title="Excel">
+            <i class="fas fa-file-excel"></i>
+        </button>
+        <button class="export-btn export-btn-csv" onclick="exportToCSV('usersTable','utilisateurs.csv')" title="CSV">
+            <i class="fas fa-file-csv"></i>
+        </button>
+        <button class="btn btn-primary" onclick="openModal('userFormModal')">
+            <i class="fas fa-plus"></i> Nouveau
+        </button>
+    </div>
 </div>
 
-<!-- Data Table -->
+<div class="toolbar">
+    <div class="toolbar-left">
+        <div class="toolbar-search">
+            <i class="fas fa-search"></i>
+            <input type="text" id="tableSearch" placeholder="Rechercher...">
+        </div>
+        <div class="toolbar-filter">
+            <select name="type" onchange="applyUserFilters()">
+                <option value="">Tous types</option>
+                <option value="CLIENT">Client</option>
+                <option value="CAISSIER">Caissier</option>
+                <option value="GESTIONNAIRE_RESTAURANT">Gestionnaire</option>
+                <option value="SUPER_ADMIN">Admin</option>
+            </select>
+        </div>
+        <div class="toolbar-filter">
+            <select name="direction" onchange="applyUserFilters()">
+                <option value="">Toutes directions</option>
+                {% for direction in directions %}
+                <option value="{{ direction.id }}">{{ direction.nom }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="toolbar-filter">
+            <select name="agence" onchange="applyUserFilters()">
+                <option value="">Toutes agences</option>
+                {% for agence in agences %}
+                <option value="{{ agence.id }}">{{ agence.nom }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="toolbar-filter">
+            <select name="statut" onchange="applyUserFilters()">
+                <option value="">Tous statuts</option>
+                <option value="actif">Actifs</option>
+                <option value="inactif">Inactifs</option>
+            </select>
+        </div>
+    </div>
+</div>
+
 <div class="data-table-wrapper">
-    <!-- Header -->
-    <div class="data-table-header">
-        <div class="data-table-title">
-            <i class="fas fa-users"></i>
-            {{ users.count }} utilisateur{{ users.count|pluralize }}
-        </div>
-
-        <div class="data-table-actions">
-            <!-- Search -->
-            <div class="data-table-search">
-                <i class="fas fa-search"></i>
-                <input type="text" id="tableSearch" placeholder="Rechercher...">
-            </div>
-
-            <!-- Export Buttons -->
-            <div class="export-group">
-                <button class="export-btn export-btn-pdf" onclick="exportToPDF('usersTable', 'utilisateurs.pdf')" title="Exporter en PDF">
-                    <i class="fas fa-file-pdf"></i>
-                </button>
-                <button class="export-btn export-btn-excel" onclick="exportToExcel('usersTable', 'utilisateurs.xlsx')" title="Exporter en Excel">
-                    <i class="fas fa-file-excel"></i>
-                </button>
-                <button class="export-btn export-btn-csv" onclick="exportToCSV('usersTable', 'utilisateurs.csv')" title="Exporter en CSV">
-                    <i class="fas fa-file-csv"></i>
-                </button>
-            </div>
-
-            <!-- Add Button -->
-            <button class="btn btn-primary btn-sm" onclick="openModal('addUserModal')">
-                <i class="fas fa-plus"></i> Nouveau
-            </button>
-        </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="filters-bar">
-        <form id="filtersForm">
-            <div class="filter-group">
-                <label class="filter-label">Type</label>
-                <select name="type" class="filter-select" onchange="applyFilters('filtersForm')">
-                    <option value="">Tous</option>
-                    <option value="CLIENT" {% if request.GET.type == 'CLIENT' %}selected{% endif %}>Client</option>
-                    <option value="CAISSIER" {% if request.GET.type == 'CAISSIER' %}selected{% endif %}>Caissier</option>
-                    <option value="GESTIONNAIRE_RESTAURANT" {% if request.GET.type == 'GESTIONNAIRE_RESTAURANT' %}selected{% endif %}>Gestionnaire</option>
-                    <option value="SUPER_ADMIN" {% if request.GET.type == 'SUPER_ADMIN' %}selected{% endif %}>Admin</option>
-                </select>
-            </div>
-
-            <div class="filter-group">
-                <label class="filter-label">Direction</label>
-                <select name="direction" class="filter-select" onchange="applyFilters('filtersForm')">
-                    <option value="">Toutes</option>
-                    {% for direction in directions %}
-                    <option value="{{ direction.id }}" {% if request.GET.direction == direction.id|stringformat:"s" %}selected{% endif %}>
-                        {{ direction.nom }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="filter-group">
-                <label class="filter-label">Agence</label>
-                <select name="agence" class="filter-select" onchange="applyFilters('filtersForm')">
-                    <option value="">Toutes</option>
-                    {% for agence in agences %}
-                    <option value="{{ agence.id }}" {% if request.GET.agence == agence.id|stringformat:"s" %}selected{% endif %}>
-                        {{ agence.nom }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="filter-group">
-                <label class="filter-label">Statut</label>
-                <select name="statut" class="filter-select" onchange="applyFilters('filtersForm')">
-                    <option value="">Tous</option>
-                    <option value="actif" {% if request.GET.statut == 'actif' %}selected{% endif %}>Actifs</option>
-                    <option value="inactif" {% if request.GET.statut == 'inactif' %}selected{% endif %}>Inactifs</option>
-                </select>
-            </div>
-
-            {% if request.GET %}
-            <div class="filter-group" style="align-self: flex-end;">
-                <button type="button" class="btn btn-outline btn-sm" onclick="clearFilters('filtersForm')">
-                    <i class="fas fa-times"></i> Réinitialiser
-                </button>
-            </div>
-            {% endif %}
-        </form>
-    </div>
-
-    <!-- Table -->
     <div class="data-table-body">
         <div class="table-responsive">
             <table class="table" id="usersTable">
                 <thead>
-                    <tr>
-                        <th data-sortable style="width: 50px;">#</th>
-                        <th data-sortable>Nom complet</th>
-                        <th data-sortable>Email</th>
-                        <th data-sortable>Type</th>
-                        <th data-sortable>Direction</th>
-                        <th data-sortable>Agence</th>
-                        <th data-sortable>Statut</th>
-                        <th style="width: 120px;" class="actions-column">Actions</th>
-                    </tr>
+                <tr>
+                    <th data-sortable style="width:40px;">#</th>
+                    <th data-sortable>Nom complet</th>
+                    <th data-sortable>Email</th>
+                    <th data-sortable>Username</th>
+                    <th data-sortable>Type</th>
+                    <th data-sortable>Direction</th>
+                    <th data-sortable>Agence</th>
+                    <th data-sortable>Statut</th>
+                    <th style="width:100px;" class="actions-column">Actions</th>
+                </tr>
                 </thead>
                 <tbody>
-                    {% for user in users %}
-                    <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <div style="width: 32px; height: 32px; background: var(--light-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--primary-green); font-size: 11px;">
-                                    {{ user.prenom.0 }}{{ user.nom.0 }}
-                                </div>
-                                <div>
-                                    <div style="font-weight: 600; font-size: 13px;">{{ user.get_full_name }}</div>
-                                    {% if user.matricule %}
-                                    <div style="font-size: 11px; color: var(--text-muted);">{{ user.matricule }}</div>
-                                    {% endif %}
-                                </div>
+                {% for u in users %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:28px;height:28px;background:var(--light-green);border-radius:50%;
+                                        display:flex;align-items:center;justify-content:center;
+                                        font-weight:700;color:var(--primary-green);font-size:10px;flex-shrink:0;">
+                                {{ u.prenom.0 }}{{ u.nom.0 }}
                             </div>
-                        </td>
-                        <td style="font-size: 13px;">{{ user.email }}</td>
-                        <td>
-                            <span class="badge {% if user.type_utilisateur == 'SUPER_ADMIN' %}badge-danger{% elif user.type_utilisateur == 'CAISSIER' %}badge-warning{% else %}badge-success{% endif %}">
-                                {{ user.get_type_utilisateur_display }}
-                            </span>
-                        </td>
-                        <td style="font-size: 12px;">{{ user.direction.nom|default:"-" }}</td>
-                        <td style="font-size: 12px;">{{ user.agence.nom|default:"-" }}</td>
-                        <td>
-                            <span class="badge {% if user.est_actif %}badge-success{% else %}badge-danger{% endif %}">
-                                {% if user.est_actif %}<i class="fas fa-check"></i> Actif{% else %}<i class="fas fa-times"></i> Inactif{% endif %}
-                            </span>
-                        </td>
-                        <td class="actions-cell">
-                            <button class="action-btn action-btn-view" onclick="viewUser({{ user.id }})" title="Voir">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="action-btn action-btn-edit" onclick="editUser({{ user.id }})" title="Modifier">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="action-btn action-btn-delete" onclick="confirmDelete({{ user.id }}, '{{ user.get_full_name }}', '{% url 'accounts:user_delete' user.id %}')" title="Supprimer">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="8">
-                            <div class="empty-state">
-                                <i class="fas fa-users"></i>
-                                <p>Aucun utilisateur trouvé</p>
+                            <div>
+                                <div style="font-weight:600;font-size:12px;">{{ u.get_full_name }}</div>
+                                {% if u.matricule %}
+                                <div style="font-size:10px;color:var(--text-muted);">{{ u.matricule }}</div>
+                                {% endif %}
                             </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
+                        </div>
+                    </td>
+                    <td style="font-size:12px;">{{ u.email }}</td>
+                    <td style="font-size:12px;font-family:monospace;">{{ u.nom_utilisateur|default:"-" }}</td>
+                    <td>
+                        <span class="badge {% if u.type_utilisateur == 'SUPER_ADMIN' %}badge-danger{% elif u.type_utilisateur == 'CAISSIER' %}badge-warning{% elif u.type_utilisateur == 'GESTIONNAIRE_RESTAURANT' %}badge-info{% else %}badge-success{% endif %}"
+                              style="font-size:10px;">
+                            {{ u.get_type_utilisateur_display }}
+                        </span>
+                    </td>
+                    <td style="font-size:11px;">{{ u.direction.nom|default:"-" }}</td>
+                    <td style="font-size:11px;">{{ u.agence.nom|default:"-" }}</td>
+                    <td>
+                        <span class="badge {% if u.est_actif %}badge-success{% else %}badge-danger{% endif %}" style="font-size:10px;">
+                            {% if u.est_actif %}<i class="fas fa-check"></i>{% else %}<i class="fas fa-times"></i>{% endif %}
+                        </span>
+                    </td>
+                    <td class="actions-cell">
+                        <button class="action-btn action-btn-view" onclick="viewUser({{ u.id }})" title="Voir">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn action-btn-edit" onclick="editUser({{ u.id }})" title="Modifier">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn action-btn-delete"
+                                onclick="confirmDelete({{ u.id }},'{{ u.get_full_name }}','{% url 'accounts:user_delete' u.id %}')"
+                                title="Supprimer">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">
+                        <div class="empty-state">
+                            <i class="fas fa-users"></i>
+                            <p>Aucun utilisateur trouvé</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- Pagination -->
     {% if is_paginated %}
     <div class="pagination-wrapper">
         <div class="pagination-info">
-            Affichage {{ page_obj.start_index }} à {{ page_obj.end_index }} sur {{ page_obj.paginator.count }}
+            Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
         </div>
         <div class="pagination">
             {% if page_obj.has_previous %}
             <button class="pagination-btn" onclick="window.location.href='?page={{ page_obj.previous_page_number }}'">
                 <i class="fas fa-chevron-left"></i>
             </button>
-            {% else %}
-            <button class="pagination-btn" disabled>
-                <i class="fas fa-chevron-left"></i>
-            </button>
             {% endif %}
-
             {% for num in page_obj.paginator.page_range %}
-            {% if page_obj.number == num %}
-            <button class="pagination-btn active">{{ num }}</button>
-            {% else %}
-            <button class="pagination-btn" onclick="window.location.href='?page={{ num }}'">{{ num }}</button>
-            {% endif %}
+            <button class="pagination-btn {% if page_obj.number == num %}active{% endif %}"
+                    onclick="window.location.href='?page={{ num }}'">{{ num }}</button>
             {% endfor %}
-
             {% if page_obj.has_next %}
             <button class="pagination-btn" onclick="window.location.href='?page={{ page_obj.next_page_number }}'">
-                <i class="fas fa-chevron-right"></i>
-            </button>
-            {% else %}
-            <button class="pagination-btn" disabled>
                 <i class="fas fa-chevron-right"></i>
             </button>
             {% endif %}
@@ -218,40 +186,55 @@
     {% endif %}
 </div>
 
-<!-- Add User Modal -->
-{% include 'accounts/partials/user_form_modal.html' %}
-
+{% include 'accounts/modals/user_form.html' %}
 {% endblock %}
 
 {% block dashboard_js %}
 <script src="{% static 'js/components.js' %}"></script>
 <script>
-    // Initialize data table
-    document.addEventListener('DOMContentLoaded', function() {
-        initDataTable('usersTable');
+document.addEventListener('DOMContentLoaded', function () {
+    initDataTable('usersTable');
+});
+
+function viewUser(id) {
+    var urls = document.getElementById('user-urls').dataset;
+    window.location.href = urls.detailBase.replace('/0/', '/' + id + '/');
+}
+
+function editUser(id) {
+    var urls = document.getElementById('user-urls').dataset;
+    fetch(urls.editBase.replace('/0/', '/' + id + '/'))
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            document.getElementById('user_id').value            = data.id              || '';
+            document.getElementById('u_prenom').value           = data.prenom          || '';
+            document.getElementById('u_nom').value              = data.nom             || '';
+            document.getElementById('u_email').value            = data.email           || '';
+            document.getElementById('u_telephone').value        = data.telephone       || '';
+            document.getElementById('u_type_utilisateur').value = data.type_utilisateur|| '';
+            document.getElementById('u_genre').value            = data.genre           || '';
+            document.getElementById('u_matricule').value        = data.matricule       || '';
+            document.getElementById('u_departement').value      = data.departement     || '';
+            document.getElementById('u_poste').value            = data.poste           || '';
+            document.getElementById('u_direction').value        = data.direction_id    || '';
+            document.getElementById('u_agence').value           = data.agence_id       || '';
+            document.getElementById('u_adresse').value          = data.adresse         || '';
+            // Masquer info mdp en édition
+            var infoBox = document.getElementById('password_info_box');
+            if (infoBox) infoBox.style.display = 'none';
+            toggleUserFields(data.type_utilisateur);
+            document.getElementById('userModalTitle').textContent = 'Modifier l\'utilisateur';
+            openModal('userFormModal');
+        })
+        .catch(function () { showToast('Erreur lors du chargement', 'error'); });
+}
+
+function applyUserFilters() {
+    var params = new URLSearchParams();
+    document.querySelectorAll('.toolbar-filter select').forEach(function (sel) {
+        if (sel.name && sel.value) params.append(sel.name, sel.value);
     });
-
-    // View user
-    function viewUser(userId) {
-        window.location.href = `/accounts/users/${userId}/`;
-    }
-
-    // Edit user
-    function editUser(userId) {
-        // Load user data and open modal
-        fetch(`/api/accounts/users/${userId}/`)
-            .then(response => response.json())
-            .then(data => {
-                // Populate form fields
-                document.getElementById('user_id').value = data.id;
-                document.getElementById('prenom').value = data.prenom;
-                document.getElementById('nom').value = data.nom;
-                document.getElementById('email').value = data.email;
-                document.getElementById('type_utilisateur').value = data.type_utilisateur;
-                // ... populate other fields
-
-                openModal('addUserModal');
-            });
-    }
+    window.location.search = params.toString();
+}
 </script>
 {% endblock %}

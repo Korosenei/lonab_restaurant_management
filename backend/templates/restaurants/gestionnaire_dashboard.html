@@ -1,0 +1,172 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Tableau de bord - Manager Restaurant{% endblock %}
+
+{% block sidebar_menu %}
+{% include 'dashboards/sidebars/restaurant_sidebar.html' %}
+{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1 class="page-title">{{ user.managed_restaurant.name }}</h1>
+    <p class="page-subtitle">{{ user.managed_restaurant.city }}</p>
+    <div class="page-actions">
+        <button class="btn btn-primary" onclick="window.location.href='{% url 'accounts:restaurant_scan' %}'">
+            <i class="fas fa-qrcode"></i> Scanner QR Code
+        </button>
+        <button class="btn btn-outline" onclick="window.location.href='{% url 'restaurants:menu_create' %}'">
+            <i class="fas fa-plus"></i> Ajouter menu
+        </button>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+    <!-- Consommations du jour -->
+    <div class="card" style="border-left: 4px solid var(--primary-green);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 4px;">Consommations du jour</div>
+                <div style="font-size: 28px; font-weight: 700; color: var(--primary-green);">{{ today_consumptions }}</div>
+            </div>
+            <div style="width: 50px; height: 50px; background: var(--light-green); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-utensils" style="font-size: 22px; color: var(--primary-green);"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Consommations du mois -->
+    <div class="card" style="border-left: 4px solid #17a2b8;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 4px;">Consommations du mois</div>
+                <div style="font-size: 28px; font-weight: 700; color: var(--text-primary);">{{ month_consumptions }}</div>
+            </div>
+            <div style="width: 50px; height: 50px; background: #d1ecf1; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-chart-line" style="font-size: 22px; color: #17a2b8;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Réservations en attente -->
+    <div class="card" style="border-left: 4px solid #ffc107;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 4px;">Réservations en attente</div>
+                <div style="font-size: 28px; font-weight: 700; color: var(--text-primary);">{{ pending_reservations }}</div>
+            </div>
+            <div style="width: 50px; height: 50px; background: #fff3cd; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-calendar-check" style="font-size: 22px; color: #ffc107;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agences servies -->
+    <div class="card" style="border-left: 4px solid var(--accent-red);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 4px;">Agences servies</div>
+                <div style="font-size: 28px; font-weight: 700; color: var(--text-primary);">{{ agencies_count }}</div>
+            </div>
+            <div style="width: 50px; height: 50px; background: var(--red-light); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-building" style="font-size: 22px; color: var(--accent-red);"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Two Column Layout -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md);">
+    <!-- Scanner QR Code -->
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-qrcode"></i> Scanner QR Code
+        </div>
+        <div style="text-align: center; padding: var(--spacing-xl);">
+            <div style="width: 150px; height: 150px; margin: 0 auto; background: var(--bg-secondary); border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center; border: 3px dashed var(--border-color); margin-bottom: var(--spacing-md);">
+                <i class="fas fa-qrcode" style="font-size: 64px; color: var(--text-muted);"></i>
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: var(--spacing-md); font-size: 13px;">Scannez le QR code du client pour valider sa consommation</p>
+            <button class="btn btn-primary" style="width: 100%;" onclick="window.location.href='{% url 'accounts:restaurant_scan' %}'">
+                <i class="fas fa-camera"></i> Activer le scanner
+            </button>
+        </div>
+    </div>
+
+    <!-- Menu du jour -->
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-clipboard-list"></i> Menu du jour
+        </div>
+        {% if today_menus %}
+            <div style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
+                {% for menu in today_menus %}
+                <div style="padding: var(--spacing-sm); background: var(--bg-secondary); border-radius: var(--border-radius-sm);">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 4px;">
+                        <div style="font-weight: 600; color: var(--text-primary); font-size: 13px;">{{ menu.name }}</div>
+                        <span class="badge {% if menu.is_available %}badge-success{% else %}badge-danger{% endif %}">
+                            {% if menu.is_available %}Disponible{% else %}Épuisé{% endif %}
+                        </span>
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-muted);">
+                        {% if menu.quantity_available %}
+                            {{ menu.remaining_quantity }}/{{ menu.quantity_available }} portions
+                        {% else %}
+                            Illimité
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div style="text-align: center; padding: var(--spacing-md); border-top: 1px solid var(--border-color); margin-top: var(--spacing-sm);">
+                <a href="{% url 'restaurants:menus_list' %}" class="btn btn-outline btn-sm">Gérer les menus</a>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: var(--spacing-xl); color: var(--text-muted);">
+                <i class="fas fa-clipboard" style="font-size: 48px; margin-bottom: var(--spacing-md);"></i>
+                <p style="font-size: 13px;">Aucun menu pour aujourd'hui</p>
+                <button class="btn btn-primary btn-sm" style="margin-top: var(--spacing-sm);>
+                    <i class="fas fa-plus"></i> Ajouter un menu
+                </button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Consommations récentes -->
+<div class="card" style="margin-top: var(--spacing-md);">
+    <div class="card-header">
+        <i class="fas fa-history"></i> Consommations récentes
+    </div>
+    {% if recent_consumptions %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Heure</th>
+                    <th>Client</th>
+                    <th>Ticket</th>
+                    <th>Menu</th>
+                    <th>Agence</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for consumption in recent_consumptions %}
+                <tr>
+                    <td>{{ consumption.consumption_date|date:"H:i" }}</td>
+                    <td>{{ consumption.client.get_full_name }}</td>
+                    <td style="font-family: monospace; font-size: 12px;">{{ consumption.ticket.ticket_number }}</td>
+                    <td>{{ consumption.menu_consumed.name|default:"N/A" }}</td>
+                    <td>{{ consumption.agency.name }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div style="text-align: center; padding: var(--spacing-xl); color: var(--text-muted);">
+            <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: var(--spacing-md);"></i>
+            <p>Aucune consommation récente</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

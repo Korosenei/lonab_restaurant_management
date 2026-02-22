@@ -1,0 +1,151 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Mes Réservations{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
+{% endblock %}
+
+{% block sidebar_menu %}
+{% include 'dashboards/sidebars/client_sidebar.html' %}
+{% endblock %}
+
+{% block page_content %}
+<div class="page-header-with-actions">
+    <div class="page-header">
+        <h1 class="page-title">Mes Réservations</h1>
+        <p class="page-subtitle">Historique de vos réservations de repas</p>
+    </div>
+    <div class="page-header-actions">
+        <a href="{% url 'restaurants:client_menus' %}" class="btn btn-primary">
+            <i class="fas fa-utensils"></i> Réserver un repas
+        </a>
+    </div>
+</div>
+
+<!-- Filtres statut -->
+<div class="toolbar">
+    <div class="toolbar-left">
+        {% for v, l in statuts %}
+        <a href="?statut={{ v }}"
+           class="btn {% if filtre_actif == v %}btn-primary{% else %}btn-outline{% endif %}"
+           style="height:28px;padding:0 12px;font-size:12px;">
+            {{ l }}
+        </a>
+        {% endfor %}
+        {% if filtre_actif %}
+        <a href="{% url 'restaurants:client_reservations' %}" class="btn btn-outline"
+           style="height:28px;padding:0 12px;font-size:12px;">
+            <i class="fas fa-times"></i> Tout voir
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+{% if reservations %}
+<div class="data-table-wrapper">
+    <div class="data-table-body">
+        <div class="table-responsive">
+            <table class="table" id="reservationsTable">
+                <thead>
+                    <tr>
+                        <th data-sortable>Restaurant</th>
+                        <th data-sortable>Menu</th>
+                        <th data-sortable>Date</th>
+                        <th data-sortable>Statut</th>
+                        <th class="actions-column">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for r in reservations %}
+                <tr data-statut="{{ r.statut }}">
+                    <td>
+                        <div class="user-cell">
+                            {% if r.restaurant.logo %}
+                            <img src="{{ r.restaurant.logo.url }}" alt="{{ r.restaurant.nom }}"
+                                 style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+                            {% else %}
+                            <div class="user-avatar-sm">{{ r.restaurant.nom.0 }}</div>
+                            {% endif %}
+                            <div class="user-name">{{ r.restaurant.nom }}</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="user-name">{{ r.menu.nom|default:"—" }}</div>
+                        {% if r.menu.description %}
+                        <div class="user-meta">{{ r.menu.description|truncatechars:50 }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="text-sm text-muted">{{ r.date_reservation|date:"d/m/Y" }}</td>
+                    <td>
+                        {% if r.statut == 'EN_ATTENTE' %}
+                        <span class="badge badge-warning">En attente</span>
+                        {% elif r.statut == 'CONFIRME' %}
+                        <span class="badge badge-success">Confirmée</span>
+                        {% elif r.statut == 'TERMINE' %}
+                        <span class="badge badge-secondary">Terminée</span>
+                        {% elif r.statut == 'ANNULE' %}
+                        <span class="badge badge-danger">Annulée</span>
+                        {% endif %}
+                    </td>
+                    <td class="actions-cell">
+                        {% if r.statut == 'EN_ATTENTE' %}
+                        <button class="action-btn action-btn-delete"
+                                onclick="annulerReservation({{ r.id }}, '{{ r.menu.nom|default:r.restaurant.nom }}')"
+                                title="Annuler">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        {% else %}
+                        <span class="text-muted" style="font-size:11px;">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="data-table-wrapper">
+    <div class="empty-state" style="padding:60px 20px;">
+        <i class="fas fa-calendar-times"></i>
+        <p>Aucune réservation{% if filtre_actif %} avec ce statut{% endif %}.</p>
+        <a href="{% url 'restaurants:client_menus' %}" class="btn btn-primary" style="margin-top:12px;">
+            <i class="fas fa-utensils"></i> Parcourir les menus
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{% static 'js/components.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    initDataTable('reservationsTable');
+});
+
+function annulerReservation(id, nom) {
+    showConfirm(
+        'Annuler la réservation',
+        'Annuler la réservation pour <strong>' + nom + '</strong> ?',
+        function() {
+            fetch('{% url "restaurants:client_annuler" pk=0 %}'.replace('/0/', '/' + id + '/'), {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCsrfToken() },
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.success) { showSuccess(d.message); setTimeout(function() { location.reload(); }, 800); }
+                else showError(d.error || 'Erreur');
+            })
+            .catch(function() { showError('Erreur réseau'); });
+        },
+        'Annuler la réservation'
+    );
+}
+</script>
+{% endblock %}

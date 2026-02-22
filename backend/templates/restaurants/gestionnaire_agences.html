@@ -1,0 +1,162 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Agences — {{ restaurant.nom }}{% endblock %}
+{% block dashboard_css %}<link rel="stylesheet" href="{% static 'css/components.css' %}">{% endblock %}
+{% block sidebar_menu %}{% include 'dashboards/sidebars/restaurant_sidebar.html' %}{% endblock %}
+
+{% block page_content %}
+<!-- En-tête -->
+<div class="page-header-with-actions">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-building" style="color:var(--primary-green);margin-right:8px;"></i>Mes Agences
+        </h1>
+        <p class="page-subtitle">Agences desservies par {{ restaurant.nom }}</p>
+    </div>
+</div>
+
+<!-- ═══ Stats Rapides ══════════════════════════════════════════ -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px;">
+    <div class="card" style="border-left:4px solid var(--primary-green);padding:16px 18px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">AGENCES ACTIVES</div>
+        <div style="font-size:26px;font-weight:800;color:var(--primary-green);">{{ nb_agences_actives }}</div>
+        <div style="font-size:11px;color:var(--text-muted);">plannings en cours</div>
+    </div>
+    <div class="card" style="border-left:4px solid #17a2b8;padding:16px 18px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">TOTAL AGENCES</div>
+        <div style="font-size:26px;font-weight:800;color:#17a2b8;">{{ agences|length }}</div>
+        <div style="font-size:11px;color:var(--text-muted);">ayant un historique</div>
+    </div>
+    <div class="card" style="border-left:4px solid #6f42c1;padding:16px 18px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">TICKETS CE MOIS</div>
+        <div style="font-size:26px;font-weight:800;color:#6f42c1;">
+            {% for a in agences %}{% if forloop.first %}{{ a.nb_tickets_mois }}{% endif %}{% empty %}0{% endfor %}
+            {# Correction : on somme via template tag—le total est dans stats #}
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);">{{ debut_mois|date:"M Y" }}</div>
+    </div>
+    <div class="card" style="border-left:4px solid #ffc107;padding:16px 18px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">PLANNINGS TOTAL</div>
+        <div style="font-size:26px;font-weight:800;color:#ffc107;">{{ plannings|length }}</div>
+        <div style="font-size:11px;color:var(--text-muted);">historique complet</div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:3fr 2fr;gap:20px;">
+
+    <!-- ═══ Tableau agences ════════════════════════════════════ -->
+    <div>
+        <div class="card" style="overflow:hidden;">
+            <div style="padding:14px 18px;border-bottom:1px solid var(--border-color);
+                        display:flex;align-items:center;gap:10px;">
+                <i class="fas fa-building" style="color:var(--primary-green);"></i>
+                <span style="font-weight:700;font-size:15px;">Agences desservies</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Agence</th>
+                            <th style="text-align:center;">Statut</th>
+                            <th style="text-align:center;">Tickets mois</th>
+                            <th style="text-align:center;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in agences %}
+                        <tr>
+                            <td>
+                                <div style="display:flex;align-items:center;gap:10px;">
+                                    <div style="width:34px;height:34px;border-radius:8px;
+                                                background:{% if a.id in agences_actives_ids %}var(--light-green){% else %}#f8f9fa{% endif %};
+                                                display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        <i class="fas fa-building" style="font-size:14px;
+                                           color:{% if a.id in agences_actives_ids %}var(--primary-green){% else %}#adb5bd{% endif %};"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-weight:600;font-size:13px;">{{ a.nom }}</div>
+                                        {% if a.ville %}
+                                        <div style="font-size:11px;color:var(--text-muted);">
+                                            <i class="fas fa-map-marker-alt"></i> {{ a.ville }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="text-align:center;">
+                                {% if a.id in agences_actives_ids %}
+                                <span class="badge badge-success" style="font-size:10px;">
+                                    <i class="fas fa-circle" style="font-size:6px;"></i> Active
+                                </span>
+                                {% else %}
+                                <span class="badge" style="background:#e9ecef;color:#6c757d;font-size:10px;">
+                                    Passée
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align:center;font-weight:700;font-size:14px;
+                                       color:{% if a.nb_tickets_mois > 0 %}var(--primary-green){% else %}var(--text-muted){% endif %};">
+                                {{ a.nb_tickets_mois }}
+                            </td>
+                            <td style="text-align:center;font-size:13px;color:var(--text-muted);">
+                                {{ a.nb_tickets_total }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4">
+                                <div class="empty-state">
+                                    <i class="fas fa-building"></i>
+                                    <p>Aucune agence desservie</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Historique plannings ════════════════════════════════ -->
+    <div class="card" style="overflow:hidden;">
+        <div style="padding:14px 18px;border-bottom:1px solid var(--border-color);
+                    display:flex;align-items:center;gap:10px;">
+            <i class="fas fa-calendar-alt" style="color:var(--primary-green);"></i>
+            <span style="font-weight:700;font-size:15px;">Historique des plannings</span>
+        </div>
+        <div style="max-height:420px;overflow-y:auto;">
+            {% for p in plannings %}
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border-color);
+                        display:flex;gap:12px;align-items:flex-start;">
+                <div style="width:10px;height:10px;border-radius:50%;margin-top:4px;flex-shrink:0;
+                             background:{% if p.est_actuel %}#28a745{% else %}#adb5bd{% endif %};"></div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:600;font-size:13px;color:var(--text-primary);">
+                        {{ p.agence.nom }}
+                    </div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
+                        {{ p.date_debut|date:"d/m/Y" }} → {{ p.date_fin|date:"d/m/Y" }}
+                    </div>
+                    <div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;">
+                        <span class="badge {% if p.est_actif %}badge-success{% else %}badge-danger{% endif %}"
+                              style="font-size:9px;">
+                            {% if p.est_actif %}Actif{% else %}Inactif{% endif %}
+                        </span>
+                        <span class="badge" style="background:#e9ecef;color:#6c757d;font-size:9px;">
+                            {{ p.get_type_planning_display }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align:center;padding:32px;color:var(--text-muted);">
+                <i class="fas fa-calendar-times" style="font-size:28px;display:block;margin-bottom:10px;opacity:.3;"></i>
+                Aucun planning configuré
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

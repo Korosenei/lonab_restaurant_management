@@ -1,0 +1,76 @@
+<!-- Modal Détail Restaurant — restaurants/modals/restaurant_detail.html -->
+<div class="modal-overlay" id="restaurantDetailModal">
+    <div class="modal" style="max-width:560px;width:100%;">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="fas fa-utensils" style="color:var(--primary-green);margin-right:8px;"></i>
+                <span id="d_nom">—</span>
+            </h3>
+            <button class="modal-close" onclick="closeModal('restaurantDetailModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body" style="padding:0;">
+
+            <!-- Stats rapides -->
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--border-color);">
+                <div style="text-align:center;padding:16px 8px;border-right:1px solid var(--border-color);">
+                    <div style="font-size:22px;font-weight:800;color:var(--primary-green);" id="d_tickets">0</div>
+                    <div style="font-size:11px;color:var(--text-muted);">Tickets ce mois</div>
+                </div>
+                <div style="text-align:center;padding:16px 8px;border-right:1px solid var(--border-color);">
+                    <div style="font-size:22px;font-weight:800;color:#17a2b8;" id="d_menus">0</div>
+                    <div style="font-size:11px;color:var(--text-muted);">Menus actifs</div>
+                </div>
+                <div style="text-align:center;padding:16px 8px;">
+                    <div style="font-size:22px;font-weight:800;color:#6f42c1;" id="d_plannings">0</div>
+                    <div style="font-size:11px;color:var(--text-muted);">Plannings actifs</div>
+                </div>
+            </div>
+
+            <!-- Infos -->
+            <div style="padding:20px;display:grid;gap:12px;">
+                <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 14px;align-items:start;font-size:13px;">
+                    <span style="color:var(--text-muted);"><i class="fas fa-barcode"></i></span>
+                    <span><strong>Code :</strong> <span id="d_code" style="font-family:monospace;color:var(--primary-green);font-weight:700;">—</span></span>
+
+                    <span style="color:var(--text-muted);"><i class="fas fa-map-marker-alt"></i></span>
+                    <span><strong>Ville :</strong> <span id="d_ville">—</span></span>
+
+                    <span style="color:var(--text-muted);"><i class="fas fa-phone"></i></span>
+                    <span><strong>Tél :</strong> <span id="d_tel">—</span></span>
+
+                    <span style="color:var(--text-muted);"><i class="fas fa-envelope"></i></span>
+                    <span><strong>Email :</strong> <span id="d_email">—</span></span>
+
+                    <span style="color:var(--text-muted);"><i class="fas fa-circle"></i></span>
+                    <span><strong>Statut :</strong> <span id="d_statut_badge">—</span></span>
+                </div>
+
+                <!-- Agences desservies -->
+                <div style="margin-top:4px;">
+                    <div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:8px;">
+                        <i class="fas fa-building" style="color:var(--primary-green);margin-right:6px;"></i>Agences desservies
+                    </div>
+                    <div id="d_agences" style="display:flex;flex-wrap:wrap;gap:6px;">
+                        <span style="color:var(--text-muted);font-size:12px;">—</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer" style="padding:12px 20px;border-top:1px solid var(--border-color);display:flex;justify-content:flex-end;gap:8px;">
+            <button class="btn btn-outline" onclick="closeModal('restaurantDetailModal')">Fermer</button>
+            <button class="btn btn-primary" onclick="editRestoFromDetail()">
+                <i class="fas fa-edit"></i> Modifier
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+var _currentRestoId = null;
+function editRestoFromDetail() {
+    closeModal('restaurantDetailModal');
+    if (_currentRestoId) editResto(_currentRestoId);
+}
+</script>

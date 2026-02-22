@@ -1,0 +1,305 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Programmer un restaurant{% endblock %}
+{% block dashboard_css %}<link rel="stylesheet" href="{% static 'css/components.css' %}">{% endblock %}
+{% block sidebar_menu %}{% include 'dashboards/sidebars/caissier_sidebar.html' %}{% endblock %}
+
+{% block page_content %}
+<div id="page-urls"
+     data-create="{% url 'restaurants:planning_create' %}"
+     data-delete-base="{% url 'restaurants:planning_delete' pk=0 %}"
+     style="display:none;"></div>
+
+<div class="page-header-with-actions">
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-calendar-plus" style="color:var(--primary-green);margin-right:8px;"></i>
+            Programmer un restaurant
+        </h1>
+        <p class="page-subtitle">
+            {% if est_caissier and agence_caissier %}
+            Agence : <strong>{{ agence_caissier.nom }}</strong>
+            {% else %}
+            Planifier la présence d'un restaurant pour une agence
+            {% endif %}
+        </p>
+    </div>
+    <div class="page-header-actions">
+        <a href="# url 'restaurants:plannings_list' %}" class="btn btn-outline">
+            <i class="fas fa-list"></i> Voir tous les plannings
+        </a>
+    </div>
+</div>
+
+<!-- ═══ Alerte restaurant déjà actif ══════════════════════════ -->
+{% if planning_actif_actuel %}
+<div style="background:linear-gradient(135deg,#fff3cd,#ffe69c);border:1px solid #ffc107;
+            border-left:5px solid #ffc107;border-radius:10px;padding:16px 20px;margin-bottom:20px;
+            display:flex;gap:16px;align-items:flex-start;">
+    <i class="fas fa-exclamation-triangle" style="color:#856404;font-size:22px;flex-shrink:0;margin-top:2px;"></i>
+    <div>
+        <div style="font-weight:700;font-size:14px;color:#856404;margin-bottom:4px;">
+            Restaurant actuellement actif pour votre agence
+        </div>
+        <div style="font-size:13px;color:#856404;line-height:1.6;">
+            <strong>{{ planning_actif_actuel.restaurant.nom }}</strong> est programmé du
+            <strong>{{ planning_actif_actuel.date_debut|date:"d/m/Y" }}</strong>
+            au <strong>{{ planning_actif_actuel.date_fin|date:"d/m/Y" }}</strong>.
+            <br>Vous ne pouvez pas programmer un autre restaurant pendant cette période.
+            Si vous souhaitez changer, terminez ou désactivez d'abord ce planning.
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:1fr 1.5fr;gap:20px;">
+
+    <!-- ═══ Formulaire création ════════════════════════════════ -->
+    <div class="card" style="padding:24px;{% if planning_actif_actuel %}opacity:.7;pointer-events:none;{% endif %}">
+        <div style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:6px;">
+            <i class="fas fa-calendar-plus" style="color:var(--primary-green);margin-right:8px;"></i>
+            Nouveau planning
+        </div>
+        {% if planning_actif_actuel %}
+        <p style="font-size:12px;color:#856404;background:#fff3cd;padding:8px 12px;border-radius:6px;margin-bottom:16px;">
+            <i class="fas fa-lock"></i> Formulaire désactivé — un restaurant est déjà actif pour votre agence
+        </p>
+        {% else %}
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">
+            Le restaurant restera actif jusqu'à la date de fin. Le gestionnaire du restaurant pourra se connecter dès l'activation.
+        </p>
+        {% endif %}
+
+        <form id="planningForm" style="display:grid;gap:16px;">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label">Restaurant <span style="color:red">*</span></label>
+                <select name="restaurant" id="p_restaurant" class="form-control" required>
+                    <option value="">— Sélectionner un restaurant —</option>
+                    {% for r in restaurants %}
+                    <option value="{{ r.id }}">{{ r.nom }} ({{ r.ville }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            {% if est_caissier %}
+            <div class="form-group">
+                <label class="form-label">Agence</label>
+                <input type="text" class="form-control" value="{{ agence_caissier.nom }}" readonly
+                       style="background:var(--bg-secondary);color:var(--text-muted);">
+                <input type="hidden" name="agence" value="{{ agence_caissier.id }}">
+            </div>
+            {% else %}
+            <div class="form-group">
+                <label class="form-label">Agence <span style="color:red">*</span></label>
+                <select name="agence" class="form-control" required>
+                    <option value="">— Sélectionner une agence —</option>
+                    {% for a in agences %}
+                    <option value="{{ a.id }}">{{ a.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label class="form-label">Type de planning</label>
+                <select name="type_planning" class="form-control">
+                    <option value="MENSUEL">📅 Mensuel</option>
+                    <option value="HEBDOMADAIRE">📆 Hebdomadaire</option>
+                </select>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="form-group">
+                    <label class="form-label">Début <span style="color:red">*</span></label>
+                    <input type="date" name="date_debut" id="p_debut" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fin <span style="color:red">*</span></label>
+                    <input type="date" name="date_fin" id="p_fin" class="form-control" required>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn btn-primary" style="padding:12px;">
+                <i class="fas fa-calendar-plus"></i> Activer ce restaurant pour l'agence
+            </button>
+        </form>
+    </div>
+
+    <!-- ═══ Plannings récents ═══════════════════════════════════ -->
+    <div class="card" style="overflow:hidden;">
+        <div style="padding:14px 18px;border-bottom:1px solid var(--border-color);
+                    display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-weight:700;font-size:15px;">
+                <i class="fas fa-history" style="color:var(--primary-green);margin-right:8px;"></i>
+                Historique des plannings
+                {% if agence_caissier %}<span style="font-size:12px;color:var(--text-muted);font-weight:400;">— {{ agence_caissier.nom }}</span>{% endif %}
+            </span>
+            <a href="# url 'restaurants:plannings_list' %}" style="font-size:12px;color:var(--primary-green);">
+                Tout voir →
+            </a>
+        </div>
+        <div style="max-height:520px;overflow-y:auto;">
+            {% for p in plannings_recents %}
+            <div style="padding:13px 18px;border-bottom:1px solid var(--border-color);
+                        display:flex;gap:12px;align-items:flex-start;"
+                 id="planningRow-{{ p.id }}">
+                <!-- Pastille statut -->
+                <div style="width:10px;height:10px;border-radius:50%;margin-top:5px;flex-shrink:0;
+                             background:{% if p.est_actuel %}#28a745{% elif p.est_actif %}#ffc107{% else %}#adb5bd{% endif %};"></div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:700;font-size:13px;color:var(--text-primary);">
+                        {{ p.restaurant.nom }}
+                        {% if p.est_actuel %}
+                        <span style="font-size:10px;background:var(--light-green);color:var(--primary-green);
+                                     padding:2px 7px;border-radius:10px;font-weight:600;margin-left:5px;">
+                            ● EN COURS
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% if not est_caissier %}
+                    <div style="font-size:12px;color:var(--text-muted);margin:2px 0;">
+                        <i class="fas fa-building" style="width:12px;"></i> {{ p.agence.nom }}
+                    </div>
+                    {% endif %}
+                    <div style="font-size:11px;color:var(--text-muted);">
+                        <i class="fas fa-calendar"></i>
+                        {{ p.date_debut|date:"d/m/Y" }} → {{ p.date_fin|date:"d/m/Y" }}
+                    </div>
+                    <div style="margin-top:5px;display:flex;gap:5px;flex-wrap:wrap;">
+                        <span class="badge {% if p.est_actif %}badge-success{% else %}badge-danger{% endif %}" style="font-size:9px;">
+                            {% if p.est_actif %}Actif{% else %}Inactif{% endif %}
+                        </span>
+                        <span class="badge" style="background:#e9ecef;color:#6c757d;font-size:9px;">
+                            {{ p.get_type_planning_display }}
+                        </span>
+                    </div>
+                </div>
+                <!-- Action désactiver / supprimer -->
+                {% if p.est_actif and not p.est_actuel %}
+                <button class="action-btn action-btn-delete" title="Supprimer"
+                        onclick="supprimerPlanning({{ p.id }}, '{{ p.restaurant.nom|escapejs }}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+                {% elif p.est_actuel %}
+                <button class="btn btn-outline" style="font-size:11px;padding:4px 10px;color:#dc3545;border-color:#dc3545;flex-shrink:0;"
+                        title="Désactiver ce planning"
+                        onclick="desactiverPlanning({{ p.id }}, '{{ p.restaurant.nom|escapejs }}')">
+                    <i class="fas fa-ban"></i> Arrêter
+                </button>
+                {% else %}
+                <button class="action-btn action-btn-delete" title="Supprimer"
+                        onclick="supprimerPlanning({{ p.id }}, '{{ p.restaurant.nom|escapejs }}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div style="text-align:center;padding:40px;color:var(--text-muted);">
+                <i class="fas fa-calendar-times" style="font-size:32px;display:block;margin-bottom:12px;opacity:.3;"></i>
+                Aucun planning — créez le premier ci-contre
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- ─── Explication du système ───────────────────────────────── -->
+<div style="margin-top:20px;padding:16px 20px;background:var(--bg-secondary);border-radius:10px;
+            border-left:4px solid #17a2b8;font-size:13px;color:var(--text-muted);">
+    <strong style="color:var(--text-primary);">
+        <i class="fas fa-info-circle" style="color:#17a2b8;margin-right:6px;"></i>Règles de planification
+    </strong>
+    <ul style="margin:8px 0 0 16px;line-height:1.9;">
+        <li>Un seul restaurant peut être actif par agence à la fois pendant une période donnée.</li>
+        <li>Le gestionnaire du restaurant peut se connecter et effectuer ses activités dès l'activation du planning.</li>
+        <li>Les clients de votre agence verront les menus du restaurant actif à partir de 08h00.</li>
+        <li>Pour changer de restaurant : cliquez sur <strong>Arrêter</strong> le planning actuel, puis créez-en un nouveau.</li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{% static 'js/components.js' %}"></script>
+<script>
+var urls = document.getElementById('page-urls').dataset;
+
+/* Auto-fill date fin = début + 1 mois */
+document.getElementById('p_debut').addEventListener('change', function () {
+    if (!document.getElementById('p_fin').value) {
+        var d = new Date(this.value);
+        d.setMonth(d.getMonth() + 1);
+        d.setDate(d.getDate() - 1);
+        document.getElementById('p_fin').value = d.toISOString().split('T')[0];
+    }
+});
+
+document.getElementById('planningForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Activation...';
+
+    fetch(urls.create, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCsrfToken() },
+        body: new FormData(this)
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-calendar-plus"></i> Activer ce restaurant pour l\'agence';
+        if (d.success) {
+            showSuccess(d.message);
+            setTimeout(function () { location.reload(); }, 900);
+        } else {
+            showError(d.error);
+        }
+    })
+    .catch(function () {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-calendar-plus"></i> Activer ce restaurant pour l\'agence';
+        showError('Erreur réseau');
+    });
+});
+
+function supprimerPlanning(id, nom) {
+    showConfirm('Supprimer le planning « ' + nom + ' » ?', 'Le gestionnaire du restaurant ne pourra plus se connecter.', function () {
+        fetch(urls.deleteBase.replace('/0/', '/' + id + '/'), {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCsrfToken() }
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (d.success) { showSuccess(d.message); setTimeout(function () { location.reload(); }, 700); }
+            else showError(d.error);
+        });
+    });
+}
+
+function desactiverPlanning(id, nom) {
+    showConfirm(
+        'Arrêter le planning « ' + nom + ' » ?',
+        'Le restaurant sera immédiatement désactivé pour votre agence. Le gestionnaire ne pourra plus se connecter.',
+        function () {
+            /* On édite le planning pour le désactiver */
+            var fd = new FormData();
+            fd.append('est_actif', '0');
+            fetch('{% url "restaurants:planning_edit" pk=0 %}'.replace('/0/', '/' + id + '/'), {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCsrfToken() },
+                body: fd
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (d.success) { showSuccess('Planning désactivé'); setTimeout(function () { location.reload(); }, 700); }
+                else showError(d.error);
+            });
+        },
+        'Arrêter'
+    );
+}
+</script>
+{% endblock %}

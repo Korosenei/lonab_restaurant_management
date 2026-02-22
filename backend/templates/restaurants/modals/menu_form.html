@@ -1,0 +1,130 @@
+<!-- Modal Formulaire Menu — restaurants/modals/menu_form.html -->
+<div class="modal-overlay" id="menuModal">
+    <div class="modal" style="max-width:560px;width:100%;">
+        <div class="modal-header">
+            <h3 class="modal-title" id="menuModalTitle">
+                <i class="fas fa-clipboard-list" style="color:var(--primary-green);margin-right:8px;"></i>
+                Nouveau menu
+            </h3>
+            <button class="modal-close" onclick="closeModal('menuModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="menuForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" id="m_id" name="m_id">
+            <div class="modal-body" style="padding:20px;max-height:72vh;overflow-y:auto;">
+                <div style="display:grid;gap:14px;">
+
+                    {% if not est_gestionnaire %}
+                    <div class="form-group">
+                        <label class="form-label">Restaurant <span style="color:red">*</span></label>
+                        <select id="m_restaurant" name="restaurant" class="form-control" required>
+                            <option value="">— Sélectionner —</option>
+                            {% for r in restaurants %}
+                            <option value="{{ r.id }}">{{ r.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <!-- Ligne 1 : Jour + Date -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div class="form-group">
+                            <label class="form-label">Jour <span style="color:red">*</span></label>
+                            <select id="m_jour" name="jour_semaine" class="form-control" required>
+                                {% for val, lib in jours %}
+                                <option value="{{ val }}">{{ lib }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Date spécifique</label>
+                            <input type="date" id="m_date" name="date" class="form-control">
+                            <small style="color:var(--text-muted);font-size:10px;">Facultatif — précise le jour</small>
+                        </div>
+                    </div>
+
+                    <!-- Nom -->
+                    <div class="form-group">
+                        <label class="form-label">Nom du menu <span style="color:red">*</span></label>
+                        <input type="text" id="m_nom" name="nom" class="form-control" required
+                               placeholder="Ex: Menu du lundi — Riz sauce graine">
+                    </div>
+
+                    <!-- Plats -->
+                    <div class="form-group">
+                        <label class="form-label">Composition des plats <span style="color:red">*</span></label>
+                        <textarea id="m_plats" name="plats" class="form-control" rows="2" required
+                                  placeholder="Riz au gras, Salade verte, Jus de bissap, Dessert..."></textarea>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-group">
+                        <label class="form-label">Notes / Allergènes</label>
+                        <textarea id="m_description" name="description" class="form-control" rows="2"
+                                  placeholder="Informations complémentaires, allergènes..."></textarea>
+                    </div>
+
+                    <!-- Ligne 2 : Prix + Quantité -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div class="form-group">
+                            <label class="form-label">Prix (FCFA)</label>
+                            <input type="number" id="m_prix" name="prix" class="form-control"
+                                   min="0" step="50" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Quantité disponible</label>
+                            <input type="number" id="m_quantite" name="quantite_disponible"
+                                   class="form-control" min="1" placeholder="Illimitée si vide">
+                        </div>
+                    </div>
+
+                    <!-- Image -->
+                    <div class="form-group">
+                        <label class="form-label">Photo du plat</label>
+                        <input type="file" id="m_image" name="image" class="form-control" accept="image/*">
+                        <div id="m_image_preview" style="display:none;margin-top:8px;">
+                            <img id="m_image_thumb" src="" alt="Aperçu"
+                                 style="height:80px;border-radius:8px;object-fit:cover;border:1px solid var(--border-color);">
+                        </div>
+                    </div>
+
+                    <!-- Disponibilité (visible en mode édition) -->
+                    <div class="form-group" id="m_dispo_group" style="display:none;">
+                        <label class="form-label">Disponibilité</label>
+                        <select id="m_disponible" name="est_disponible" class="form-control">
+                            <option value="1">✅ Disponible</option>
+                            <option value="0">❌ Indisponible / Épuisé</option>
+                        </select>
+                    </div>
+
+                </div>
+            </div>
+            <div class="modal-footer" style="padding:14px 20px;border-top:1px solid var(--border-color);
+                         display:flex;gap:10px;justify-content:flex-end;">
+                <button type="button" class="btn btn-outline" onclick="closeModal('menuModal')">
+                    <i class="fas fa-times"></i> Annuler
+                </button>
+                <button type="submit" id="menuFormBtn" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+/* Prévisualisation image */
+document.getElementById('m_image').addEventListener('change', function () {
+    var file = this.files[0];
+    if (file) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('m_image_thumb').src = e.target.result;
+            document.getElementById('m_image_preview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+});
+</script>

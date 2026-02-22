@@ -1,0 +1,61 @@
+<!-- Client Sidebar Menu -->
+<div class="nav-section">
+    <div class="nav-section-title">Menu Principal</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="{% url 'accounts:client_dashboard' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'client_dashboard' %}active{% endif %}">
+                <i class="fas fa-home"></i>
+                <span class="nav-link-text">Tableau de bord</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'tickets:client_tickets' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'client_tickets' %}active{% endif %}">
+                <i class="fas fa-ticket-alt"></i>
+                <span class="nav-link-text">Mes tickets</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'tickets:client_qrcode' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'client_qrcode' %}active{% endif %}">
+                <i class="fas fa-qrcode"></i>
+                <span class="nav-link-text">Mon QR Code</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'transactions:client_historique' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'client_historique' %}active{% endif %}">
+                <i class="fas fa-history"></i>
+                <span class="nav-link-text">Historique</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+<div class="nav-section">
+    <div class="nav-section-title">Restaurants</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="{% url 'restaurants:client_restaurants' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'client_restaurants' %}active{% endif %}">
+                <i class="fas fa-utensils"></i>
+                <span class="nav-link-text">Restaurants</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'restaurants:client_menus' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'client_menus' %}active{% endif %}">
+                <i class="fas fa-book-open"></i>
+                <span class="nav-link-text">Menus du jour</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'restaurants:client_reservations' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'client_reservations' %}active{% endif %}">
+                <i class="fas fa-calendar-check"></i>
+                <span class="nav-link-text">Mes réservations</span>
+            </a>
+        </li>
+    </ul>
+</div>

@@ -57,7 +57,7 @@ class Ticket(models.Model):
         null=True,
         blank=True,
         related_name='tickets_valides',
-        limit_choices_to={'type_utilisateur': 'GESTIONNAIRE_RESTAURANT'}
+        limit_choices_to={'type_utilisateur': 'RESTAURANT_MANAGER'}
     )
 
     # Validité
@@ -266,4 +266,3 @@ class CodeQR(models.Model):
             est_valide=True,
             est_utilise=False
         ).update(est_valide=False)
-

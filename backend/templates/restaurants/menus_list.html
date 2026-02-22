@@ -1,0 +1,156 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
+{% endblock %}
+
+{% block sidebar_menu %}
+{% if est_gestionnaire %}
+{% include 'dashboards/sidebars/restaurant_sidebar.html' %}
+{% else %}
+{% include 'dashboards/sidebars/admin_sidebar.html' %}
+{% endif %}
+{% endblock %}
+
+{% block page_content %}
+<div id="page-urls"
+     data-create="{% url 'restaurants:menu_create' %}"
+     data-edit-base="{% url 'restaurants:menu_edit' pk=0 %}"
+     data-delete-base="{% url 'restaurants:menu_delete' pk=0 %}"
+     style="display:none;"></div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+    <h1 style="font-size:22px;font-weight:700;color:var(--text-primary);margin:0;">
+        <i class="fas fa-book-open" style="color:var(--primary-green);margin-right:10px;"></i>Menus
+    </h1>
+    <button class="btn btn-primary" onclick="openModal('menuModal')">
+        <i class="fas fa-plus"></i> Nouveau menu
+    </button>
+</div>
+
+<!-- Filtres -->
+<div class="card" style="padding:14px 16px;margin-bottom:18px;">
+    <form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+        {% if not est_gestionnaire %}
+        <div>
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Restaurant</label>
+            <select name="restaurant" class="form-control" style="min-width:180px;">
+                <option value="">Tous</option>
+                {% for r in restaurants %}
+                <option value="{{ r.id }}" {% if request.GET.restaurant == r.id|stringformat:'s' %}selected{% endif %}>{{ r.nom }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        <div>
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Jour</label>
+            <select name="jour" class="form-control">
+                <option value="">Tous les jours</option>
+                {% for val, lib in jours %}
+                <option value="{{ val }}" {% if request.GET.jour == val %}selected{% endif %}>{{ lib }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-secondary">Filtrer</button>
+    </form>
+</div>
+
+<!-- Grille menus -->
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
+    {% for m in menus %}
+    <div class="card" style="overflow:hidden;">
+        {% if m.image %}
+        <img src="{{ m.image.url }}" alt="{{ m.nom }}" style="width:100%;height:130px;object-fit:cover;">
+        {% else %}
+        <div style="width:100%;height:80px;background:var(--light-green);display:flex;align-items:center;justify-content:center;">
+            <i class="fas fa-utensils" style="color:var(--primary-green);font-size:28px;opacity:.5;"></i>
+        </div>
+        {% endif %}
+        <div style="padding:14px;">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">
+                {{ m.restaurant.nom }} · {{ m.get_jour_semaine_display }}
+            </div>
+            <div style="font-weight:700;font-size:14px;color:var(--text-primary);margin-bottom:6px;">{{ m.nom }}</div>
+            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">{{ m.plats|truncatechars:80 }}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="font-size:12px;color:var(--text-muted);">
+                    {% if m.quantite_disponible %}
+                    <span style="color:{% if m.quantite_restante < 5 %}#dc3545{% else %}var(--primary-green){% endif %};">
+                        {{ m.quantite_restante }}/{{ m.quantite_disponible }}
+                    </span>
+                    {% endif %}
+                    {% if not m.est_disponible %}
+                    <span style="color:#dc3545;font-weight:600;">Épuisé</span>
+                    {% endif %}
+                </div>
+                <div style="display:flex;gap:6px;">
+                    <button onclick="editMenu({{ m.id }})" class="btn-icon" title="Modifier">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="deleteMenu({{ m.id }}, '{{ m.nom|escapejs }}')" class="btn-icon btn-icon-danger" title="Supprimer">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-muted);">
+        <i class="fas fa-book-open" style="font-size:36px;opacity:.3;display:block;margin-bottom:12px;"></i>
+        Aucun menu configuré
+    </div>
+    {% endfor %}
+</div>
+
+{% include 'restaurants/modals/menu_form.html' %}
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{% static 'js/components.js' %}"></script>
+<script>
+var urls = document.getElementById('page-urls').dataset;
+
+function editMenu(id) {
+    fetch(urls.editBase.replace('/0/', '/' + id + '/'))
+        .then(r => r.json()).then(d => {
+            document.getElementById('m_id').value = id;
+            document.getElementById('m_nom').value = d.nom;
+            document.getElementById('m_plats').value = d.plats;
+            document.getElementById('m_description').value = d.description;
+            document.getElementById('m_jour').value = d.jour_semaine;
+            document.getElementById('m_date').value = d.date;
+            document.getElementById('m_prix').value = d.prix;
+            document.getElementById('m_quantite').value = d.quantite_disponible || '';
+            document.getElementById('m_disponible').value = d.est_disponible ? '1' : '0';
+            document.getElementById('m_dispo_group').style.display = 'block';
+            if (document.getElementById('m_restaurant'))
+                document.getElementById('m_restaurant').value = d.restaurant_id;
+            document.getElementById('menuModalTitle').textContent = 'Modifier le menu';
+            openModal('menuModal');
+        });
+}
+
+function deleteMenu(id, nom) {
+    showConfirm('Supprimer « ' + nom + ' » ?', '', function() {
+        fetch(urls.deleteBase.replace('/0/', '/' + id + '/'), {
+            method:'POST', headers:{'X-CSRFToken':getCsrfToken()}
+        }).then(r => r.json()).then(d => {
+            if (d.success) { showToast(d.message, 'success'); setTimeout(() => location.reload(), 1000); }
+            else showToast(d.error, 'error');
+        });
+    });
+}
+
+document.getElementById('menuForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var id  = document.getElementById('m_id').value;
+    var url = id ? urls.editBase.replace('/0/', '/' + id + '/') : urls.create;
+    fetch(url, { method:'POST', headers:{'X-CSRFToken':getCsrfToken()}, body:new FormData(this) })
+        .then(r => r.json()).then(d => {
+            if (d.success) { showToast(d.message, 'success'); closeModal('menuModal'); setTimeout(() => location.reload(), 900); }
+            else showToast(d.error, 'error');
+        });
+});
+</script>
+{% endblock %}

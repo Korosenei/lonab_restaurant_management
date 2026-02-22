@@ -1,0 +1,62 @@
+<!-- Caissier Sidebar Menu -->
+<div class="nav-section">
+    <div class="nav-section-title">Menu Principal</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="{% url 'accounts:caissier_dashboard' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'caissier_dashboard' %}active{% endif %}">
+                <i class="fas fa-home"></i>
+                <span class="nav-link-text">Tableau de bord</span>
+            </a>
+        </li>
+        <li class="nav-item">
+           <!-- <a href="{% url 'tickets:caissier_tickets' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'caissier_tickets' %}active{% endif %}">-->
+            <a href="{% url 'transactions:tickets_list' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'tickets_list' %}active{% endif %}">
+                <i class="fas fa-ticket-alt"></i>
+                <span class="nav-link-text">Tickets</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'transactions:caissier_clients' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'caissier_clients' %}active{% endif %}">
+                <i class="fas fa-users"></i>
+                <span class="nav-link-text">Clients</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+<div class="nav-section">
+    <div class="nav-section-title">Restaurants</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="{% url 'restaurants:restaurants_list' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'restaurants_list' %}active{% endif %}">
+                <i class="fas fa-utensils"></i>
+                <span class="nav-link-text">Restaurants</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'restaurants:caissier_planifier' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'caissier_planifier' %}active{% endif %}">
+                <i class="fas fa-calendar-alt"></i>
+                <span class="nav-link-text">Programmations</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+<div class="nav-section">
+    <div class="nav-section-title">Rapports</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="{% url 'transactions:caissier_historique' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'caissier_historique' %}active{% endif %}">
+                <i class="fas fa-history"></i>
+                <span class="nav-link-text">Historique</span>
+            </a>
+        </li>
+    </ul>
+</div>

@@ -150,20 +150,19 @@ class AgenceSerializer(serializers.ModelSerializer):
     agence_parente_nom = serializers.CharField(source='agence_parente.nom', read_only=True)
     total_employes = serializers.IntegerField(read_only=True)
     employes_actifs = serializers.IntegerField(read_only=True)
-    a_capacite = serializers.BooleanField(read_only=True)
     adresse_complete = serializers.CharField(read_only=True)
 
     class Meta:
         model = Agence
         fields = [
             'id', 'nom', 'code', 'type_agence',
-            'adresse', 'adresse_complete', 'ville', 'region', 'code_postal',
-            'telephone', 'email', 'fax',
+            'adresse', 'adresse_complete', 'ville', 'region',
+            'telephone', 'email',
             'direction', 'direction_nom',
             'agence_parente', 'agence_parente_nom',
             'responsable', 'responsable_nom',
-            'capacite_max_employes', 'total_employes', 'employes_actifs', 'a_capacite',
-            'est_active', 'date_ouverture', 'date_fermeture', 'notes',
+             'total_employes', 'employes_actifs', 'a_capacite',
+            'est_active', 'date_ouverture', 'date_fermeture',
             'date_creation', 'date_modification'
         ]
         read_only_fields = ['id', 'date_creation', 'date_modification']

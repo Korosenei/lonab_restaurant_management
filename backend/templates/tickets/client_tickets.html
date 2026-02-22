@@ -1,0 +1,176 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Mes Tickets{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
+{% endblock %}
+
+{% block sidebar_menu %}
+{% include 'dashboards/sidebars/client_sidebar.html' %}
+{% endblock %}
+
+{% block page_content %}
+<div class="page-header-with-actions">
+    <div class="page-header">
+        <h1 class="page-title">Mes Tickets</h1>
+        <p class="page-subtitle">
+            Validité : {{ debut_mois|date:"d/m" }} → {{ fin_mois|date:"d/m/Y" }}
+        </p>
+    </div>
+    <div class="page-header-actions">
+        <a href="{% url 'tickets:client_qrcode' %}" class="btn btn-primary">
+            <i class="fas fa-qrcode"></i> Mon QR Code
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card stat-card-green">
+        <div class="stat-card-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-card-content">
+            <div class="stat-card-label">Tickets valides</div>
+            <div class="stat-card-value">{{ nb_valides }}</div>
+            <div class="stat-card-detail">Utilisables ce mois</div>
+        </div>
+    </div>
+    <div class="stat-card stat-card-blue">
+        <div class="stat-card-icon"><i class="fas fa-utensils"></i></div>
+        <div class="stat-card-content">
+            <div class="stat-card-label">Consommés ce mois</div>
+            <div class="stat-card-value">{{ nb_consommes_mois }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- TICKETS DISPONIBLES -->
+<div class="data-table-wrapper" style="margin-bottom:16px;">
+    <div class="data-table-header">
+        <div class="data-table-title">
+            <i class="fas fa-check-circle text-green"></i>
+            Tickets disponibles
+            <span class="badge badge-success" style="margin-left:4px;">{{ nb_valides }}</span>
+        </div>
+    </div>
+
+    {% if tickets_valides %}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;padding:14px;">
+        {% for ticket in tickets_valides %}
+        <div class="ticket-card">
+            <div class="ticket-number">{{ ticket.numero_ticket|slice:":14" }}…</div>
+            <div class="ticket-valid-label">Valide jusqu'au</div>
+            <div class="ticket-valid-date">{{ ticket.valide_jusqua|date:"d/m/Y" }}</div>
+            <span class="badge badge-success" style="margin-top:8px;">● Disponible</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-ticket-alt"></i>
+        <p>Aucun ticket disponible pour ce mois.</p>
+        <p style="font-size:12px;color:#adb5bd;">Contactez votre caissier pour en acquérir.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- TICKETS CONSOMMÉS -->
+{% if tickets_consommes %}
+<div class="data-table-wrapper" style="margin-bottom:16px;">
+    <div class="data-table-header">
+        <div class="data-table-title">
+            <i class="fas fa-utensils" style="color:#17a2b8;"></i>
+            Tickets consommés
+        </div>
+    </div>
+    <div class="data-table-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>N° Ticket</th>
+                        <th>Restaurant</th>
+                        <th>Date consommation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for ticket in tickets_consommes %}
+                <tr>
+                    <td><code class="ticket-number-sm">{{ ticket.numero_ticket|slice:":18" }}…</code></td>
+                    <td class="text-sm">
+                        {% if ticket.restaurant_consommateur %}
+                        <i class="fas fa-store text-green"></i> {{ ticket.restaurant_consommateur.nom }}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td class="text-sm text-muted">
+                        {% if ticket.date_consommation %}{{ ticket.date_consommation|date:"d/m/Y H:i" }}{% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- TICKETS EXPIRÉS -->
+{% if tickets_expires %}
+<div class="data-table-wrapper">
+    <div class="data-table-header">
+        <div class="data-table-title" style="color:#adb5bd;">
+            <i class="fas fa-clock"></i>
+            Expirés / Annulés
+        </div>
+    </div>
+    <div class="data-table-body">
+        <div class="table-responsive">
+            <table class="table" style="opacity:.7;">
+                <thead>
+                    <tr>
+                        <th>N° Ticket</th>
+                        <th>Fin de validité</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for ticket in tickets_expires %}
+                <tr>
+                    <td><code class="ticket-number-sm text-muted">{{ ticket.numero_ticket|slice:":18" }}…</code></td>
+                    <td class="text-sm text-muted">{{ ticket.valide_jusqua|date:"d/m/Y" }}</td>
+                    <td><span class="badge badge-secondary">{{ ticket.get_statut_display }}</span></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<style>
+.ticket-card {
+    background: white;
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.07);
+    border-top: 3px solid #28a745;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.ticket-number {
+    font-family: monospace;
+    font-size: 12px;
+    font-weight: 800;
+    color: #28a745;
+    word-break: break-all;
+    margin-bottom: 6px;
+}
+.ticket-valid-label { font-size: 10px; color: #6c757d; }
+.ticket-valid-date  { font-size: 13px; font-weight: 700; color: #2d3748; }
+.ticket-number-sm   { font-family: monospace; font-size: 11px; font-weight: 700; color: #17a2b8; }
+</style>
+{% endblock %}

@@ -1,0 +1,114 @@
+<!-- Admin Sidebar Menu -->
+<div class="nav-section">
+    <div class="nav-section-title">Menu Principal</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="{% url 'accounts:admin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                <i class="fas fa-home"></i>
+                <span class="nav-link-text">Tableau de bord</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'accounts:admin_overview' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_overview' %}active{% endif %}">
+                <i class="fas fa-chart-pie"></i>
+                <span class="nav-link-text">Vue d'ensemble</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+<div class="nav-section">
+    <div class="nav-section-title">Organisation</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="{% url 'accounts:directions_list' %}" class="nav-link {% if request.resolver_match.url_name == 'directions_list' %}active{% endif %}">
+                <i class="fas fa-sitemap"></i>
+                <span class="nav-link-text">Directions</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'accounts:agences_list' %}" class="nav-link {% if request.resolver_match.url_name == 'agences_list' %}active{% endif %}">
+                <i class="fas fa-building"></i>
+                <span class="nav-link-text">Agences</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'accounts:users_list' %}" class="nav-link {% if request.resolver_match.url_name == 'users_list' %}active{% endif %}">
+                <i class="fas fa-users"></i>
+                <span class="nav-link-text">Utilisateurs</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+<div class="nav-section">
+    <div class="nav-section-title">Gestion</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="{% url 'tickets:admin_tickets' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_tickets' %}active{% endif %}">
+                <i class="fas fa-ticket-alt"></i>
+                <span class="nav-link-text">Tickets</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'transactions:transactions_list' %}" class="nav-link {% if request.resolver_match.url_name == 'transactions_list' %}active{% endif %}">
+                <i class="fas fa-exchange-alt"></i>
+                <span class="nav-link-text">Transactions</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'restaurants:restaurants_list' %}" class="nav-link {% if request.resolver_match.url_name == 'restaurants_list' %}active{% endif %}">
+                <i class="fas fa-utensils"></i>
+                <span class="nav-link-text">Restaurants</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'restaurants:plannings_list' %}" class="nav-link {% if request.resolver_match.url_name == 'plannings_list' %}active{% endif %}">
+                <i class="fas fa-calendar-alt"></i>
+                <span class="nav-link-text">Programmations</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+<div class="nav-section">
+    <div class="nav-section-title">Rapports</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="{% url 'accounts:admin_reports' %}" class="nav-link">
+                <i class="fas fa-chart-bar"></i>
+                <span class="nav-link-text">Rapports</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'transactions:transaction_stats' %}" class="nav-link {% if request.resolver_match.url_name == 'transaction_stats' %}active{% endif %}">
+                <i class="fas fa-chart-line"></i>
+                <span class="nav-link-text">Statistiques</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'accounts:admin_audit' %}" class="nav-link">
+                <i class="fas fa-clipboard-check"></i>
+                <span class="nav-link-text">Audit</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+<div class="nav-section">
+    <div class="nav-section-title">Paramètres</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="{% url 'accounts:admin_settings' %}" class="nav-link">
+                <i class="fas fa-cog"></i>
+                <span class="nav-link-text">Paramètres</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'accounts:admin_notifications' %}" class="nav-link">
+                <i class="fas fa-bell"></i>
+                <span class="nav-link-text">Notifications</span>
+            </a>
+        </li>
+    </ul>
+</div>

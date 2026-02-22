@@ -218,6 +218,12 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
         """Vérifie si l'utilisateur est un super administrateur"""
         return self.type_utilisateur == 'SUPER_ADMIN'
 
+    @property
+    def tickets_disponibles(self):
+        """Retourne le nombre de tickets disponibles pour l'utilisateur"""
+        from apps.tickets.models import Ticket
+        return Ticket.objects.filter(proprietaire=self, statut='DISPONIBLE').count()
+
 
 class Direction(models.Model):
     """Modèle pour les directions LONAB (départements)"""
@@ -273,7 +279,6 @@ class Agence(models.Model):
         ('SIEGE', 'Siège'),
         ('REGIONALE', 'Agence Régionale'),
         ('LOCALE', 'Agence Locale'),
-        ('SUCCURSALE', 'Succursale'),
     ]
 
     nom = models.CharField("Nom de l'agence", max_length=200, unique=True)
@@ -284,12 +289,10 @@ class Agence(models.Model):
     adresse = models.TextField("Adresse")
     ville = models.CharField("Ville", max_length=100)
     region = models.CharField("Région", max_length=100, blank=True)
-    code_postal = models.CharField("Code postal", max_length=10, blank=True)
 
     # Informations de contact
     telephone = models.CharField("Téléphone", max_length=17)
     email = models.EmailField("Email", blank=True)
-    fax = models.CharField("Fax", max_length=17, blank=True)
 
     # Hiérarchie - Direction parente
     direction = models.ForeignKey(
@@ -322,16 +325,10 @@ class Agence(models.Model):
         verbose_name='Responsable'
     )
 
-    # Capacité
-    capacite_max_employes = models.IntegerField("Capacité maximale d'employés", default=100, blank=True, null=True)
-
     # Statut
     est_active = models.BooleanField("Active", default=True)
     date_ouverture = models.DateField("Date d'ouverture", blank=True, null=True)
     date_fermeture = models.DateField("Date de fermeture", blank=True, null=True)
-
-    # Notes
-    notes = models.TextField("Notes", blank=True)
 
     # Dates
     date_creation = models.DateTimeField("Créée le", auto_now_add=True)

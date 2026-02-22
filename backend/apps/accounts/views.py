@@ -1,9 +1,15 @@
 """
 Vues pour l'application comptes
 """
+import secrets
+import string
+
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login as auth_login, logout as auth_logout, authenticate
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate as django_authenticate
+from django.contrib.auth import login as auth_login, logout as auth_logout
+from django.contrib.auth.backends import ModelBackend
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Q, Count
@@ -32,63 +38,81 @@ from .serializers import (
 
 
 # ============================================
-# Vues d'authentification (basées sur templates)
+# Authentification email OU username
+# ============================================
+class EmailOrUsernameBackend(ModelBackend):
+    def authenticate(self, request, username=None, password=None, **kwargs):
+        if not username or not password:
+            return None
+
+        # Chercher par email
+        user = None
+        try:
+            user = Utilisateur.objects.get(email=username)
+        except Utilisateur.DoesNotExist:
+            pass
+
+        # Sinon par nom_utilisateur (matricule)
+        if user is None:
+            try:
+                user = Utilisateur.objects.get(nom_utilisateur=username)
+            except Utilisateur.DoesNotExist:
+                return None
+
+        # Vérifier le mot de passe (Django utilise PBKDF2 par défaut — set_password crypte, check_password décrypte)
+        if user.check_password(password) and self.user_can_authenticate(user):
+            return user
+        return None
+
+# ============================================
+# Vues d'authentification
 # ============================================
 @ensure_csrf_cookie
 @never_cache
 @require_http_methods(["GET", "POST"])
 def login_view(request):
-    """Vue de la page de connexion - CORRIGÉE"""
+    """Connexion par email OU par nom_utilisateur (matricule)"""
     if request.user.is_authenticated:
         return redirect('accounts:dashboard')
 
     if request.method == 'POST':
-        # Récupération et nettoyage des données
-        email = request.POST.get('email', '').strip()
+        identifiant = request.POST.get('email', '').strip()   # champ email accepte les deux
         mot_de_passe = request.POST.get('password', '')
-        se_souvenir_de_moi = request.POST.get('remember_me', False)
+        se_souvenir = request.POST.get('remember_me', False)
 
-        if email and mot_de_passe:
-            # IMPORTANT : Django utilise 'username' dans authenticate, même si le champ est 'email'
-            utilisateur = authenticate(
-                request=request,
-                username=email,  # Pas 'email=', mais 'username='
-                password=mot_de_passe
-            )
-
-            if utilisateur is not None:
-                if utilisateur.is_active:
-                    auth_login(request, utilisateur)
-
-                    # Mettre à jour la dernière connexion
-                    utilisateur.derniere_connexion = timezone.now()
-                    utilisateur.save(update_fields=['derniere_connexion'])
-
-                    # Définir l'expiration de session
-                    if not se_souvenir_de_moi:
-                        request.session.set_expiry(0)  # Expire à la fermeture du navigateur
-                    else:
-                        request.session.set_expiry(1209600)  # 14 jours en secondes
-
-                    messages.success(request, f'Bienvenue {utilisateur.get_full_name()} !')
-
-                    # Redirection selon le type d'utilisateur
-                    if utilisateur.est_super_admin:
-                        return redirect('accounts:admin_dashboard')
-                    elif utilisateur.est_caissier:
-                        return redirect('accounts:caissier_dashboard')
-                    elif utilisateur.est_gestionnaire_restaurant:
-                        return redirect('accounts:restaurant_dashboard')
-                    else:
-                        return redirect('accounts:client_dashboard')
-                else:
-                    messages.error(request, 'Ce compte est désactivé.')
-            else:
-                messages.error(request, 'Email ou mot de passe incorrect.')
-        else:
+        if not identifiant or not mot_de_passe:
             messages.error(request, 'Veuillez remplir tous les champs.')
+            return render(request, 'auth/login.html')
 
-    # GET request - rendre la page avec le CSRF token
+        # Django authenticate utilise le backend enregistré dans AUTHENTICATION_BACKENDS
+        utilisateur = django_authenticate(request, username=identifiant, password=mot_de_passe)
+
+        if utilisateur is not None:
+            if utilisateur.is_active:
+                auth_login(request, utilisateur)
+                utilisateur.derniere_connexion = timezone.now()
+                utilisateur.save(update_fields=['derniere_connexion'])
+
+                if not se_souvenir:
+                    request.session.set_expiry(0)
+                else:
+                    request.session.set_expiry(1209600)  # 14 jours
+
+                messages.success(request, f'Bienvenue {utilisateur.get_full_name()} !')
+
+                if utilisateur.est_super_admin:
+                    return redirect('accounts:admin_dashboard')
+                elif utilisateur.est_caissier:
+                    return redirect('accounts:cashier_dashboard')
+                elif utilisateur.est_gestionnaire_restaurant:
+                    return redirect('accounts:restaurant_dashboard')
+                else:
+                    return redirect('accounts:client_dashboard')
+            else:
+                messages.error(request, 'Ce compte est désactivé.')
+        else:
+            messages.error(request, 'Identifiant ou mot de passe incorrect.')
+
     return render(request, 'auth/login.html')
 
 @require_http_methods(["GET", "POST"])
@@ -114,7 +138,7 @@ def password_reset_view(request):
             for error in serializer.errors.values():
                 messages.error(request, error[0])
 
-    return render(request, 'auth/password_reset_view.html')
+    return render(request, 'auth/password_reset.html')
 
 
 # ============================================
@@ -477,6 +501,45 @@ def dashboard_admin(request):
 # ============================================
 # VUES DE GESTION DES UTILISATEURS
 # ============================================
+def _generer_mot_de_passe():
+    """Génère un mot de passe sécurisé de 12 caractères"""
+    alphabet = string.ascii_letters + string.digits + "!@#$%"
+    mdp = [
+        secrets.choice(string.ascii_uppercase),
+        secrets.choice(string.ascii_lowercase),
+        secrets.choice(string.digits),
+        secrets.choice("!@#$%"),
+    ]
+    mdp += [secrets.choice(alphabet) for _ in range(8)]
+    secrets.SystemRandom().shuffle(mdp)
+    return ''.join(mdp)
+
+def _generer_username(matricule, email, prenom, nom):
+    """
+    Stratégie username :
+    1. matricule s'il existe
+    2. sinon partie gauche de l'email (avant @)
+    3. fallback : prenom.nom en minuscules
+    """
+    if matricule and matricule.strip():
+        return matricule.strip()
+    if email:
+        base = email.split('@')[0]
+        # Vérifier unicité
+        username = base
+        counter = 1
+        while Utilisateur.objects.filter(nom_utilisateur=username).exists():
+            username = f"{base}{counter}"
+            counter += 1
+        return username
+    # Fallback
+    base = f"{prenom.lower()}.{nom.lower()}".replace(' ', '.')
+    username = base
+    counter = 1
+    while Utilisateur.objects.filter(nom_utilisateur=username).exists():
+        username = f"{base}{counter}"
+        counter += 1
+    return username
 
 @login_required
 def users_list(request):
@@ -558,27 +621,57 @@ def user_create(request):
         return JsonResponse({'error': 'Permission refusée'}, status=403)
 
     try:
-        # Vérifier que l'email n'existe pas déjà
-        if Utilisateur.objects.filter(email=request.POST.get('email')).exists():
+        email = request.POST.get('email', '').strip()
+        type_utilisateur = request.POST.get('type_utilisateur', 'CLIENT')
+        matricule = request.POST.get('matricule', '').strip() or None
+        prenom = request.POST.get('prenom', '').strip()
+        nom = request.POST.get('nom', '').strip()
+
+        # Validation email unique
+        if Utilisateur.objects.filter(email=email).exists():
             return JsonResponse({'error': 'Un utilisateur avec cet email existe déjà'}, status=400)
 
-        # Créer l'utilisateur
-        user = Utilisateur.objects.create_user(
-            email=request.POST.get('email'),
-            password=request.POST.get('password'),
-            prenom=request.POST.get('prenom'),
-            nom=request.POST.get('nom'),
+        # Matricule obligatoire pour CLIENT
+        if type_utilisateur == 'CLIENT' and not matricule:
+            return JsonResponse({'error': 'Le matricule est obligatoire pour un client (employé)'}, status=400)
+
+        # Vérifier unicité du matricule si fourni
+        if matricule and Utilisateur.objects.filter(matricule=matricule).exists():
+            return JsonResponse({'error': 'Ce matricule est déjà utilisé'}, status=400)
+
+        # Générer username = matricule en priorité
+        username = _generer_username(matricule, email, prenom, nom)
+
+        # Vérifier unicité du username
+        if Utilisateur.objects.filter(nom_utilisateur=username).exists():
+            base = username
+            counter = 1
+            while Utilisateur.objects.filter(nom_utilisateur=f"{base}{counter}").exists():
+                counter += 1
+            username = f"{base}{counter}"
+
+        # Générer mot de passe sécurisé
+        # Django utilise PBKDF2 SHA256 via set_password — cryptage automatique
+        mot_de_passe = _generer_mot_de_passe()
+
+        user = Utilisateur(
+            email=email,
+            nom_utilisateur=username,
+            prenom=prenom,
+            nom=nom,
             telephone=request.POST.get('telephone', ''),
             genre=request.POST.get('genre', ''),
             date_naissance=request.POST.get('date_naissance') or None,
-            type_utilisateur=request.POST.get('type_utilisateur', 'CLIENT'),
-            matricule=request.POST.get('matricule', ''),
+            type_utilisateur=type_utilisateur,
+            matricule=matricule,
             departement=request.POST.get('departement', ''),
             poste=request.POST.get('poste', ''),
             adresse=request.POST.get('adresse', ''),
-            est_actif=request.POST.get('est_actif') == '1',
-            est_verifie=request.POST.get('est_verifie') == '1',
+            est_actif=True,
+            est_verifie=False,
         )
+        # set_password crypte le mot de passe (PBKDF2 SHA256 + salt)
+        user.set_password(mot_de_passe)
 
         # Relations
         if request.POST.get('direction'):
@@ -587,20 +680,19 @@ def user_create(request):
             user.agence_id = request.POST.get('agence')
         if request.POST.get('restaurant_gere'):
             user.restaurant_gere_id = request.POST.get('restaurant_gere')
-
-        # Photo de profil
         if request.FILES.get('photo_profil'):
             user.photo_profil = request.FILES.get('photo_profil')
 
         user.save()
-
-        # Créer le profil
         ProfilUtilisateur.objects.get_or_create(utilisateur=user)
 
-        messages.success(request, f'Utilisateur {user.get_full_name()} créé avec succès.')
+        # Envoyer email avec les identifiants
+        from .signals import envoyer_email_avec_mdp
+        envoyer_email_avec_mdp(user, mot_de_passe)
+
         return JsonResponse({
             'success': True,
-            'message': 'Utilisateur créé avec succès',
+            'message': f'Utilisateur {user.get_full_name()} créé. Email d\'accès envoyé à {email}.',
             'user_id': user.id
         })
 
@@ -609,7 +701,7 @@ def user_create(request):
 
 @login_required
 def user_edit(request, pk):
-    """Éditer un utilisateur (GET: données, POST: mise à jour)"""
+    """Éditer un utilisateur (GET: données JSON, POST: mise à jour)"""
     if not request.user.est_super_admin:
         return JsonResponse({'error': 'Permission refusée'}, status=403)
 
@@ -619,8 +711,7 @@ def user_edit(request, pk):
         return JsonResponse({'error': 'Utilisateur non trouvé'}, status=404)
 
     if request.method == 'GET':
-        # Retourner les données de l'utilisateur
-        data = {
+        return JsonResponse({
             'id': user.id,
             'prenom': user.prenom,
             'nom': user.nom,
@@ -630,6 +721,7 @@ def user_edit(request, pk):
             'date_naissance': user.date_naissance.isoformat() if user.date_naissance else None,
             'type_utilisateur': user.type_utilisateur,
             'matricule': user.matricule,
+            'nom_utilisateur': user.nom_utilisateur,
             'departement': user.departement,
             'poste': user.poste,
             'direction_id': user.direction_id,
@@ -638,60 +730,49 @@ def user_edit(request, pk):
             'adresse': user.adresse,
             'est_actif': user.est_actif,
             'est_verifie': user.est_verifie,
-        }
-        return JsonResponse(data)
+        })
 
     elif request.method == 'POST':
-        # Mettre à jour l'utilisateur
         try:
-            user.prenom = request.POST.get('prenom', user.prenom)
-            user.nom = request.POST.get('nom', user.nom)
-            user.telephone = request.POST.get('telephone', user.telephone)
-            user.genre = request.POST.get('genre', user.genre)
+            user.prenom          = request.POST.get('prenom', user.prenom)
+            user.nom             = request.POST.get('nom', user.nom)
+            user.telephone       = request.POST.get('telephone', user.telephone)
+            user.genre           = request.POST.get('genre', user.genre)
+            user.type_utilisateur = request.POST.get('type_utilisateur', user.type_utilisateur)
+            user.departement     = request.POST.get('departement', user.departement)
+            user.poste           = request.POST.get('poste', user.poste)
+            user.adresse         = request.POST.get('adresse', user.adresse)
+            user.est_actif       = request.POST.get('est_actif') == '1'
+            user.est_verifie     = request.POST.get('est_verifie') == '1'
 
-            # Date de naissance
+            # Matricule — met à jour le username si le matricule change
+            new_matricule = request.POST.get('matricule', '').strip() or None
+            if new_matricule and new_matricule != user.matricule:
+                if Utilisateur.objects.filter(matricule=new_matricule).exclude(pk=user.pk).exists():
+                    return JsonResponse({'error': 'Ce matricule est déjà utilisé'}, status=400)
+                user.matricule = new_matricule
+                user.nom_utilisateur = new_matricule  # Synchroniser le username
+
             date_naissance = request.POST.get('date_naissance')
             if date_naissance:
                 user.date_naissance = date_naissance
 
-            user.type_utilisateur = request.POST.get('type_utilisateur', user.type_utilisateur)
-            user.matricule = request.POST.get('matricule', user.matricule)
-            user.departement = request.POST.get('departement', user.departement)
-            user.poste = request.POST.get('poste', user.poste)
-            user.adresse = request.POST.get('adresse', user.adresse)
-            user.est_actif = request.POST.get('est_actif') == '1'
-            user.est_verifie = request.POST.get('est_verifie') == '1'
-
             # Relations
             direction_id = request.POST.get('direction')
-            if direction_id:
-                user.direction_id = direction_id
-            else:
-                user.direction = None
+            user.direction_id = direction_id if direction_id else None
 
             agence_id = request.POST.get('agence')
-            if agence_id:
-                user.agence_id = agence_id
-            else:
-                user.agence = None
+            user.agence_id = agence_id if agence_id else None
 
             restaurant_id = request.POST.get('restaurant_gere')
-            if restaurant_id:
-                user.restaurant_gere_id = restaurant_id
-            else:
-                user.restaurant_gere = None
+            user.restaurant_gere_id = restaurant_id if restaurant_id else None
 
-            # Photo de profil
             if request.FILES.get('photo_profil'):
                 user.photo_profil = request.FILES.get('photo_profil')
 
             user.save()
 
-            messages.success(request, f'Utilisateur {user.get_full_name()} mis à jour avec succès.')
-            return JsonResponse({
-                'success': True,
-                'message': 'Utilisateur mis à jour avec succès'
-            })
+            return JsonResponse({'success': True, 'message': f'{user.get_full_name()} mis à jour'})
 
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
@@ -740,7 +821,7 @@ def user_detail(request, pk):
         'annee_courante': timezone.now().year,
     }
 
-    return render(request, 'accounts/user_detail.html', context)
+    return render(request, 'accounts/modals/user_detail.html', context)
 
 
 # ============================================
@@ -920,7 +1001,6 @@ def direction_create(request):
             description=request.POST.get('description', ''),
             telephone=request.POST.get('telephone', ''),
             email=request.POST.get('email', ''),
-            est_active=request.POST.get('est_active') == '1',
         )
 
         if request.POST.get('directeur'):
@@ -1106,42 +1186,34 @@ def agence_create(request):
         return JsonResponse({'error': 'Permission refusée'}, status=403)
 
     try:
-        # Vérifier que le code n'existe pas déjà
-        if Agence.objects.filter(code=request.POST.get('code')).exists():
-            return JsonResponse({
-                'error': 'Une agence avec ce code existe déjà'
-            }, status=400)
+        code = request.POST.get('code', '').strip()
+        if not code:
+            return JsonResponse({'error': 'Le code est obligatoire'}, status=400)
+
+        if Agence.objects.filter(code=code).exists():
+            return JsonResponse({'error': 'Une agence avec ce code existe déjà'}, status=400)
 
         agence = Agence.objects.create(
-            nom=request.POST.get('nom'),
-            code=request.POST.get('code'),
+            nom=request.POST.get('nom', '').strip(),
+            code=code,
             type_agence=request.POST.get('type_agence', 'LOCALE'),
-            adresse=request.POST.get('adresse'),
-            ville=request.POST.get('ville'),
-            region=request.POST.get('region', ''),
-            code_postal=request.POST.get('code_postal', ''),
-            telephone=request.POST.get('telephone'),
-            email=request.POST.get('email', ''),
-            fax=request.POST.get('fax', ''),
-            capacite_max_employes=request.POST.get('capacite_max_employes') or None,
-            est_active=request.POST.get('est_active') == '1',
-            notes=request.POST.get('notes', ''),
+            adresse=request.POST.get('adresse', '').strip(),
+            ville=request.POST.get('ville', '').strip(),
+            region=request.POST.get('region', '') or '',
+            telephone=request.POST.get('telephone', '').strip(),
+            email=request.POST.get('email', '') or '',
         )
 
-        # Relations
         if request.POST.get('direction'):
             agence.direction_id = request.POST.get('direction')
-        if request.POST.get('agence_parente'):
-            agence.agence_parente_id = request.POST.get('agence_parente')
         if request.POST.get('responsable'):
             agence.responsable_id = request.POST.get('responsable')
 
         agence.save()
 
-        messages.success(request, f'Agence {agence.nom} créée avec succès.')
         return JsonResponse({
             'success': True,
-            'message': 'Agence créée avec succès',
+            'message': f'Agence {agence.nom} créée avec succès',
             'agence_id': agence.id
         })
 
@@ -1168,16 +1240,12 @@ def agence_edit(request, pk):
             'adresse': agence.adresse,
             'ville': agence.ville,
             'region': agence.region,
-            'code_postal': agence.code_postal,
             'telephone': agence.telephone,
             'email': agence.email,
-            'fax': agence.fax,
             'direction_id': agence.direction_id,
             'agence_parente_id': agence.agence_parente_id,
             'responsable_id': agence.responsable_id,
-            'capacite_max_employes': agence.capacite_max_employes,
             'est_active': agence.est_active,
-            'notes': agence.notes,
         }
         return JsonResponse(data)
 
@@ -1188,13 +1256,9 @@ def agence_edit(request, pk):
             agence.adresse = request.POST.get('adresse', agence.adresse)
             agence.ville = request.POST.get('ville', agence.ville)
             agence.region = request.POST.get('region', agence.region)
-            agence.code_postal = request.POST.get('code_postal', agence.code_postal)
             agence.telephone = request.POST.get('telephone', agence.telephone)
             agence.email = request.POST.get('email', agence.email)
-            agence.fax = request.POST.get('fax', agence.fax)
-            agence.capacite_max_employes = request.POST.get('capacite_max_employes') or None
             agence.est_active = request.POST.get('est_active') == '1'
-            agence.notes = request.POST.get('notes', agence.notes)
 
             # Relations
             direction_id = request.POST.get('direction')

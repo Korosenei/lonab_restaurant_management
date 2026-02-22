@@ -1,0 +1,297 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
+{% endblock %}
+
+{% block sidebar_menu %}{% include 'dashboards/sidebars/admin_sidebar.html' %}{% endblock %}
+
+{% block page_content %}
+<div id="page-urls"
+     data-create="{% url 'restaurants:restaurant_create' %}"
+     data-edit-base="{% url 'restaurants:restaurant_edit' pk=0 %}"
+     data-delete-base="{% url 'restaurants:restaurant_delete' pk=0 %}"
+     data-detail-base="{% url 'restaurants:restaurant_detail' pk=0 %}"
+     style="display:none;"></div>
+
+<div class="page-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+    <div>
+        <h1 style="font-size:22px;font-weight:700;color:var(--text-primary);margin:0;">
+            <i class="fas fa-utensils" style="color:var(--primary-green);margin-right:10px;"></i>Restaurants
+        </h1>
+        <p style="color:var(--text-muted);font-size:13px;margin:4px 0 0;">
+            {{ total }} restaurant(s) — {{ actifs }} actif(s)
+        </p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('restaurantModal')">
+        <i class="fas fa-plus"></i> Nouveau restaurant
+    </button>
+</div>
+
+<!-- Filtres -->
+<div class="card" style="padding:14px 16px;margin-bottom:18px;">
+    <form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+        <div style="flex:1;min-width:180px;">
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Recherche</label>
+            <div style="position:relative;">
+                <i class="fas fa-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;"></i>
+                <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Nom, code, ville..."
+                       style="padding:8px 8px 8px 32px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;width:100%;box-sizing:border-box;">
+            </div>
+        </div>
+        <div>
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Statut</label>
+            <select name="statut" style="padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;">
+                <option value="">Tous</option>
+                <option value="ACTIF" {% if request.GET.statut == 'ACTIF' %}selected{% endif %}>Actif</option>
+                <option value="INACTIF" {% if request.GET.statut == 'INACTIF' %}selected{% endif %}>Inactif</option>
+                <option value="SUSPENDU" {% if request.GET.statut == 'SUSPENDU' %}selected{% endif %}>Suspendu</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-secondary">Filtrer</button>
+        {% if request.GET.search or request.GET.statut %}
+        <a href="{% url 'restaurants:list' %}" class="btn" style="background:var(--light-green);color:var(--primary-green);">Reset</a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Tableau -->
+<div class="card" style="overflow:hidden;">
+    <table id="restTable" style="width:100%;border-collapse:collapse;">
+        <thead>
+            <tr style="background:var(--bg-light);border-bottom:2px solid var(--border-color);">
+                <th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Restaurant</th>
+                <th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Contact</th>
+                <th style="padding:12px 16px;text-align:center;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Plannings</th>
+                <th style="padding:12px 16px;text-align:center;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Statut</th>
+                <th style="padding:12px 16px;text-align:right;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in restaurants %}
+            <tr style="border-bottom:1px solid var(--border-color);"
+                onmouseover="this.style.background='var(--bg-light)'" onmouseout="this.style.background=''">
+                <td style="padding:14px 16px;">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        {% if r.logo %}
+                        <img src="{{ r.logo.url }}" alt="" style="width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0;">
+                        {% else %}
+                        <div style="width:40px;height:40px;border-radius:8px;background:var(--light-green);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i class="fas fa-utensils" style="color:var(--primary-green);font-size:16px;"></i>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <div style="font-weight:600;color:var(--text-primary);">{{ r.nom }}</div>
+                            <div style="font-size:12px;color:var(--text-muted);">{{ r.code }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="padding:14px 16px;">
+                    <div style="font-size:13px;color:var(--text-secondary);">{{ r.ville }}</div>
+                    <div style="font-size:12px;color:var(--text-muted);">{{ r.telephone }}</div>
+                </td>
+                <td style="padding:14px 16px;text-align:center;font-weight:600;color:var(--primary-green);">{{ r.nb_plannings }}</td>
+                <td style="padding:14px 16px;text-align:center;">
+                    {% if r.statut == 'ACTIF' %}
+                        <span class="badge badge-success">Actif</span>
+                    {% elif r.statut == 'SUSPENDU' %}
+                        <span class="badge badge-warning">Suspendu</span>
+                    {% else %}
+                        <span class="badge badge-danger">Inactif</span>
+                    {% endif %}
+                </td>
+                <td style="padding:14px 16px;text-align:right;">
+                    <div style="display:flex;gap:6px;justify-content:flex-end;">
+                        <button onclick="voirDetail({{ r.id }})" class="btn-icon" title="Détail"><i class="fas fa-eye"></i></button>
+                        <button onclick="editRestaurant({{ r.id }})" class="btn-icon" title="Modifier"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteRestaurant({{ r.id }},'{{ r.nom|escapejs }}')" class="btn-icon btn-icon-danger" title="Supprimer"><i class="fas fa-trash"></i></button>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align:center;padding:48px;color:var(--text-muted);">
+                    <i class="fas fa-utensils" style="font-size:32px;margin-bottom:12px;display:block;opacity:.3;"></i>
+                    Aucun restaurant — <button class="btn btn-primary" style="margin-left:8px;" onclick="openModal('restaurantModal')">Créer le premier</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- ═══ MODAL Restaurant (PAS de style="display:none" sur l'overlay !) ═══ -->
+<div class="modal-overlay" id="restaurantModal">
+    <div class="modal" style="max-width:580px;width:100%;">
+        <div class="modal-header">
+            <h3 class="modal-title" id="restaurantModalTitle" data-default-title="Nouveau restaurant">Nouveau restaurant</h3>
+            <button class="modal-close" onclick="closeModal('restaurantModal')"><i class="fas fa-times"></i></button>
+        </div>
+        <form id="restaurantForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" id="r_id" name="r_id">
+            <div class="modal-body" style="padding:20px;max-height:65vh;overflow-y:auto;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Nom <span style="color:red">*</span></label>
+                        <input type="text" id="r_nom" name="nom" class="form-control" required placeholder="Ex: Restaurant Central">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Code unique <span style="color:red">*</span></label>
+                        <input type="text" id="r_code" name="code" class="form-control" required placeholder="Ex: REST-001" style="text-transform:uppercase;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Statut</label>
+                        <select id="r_statut" name="statut" class="form-control">
+                            <option value="ACTIF">Actif</option>
+                            <option value="INACTIF">Inactif</option>
+                            <option value="SUSPENDU">Suspendu</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Description</label>
+                        <textarea id="r_description" name="description" class="form-control" rows="2" placeholder="Description..."></textarea>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Adresse <span style="color:red">*</span></label>
+                        <input type="text" id="r_adresse" name="adresse" class="form-control" required placeholder="Adresse complète">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Ville <span style="color:red">*</span></label>
+                        <input type="text" id="r_ville" name="ville" class="form-control" required placeholder="Ex: Ouagadougou">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Téléphone <span style="color:red">*</span></label>
+                        <input type="text" id="r_telephone" name="telephone" class="form-control" required placeholder="+226 XX XX XX XX">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="r_email" name="email" class="form-control" placeholder="contact@restaurant.bf">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Logo</label>
+                        <input type="file" id="r_logo" name="logo" class="form-control" accept="image/*" onchange="previewFile(this,'logo_preview')">
+                        <img id="logo_preview" src="" alt="Logo" style="display:none;width:60px;height:60px;border-radius:8px;object-fit:cover;margin-top:8px;">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding:14px 20px;border-top:1px solid var(--border-color);display:flex;gap:10px;justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('restaurantModal')">Annuler</button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% include 'restaurants/modals/restaurant_detail.html' %}
+
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{% static 'js/components.js' %}"></script>
+<script>
+var urls = document.getElementById('page-urls').dataset;
+
+function previewFile(input, previewId) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var p = document.getElementById(previewId);
+            p.src = e.target.result; p.style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function editRestaurant(id) {
+    fetch(urls.editBase.replace('/0/', '/' + id + '/'))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            document.getElementById('r_id').value          = id;
+            document.getElementById('r_nom').value         = d.nom;
+            document.getElementById('r_code').value        = d.code;
+            document.getElementById('r_code').readOnly     = true;
+            document.getElementById('r_description').value = d.description;
+            document.getElementById('r_adresse').value     = d.adresse;
+            document.getElementById('r_ville').value       = d.ville;
+            document.getElementById('r_telephone').value   = d.telephone;
+            document.getElementById('r_email').value       = d.email;
+            document.getElementById('r_statut').value      = d.statut;
+            document.getElementById('restaurantModalTitle').textContent = 'Modifier — ' + d.nom;
+            if (d.logo_url) {
+                document.getElementById('logo_preview').src = d.logo_url;
+                document.getElementById('logo_preview').style.display = 'block';
+            }
+            openModal('restaurantModal');
+        });
+}
+
+function voirDetail(id) {
+    _currentRestoId = id;
+    fetch(urls.detailBase.replace('/0/', '/' + id + '/'))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            document.getElementById('d_nom').textContent = d.nom;
+            document.getElementById('d_code').textContent = d.code;
+            document.getElementById('d_ville').textContent = d.ville || '—';
+            document.getElementById('d_tel').textContent = d.telephone || '—';
+            document.getElementById('d_email').textContent = d.email || '—';
+            document.getElementById('d_tickets').textContent = d.tickets_mois;
+            document.getElementById('d_menus').textContent = d.nb_menus;
+            document.getElementById('d_plannings').textContent = d.nb_plannings_actifs;
+            /* Statut badge */
+            var s = d.statut;
+            var cls = s === 'ACTIF' ? 'badge-success' : s === 'SUSPENDU' ? 'badge-warning' : 'badge-danger';
+            var labels = { ACTIF: 'Actif', INACTIF: 'Inactif', SUSPENDU: 'Suspendu' };
+            document.getElementById('d_statut_badge').innerHTML = '<span class="badge ' + cls + '">' + (labels[s] || s) + '</span>';
+            /* Agences */
+            var agDiv = document.getElementById('d_agences');
+            if (d.agences && d.agences.length) {
+                agDiv.innerHTML = d.agences.map(function(a) {
+                    return '<span class="badge badge-info" style="font-size:11px;">' + a.agence__nom + '</span>';
+                }).join('');
+            } else {
+                agDiv.innerHTML = '<span style="color:var(--text-muted);font-size:12px;">Aucun planning actif</span>';
+            }
+            openModal('restaurantDetailModal');
+        }).catch(function() { showError('Erreur de chargement'); });
+}
+
+function deleteRestaurant(id, nom) {
+    showConfirm('Supprimer « ' + nom + ' » ?', 'Cette action est irréversible. Tous les plannings associés seront supprimés.', function() {
+        fetch(urls.deleteBase.replace('/0/', '/' + id + '/'), {
+            method: 'POST', headers: {'X-CSRFToken': getCsrfToken()},
+        }).then(function(r) { return r.json(); }).then(function(d) {
+            if (d.success) { showToast(d.message, 'success'); setTimeout(function() { location.reload(); }, 1000); }
+            else showToast(d.error, 'error');
+        });
+    });
+}
+
+document.getElementById('restaurantForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var id  = document.getElementById('r_id').value;
+    var url = id ? urls.editBase.replace('/0/', '/' + id + '/') : urls.create;
+    fetch(url, { method: 'POST', headers: {'X-CSRFToken': getCsrfToken()}, body: new FormData(this) })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.success) {
+                showToast(d.message, 'success');
+                closeModal('restaurantModal');
+                setTimeout(function() { location.reload(); }, 900);
+            } else showToast(d.error, 'error');
+        });
+});
+
+// Reset code readonly on close
+document.getElementById('restaurantModal').addEventListener('click', function() {});
+function resetRestaurantForm() {
+    document.getElementById('r_id').value = '';
+    document.getElementById('r_code').readOnly = false;
+    document.getElementById('logo_preview').style.display = 'none';
+    document.getElementById('restaurantModalTitle').textContent = 'Nouveau restaurant';
+}
+var origClose = closeModal;
+</script>
+{% endblock %}

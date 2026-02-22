@@ -16,6 +16,10 @@ urlpatterns = [
 
     # Authentication et Dashboard
     path('', include('apps.accounts.urls')),
+    path('accounts/', include('apps.accounts.urls')),
+    path('restaurants/', include('apps.restaurants.urls')),
+    path('transactions/', include('apps.transactions.urls')),
+    path('tickets/', include('apps.tickets.urls')),
 
     # API Authentication
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

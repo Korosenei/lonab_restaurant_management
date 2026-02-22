@@ -1,0 +1,216 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Mon QR Code{% endblock %}
+{% block sidebar_menu %}{% include 'dashboards/sidebars/client_sidebar.html' %}{% endblock %}
+
+{% block page_content %}
+<div id="page-urls"
+     data-generer-url="{% url 'tickets:generer_qrcode' %}"
+     style="display:none;"></div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <h1 class="page-title" style="margin:0;"><i class="fas fa-qrcode" style="color:var(--primary-green);margin-right:8px;"></i>Mon QR Code</h1>
+    <a href="{% url 'tickets:client_tickets' %}" class="btn btn-outline">
+        <i class="fas fa-ticket-alt"></i> Mes tickets ({{ tickets_valides }})
+    </a>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start;">
+
+    <!-- QR CODE ACTIF -->
+    <div style="background:white;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.08);overflow:hidden;">
+
+        {% if tickets_valides == 0 %}
+        <!-- Pas de tickets -->
+        <div style="padding:48px 24px;text-align:center;">
+            <div style="width:120px;height:120px;border-radius:16px;background:#fff8e1;border:2px dashed #ffe082;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+                <i class="fas fa-exclamation-triangle" style="font-size:48px;color:#f59e0b;"></i>
+            </div>
+            <h2 style="font-size:18px;font-weight:800;color:#2d3748;margin:0 0 8px;">Aucun ticket disponible</h2>
+            <p style="color:#6c757d;font-size:14px;margin:0 0 20px;">Vous devez avoir des tickets valides pour générer un QR code.</p>
+            <p style="font-size:13px;color:#adb5bd;">Contactez votre caissier pour acquérir des tickets ce mois.</p>
+        </div>
+
+        {% elif qr_actif %}
+        <!-- QR CODE VALIDE -->
+        <div style="background:linear-gradient(135deg,#1a5c2e,#28a745);padding:24px;text-align:center;color:white;">
+            <div style="font-size:13px;opacity:.85;margin-bottom:4px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;">QR Code actif</div>
+            <div id="timerDisplay" style="font-size:36px;font-weight:900;letter-spacing:2px;">--:--</div>
+            <div style="font-size:12px;opacity:.75;margin-top:4px;">Expire dans</div>
+        </div>
+
+        <div style="padding:24px;text-align:center;">
+            <!-- Image QR -->
+            <div style="width:220px;height:220px;margin:0 auto 16px;border-radius:12px;border:3px solid #e9ecef;padding:10px;background:white;box-shadow:0 2px 12px rgba(0,0,0,.1);">
+                {% if qr_actif.image_qr %}
+                <img src="{{ qr_actif.image_qr.url }}" alt="QR Code" id="qrImage" style="width:100%;height:100%;object-fit:contain;">
+                {% else %}
+                <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#adb5bd;">
+                    <i class="fas fa-qrcode" style="font-size:80px;"></i>
+                </div>
+                {% endif %}
+            </div>
+
+            <p style="font-size:12px;color:#6c757d;margin:0 0 20px;">Présentez ce QR code au gestionnaire du restaurant pour valider votre ticket</p>
+
+            <!-- Code texte (fallback) -->
+            <div style="background:#f8f9fa;border-radius:8px;padding:10px 14px;margin-bottom:20px;font-family:monospace;font-size:10px;color:#6c757d;word-break:break-all;">
+                {{ qr_actif.code|slice:":32" }}...
+            </div>
+
+            <button onclick="regenererQR()" class="btn btn-outline" style="width:100%;">
+                <i class="fas fa-sync-alt"></i> Régénérer un nouveau QR Code
+            </button>
+        </div>
+
+        {% else %}
+        <!-- PAS DE QR ACTIF — GÉNÉRER -->
+        <div style="padding:32px 24px;text-align:center;">
+            <div id="qrZone">
+                <div style="width:160px;height:160px;border-radius:16px;background:#f8f9fa;border:2px dashed #dee2e6;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+                    <i class="fas fa-qrcode" style="font-size:64px;color:#adb5bd;"></i>
+                </div>
+                <h2 style="font-size:17px;font-weight:800;color:#2d3748;margin:0 0 8px;">Aucun QR Code actif</h2>
+                <p style="color:#6c757d;font-size:13px;margin:0 0 24px;">Générez votre QR code pour accéder au restaurant avec vos {{ tickets_valides }} ticket(s) valide(s).</p>
+            </div>
+            <div id="newQrResult" style="display:none;margin-bottom:20px;text-align:center;">
+                <img id="newQrImg" src="" alt="QR Code" style="width:200px;height:200px;border-radius:12px;border:3px solid #e9ecef;padding:8px;background:white;">
+                <div id="newQrTimer" style="margin-top:12px;font-size:32px;font-weight:900;color:var(--primary-green);">--:--</div>
+                <div style="font-size:12px;color:#6c757d;">Expire dans</div>
+            </div>
+            <button id="btnGenerer" onclick="genererQR()" class="btn btn-primary" style="width:100%;padding:14px;font-size:15px;font-weight:800;">
+                <i class="fas fa-qrcode"></i> Générer mon QR Code
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- SIDEBAR INFO + HISTORIQUE -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+        <!-- Info tickets -->
+        <div style="background:white;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:16px;">
+            <div style="font-size:13px;font-weight:800;color:#2d3748;margin-bottom:12px;"><i class="fas fa-info-circle" style="color:var(--primary-green);margin-right:6px;"></i>Informations</div>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:#6c757d;">
+                <div style="display:flex;justify-content:space-between;">
+                    <span>Tickets valides</span>
+                    <span style="font-weight:700;color:{% if tickets_valides > 0 %}var(--primary-green){% else %}#dc3545{% endif %};">{{ tickets_valides }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;">
+                    <span>Durée validité QR</span>
+                    <span style="font-weight:700;">{{ qr_expiry_minutes|default:30 }} min</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;">
+                    <span>Utilisation</span>
+                    <span style="font-weight:700;">1 repas / QR code</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historique QR -->
+        <div style="background:white;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden;">
+            <div style="padding:12px 16px;border-bottom:1px solid #f0f0f0;font-size:13px;font-weight:800;color:#2d3748;">
+                <i class="fas fa-history" style="color:var(--primary-green);margin-right:6px;"></i>Historique QR
+            </div>
+            {% for qr in historique_qr %}
+            <div style="padding:10px 14px;border-bottom:1px solid #f0f0f0;font-size:11px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="color:#6c757d;">{{ qr.date_creation|date:"d/m/Y H:i" }}</span>
+                    {% if qr.est_utilise %}
+                    <span style="background:#e3f2fd;color:#1976d2;padding:1px 7px;border-radius:8px;font-weight:700;">Utilisé</span>
+                    {% elif not qr.est_valide %}
+                    <span style="background:#f8f9fa;color:#adb5bd;padding:1px 7px;border-radius:8px;font-weight:700;">Expiré</span>
+                    {% else %}
+                    <span style="background:#e8f5e9;color:#28a745;padding:1px 7px;border-radius:8px;font-weight:700;">Actif</span>
+                    {% endif %}
+                </div>
+                {% if qr.est_utilise and qr.utilise_par_restaurant %}
+                <div style="color:#adb5bd;margin-top:2px;">{{ qr.utilise_par_restaurant.nom }}</div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div style="padding:20px;text-align:center;color:#adb5bd;font-size:12px;">Aucun QR code généré</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+var urls = document.getElementById('page-urls').dataset;
+
+{% if qr_actif %}
+// Timer pour QR actif
+var expiry = new Date("{{ qr_actif.expire_le|date:'c' }}");
+var timerEl = document.getElementById('timerDisplay');
+
+function majTimer() {
+    var now  = new Date();
+    var diff = Math.max(0, Math.floor((expiry - now) / 1000));
+    if (diff === 0) {
+        timerEl.textContent = 'Expiré';
+        timerEl.style.color = '#ffcdd2';
+        return;
+    }
+    var m = Math.floor(diff / 60), s = diff % 60;
+    timerEl.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    // Couleur rouge si <2 min
+    if (diff < 120) timerEl.style.color = '#ffcdd2';
+}
+majTimer();
+setInterval(majTimer, 1000);
+
+function regenererQR() {
+    showConfirm('Régénérer un QR Code ?',
+        'L\'ancien QR code sera invalidé immédiatement. Un nouveau sera créé.',
+        function() { genererQRApi(); },
+        'Régénérer');
+}
+{% endif %}
+
+var newExpiry = null;
+var newTimerInterval = null;
+
+function genererQR() {
+    var btn = document.getElementById('btnGenerer');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Génération...';
+    genererQRApi();
+}
+
+function genererQRApi() {
+    fetch(urls.genererUrl, { method:'POST', headers:{'X-CSRFToken':getCsrfToken()} })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.success) {
+                showToast(d.message, 'success');
+                // Si image dispo, afficher
+                if (d.image_url) {
+                    var zone = document.getElementById('qrZone');
+                    var res  = document.getElementById('newQrResult');
+                    var img  = document.getElementById('newQrImg');
+                    if (zone) zone.style.display = 'none';
+                    if (res)  { res.style.display = 'block'; img.src = d.image_url; }
+                    // Timer
+                    newExpiry = new Date(d.expire_le);
+                    if (newTimerInterval) clearInterval(newTimerInterval);
+                    newTimerInterval = setInterval(function() {
+                        var diff = Math.max(0, Math.floor((newExpiry - new Date()) / 1000));
+                        var el   = document.getElementById('newQrTimer');
+                        if (el) el.textContent = Math.floor(diff/60) + ':' + String(diff%60).padStart(2,'0');
+                    }, 1000);
+                } else {
+                    // Recharger la page pour afficher le QR
+                    setTimeout(function() { location.reload(); }, 800);
+                }
+            } else {
+                showToast(d.error, 'error');
+                var btn = document.getElementById('btnGenerer');
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-qrcode"></i> Générer mon QR Code'; }
+            }
+        });
+}
+</script>
+{% endblock %}

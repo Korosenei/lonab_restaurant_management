@@ -1,0 +1,73 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block dashboard_css %}<link rel="stylesheet" href="{% static 'css/components.css' %}">{% endblock %}
+{% block sidebar_menu %}{% include 'dashboards/sidebars/admin_sidebar.html' %}{% endblock %}
+
+{% block page_content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+    <h1 style="font-size:22px;font-weight:700;color:var(--text-primary);margin:0;">
+        <i class="fas fa-chart-line" style="color:var(--primary-green);margin-right:10px;"></i>Statistiques
+    </h1>
+    <a href="{% url 'transactions:transactions_list' %}" class="btn btn-secondary">Voir les transactions</a>
+</div>
+
+<!-- Stats -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px;">
+    <div class="card" style="padding:20px;text-align:center;">
+        <div style="font-size:36px;font-weight:800;color:var(--primary-green);">{{ stats.tickets_mois }}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Tickets vendus ce mois</div>
+    </div>
+    <div class="card" style="padding:20px;text-align:center;">
+        <div style="font-size:28px;font-weight:800;color:#f59e0b;">{{ stats.ca_mois|floatformat:0 }}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">FCFA encaissés ce mois</div>
+    </div>
+    <div class="card" style="padding:20px;text-align:center;">
+        <div style="font-size:36px;font-weight:800;color:#2196f3;">{{ stats.transactions_semaine }}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Transactions cette semaine</div>
+    </div>
+    <div class="card" style="padding:20px;text-align:center;">
+        <div style="font-size:36px;font-weight:800;color:var(--primary-green);">{{ stats.consommations_mois }}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Repas servis ce mois</div>
+    </div>
+</div>
+
+<!-- Graphique ventes 30 jours -->
+<div class="card" style="padding:20px;margin-bottom:20px;">
+    <h3 style="font-size:15px;font-weight:700;margin:0 0 16px;">Tickets vendus — 30 derniers jours</h3>
+    <div style="position:relative;height:200px;overflow:hidden;">
+        <canvas id="ventesChart" style="width:100%;height:200px;"></canvas>
+    </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{% static 'js/components.js' %}"></script>
+<script>
+var data = {{ ventes_jour|safe }};
+
+// Simple bar chart without Chart.js dependency
+var canvas = document.getElementById('ventesChart');
+var ctx    = canvas.getContext('2d');
+canvas.width  = canvas.parentElement.offsetWidth;
+canvas.height = 200;
+
+var max    = Math.max.apply(null, data.map(function(d) { return d.tickets; })) || 1;
+var barW   = Math.floor(canvas.width / data.length) - 2;
+var green  = '#28a745';
+var lightG = '#e8f5e9';
+
+data.forEach(function(d, i) {
+    var x   = i * (canvas.width / data.length);
+    var h   = Math.round((d.tickets / max) * 160);
+    var y   = 190 - h;
+    ctx.fillStyle = green;
+    ctx.fillRect(x + 1, y, barW, h);
+    if (i % 7 === 0) {
+        ctx.fillStyle = '#6c757d';
+        ctx.font = '9px sans-serif';
+        ctx.fillText(d.date, x, 199);
+    }
+});
+</script>
+{% endblock %}

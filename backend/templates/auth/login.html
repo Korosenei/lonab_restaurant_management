@@ -42,28 +42,28 @@
             </div>
 
             {% if messages %}
-                {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">
-                    <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
-                    {{ message }}
-                </div>
-                {% endfor %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
+                {{ message }}
+            </div>
+            {% endfor %}
             {% endif %}
 
             <form method="post" action="{% url 'accounts:login' %}" class="auth-form" id="loginForm">
                 {% csrf_token %}
 
                 <div class="form-group">
-                    <label for="email" class="form-label">Adresse email</label>
+                    <label for="email" class="form-label">Email ou nom d'utilisateur</label>
                     <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        class="form-control"
-                        placeholder="votre.email@lonab.com"
-                        required
-                        autocomplete="email"
-                        value="{{ request.POST.email }}"
+                            type="text"
+                            id="email"
+                            name="email"
+                            class="form-control"
+                            placeholder="email@lonab.bf  ou  matricule"
+                            required
+                            autocomplete="username"
+                            value="{{ request.POST.email }}"
                     >
                 </div>
 
@@ -71,13 +71,13 @@
                     <label for="password" class="form-label">Mot de passe</label>
                     <div class="password-toggle">
                         <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            class="form-control"
-                            placeholder="••••••••"
-                            required
-                            autocomplete="current-password"
+                                type="password"
+                                id="password"
+                                name="password"
+                                class="form-control"
+                                placeholder="••••••••"
+                                required
+                                autocomplete="current-password"
                         >
                         <button type="button" class="password-toggle-btn" onclick="togglePassword()">
                             <i class="fas fa-eye" id="toggleIcon"></i>
@@ -114,36 +114,36 @@
 
 {% block extra_js %}
 <script>
-function togglePassword() {
-    const passwordInput = document.getElementById('password');
-    const toggleIcon = document.getElementById('toggleIcon');
+    function togglePassword() {
+        const passwordInput = document.getElementById('password');
+        const toggleIcon = document.getElementById('toggleIcon');
 
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        toggleIcon.classList.remove('fa-eye');
-        toggleIcon.classList.add('fa-eye-slash');
-    } else {
-        passwordInput.type = 'password';
-        toggleIcon.classList.remove('fa-eye-slash');
-        toggleIcon.classList.add('fa-eye');
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.classList.remove('fa-eye');
+            toggleIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.classList.remove('fa-eye-slash');
+            toggleIcon.classList.add('fa-eye');
+        }
     }
-}
 
-// Form submission handling
-document.getElementById('loginForm').addEventListener('submit', function(e) {
-    const loadingSpinner = document.getElementById('loadingSpinner');
-    loadingSpinner.classList.add('active');
-});
-
-// Auto-hide alerts after 5 seconds
-document.addEventListener('DOMContentLoaded', function() {
-    const alerts = document.querySelectorAll('.alert');
-    alerts.forEach(alert => {
-        setTimeout(() => {
-            alert.style.opacity = '0';
-            setTimeout(() => alert.remove(), 300);
-        }, 5000);
+    // Form submission handling
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        loadingSpinner.classList.add('active');
     });
-});
+
+    // Auto-hide alerts after 5 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            setTimeout(() => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 300);
+            }, 5000);
+        });
+    });
 </script>
 {% endblock %}

@@ -1,11 +1,8 @@
-"""
-Django settings for LONAB Restaurant Management project.
-CORRIGÉ : Ajout des configurations CSRF et Session
-"""
 
 from pathlib import Path
 from datetime import timedelta
 from decouple import config
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,7 +18,10 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-5+fpf9be1n1z68k^q^89=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = config(
+    'ALLOWED_HOSTS',
+    default='localhost,127.0.0.1,.onrender.com'
+).split(',')
 
 
 # Application definition
@@ -44,21 +44,20 @@ INSTALLED_APPS = [
     # Local apps
     'apps.accounts',
     'apps.notifs',
-    'apps.qrcodes',
     'apps.restaurants',
     'apps.settings',
-    'apps.structures',
     'apps.tickets',
     'apps.transactions',
 ]
 
-# CORRECTION: Ordre des middlewares crucial pour CSRF
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',  # DOIT être AVANT CsrfViewMiddleware
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',  # DOIT être APRÈS SessionMiddleware
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -86,15 +85,23 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 
 # Database
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': config('DB_NAME', default='lonab_restaurant_db'),
+#         'USER': config('DB_USER', default='postgres'),
+#         'PASSWORD': config('DB_PASSWORD', default='admin'),
+#         'HOST': config('DB_HOST', default='localhost'),
+#         'PORT': config('DB_PORT', default='5432'),
+#     }
+# }
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME', default='lonab_restaurant_db'),
-        'USER': config('DB_USER', default='postgres'),
-        'PASSWORD': config('DB_PASSWORD', default='admin'),
-        'HOST': config('DB_HOST', default='localhost'),
-        'PORT': config('DB_PORT', default='5432'),
-    }
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL'),
+        conn_max_age=600,
+        ssl_require=not DEBUG
+    )
 }
 
 # Custom User Model
@@ -104,9 +111,11 @@ AUTH_USER_MODEL = 'accounts.Utilisateur'
 # AUTHENTICATION BACKENDS
 # ==========================================
 AUTHENTICATION_BACKENDS = [
+    'apps.accounts.views.EmailOrUsernameBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
 
+SITE_URL = config('SITE_URL', default='http://localhost:8000')
 # ==========================================
 # AUTHENTICATION URLs
 # ==========================================
@@ -126,6 +135,7 @@ CSRF_COOKIE_AGE = 31449600  # 1 an
 
 # CSRF Trusted Origins - CRUCIAL pour éviter les erreurs CSRF
 CSRF_TRUSTED_ORIGINS = [
+    "https://*.onrender.com",
     'http://localhost:8000',
     'http://127.0.0.1:8000',
     'http://localhost:3000',

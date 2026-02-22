@@ -1,0 +1,94 @@
+<!-- Direction Form Modal -->
+<div class="modal-overlay" id="directionFormModal">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="fas fa-sitemap"></i>
+                <span id="directionModalTitle" data-default-title="Nouvelle direction">Nouvelle direction</span>
+            </div>
+            <button class="modal-close" type="button" onclick="closeModal('directionFormModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form id="directionForm">
+            {% csrf_token %}
+            <input type="hidden" id="direction_id" name="id">
+
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Nom <span>*</span></label>
+                        <input type="text" id="dir_nom" name="nom" class="form-control" required placeholder="Direction des...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Code <span>*</span></label>
+                        <input type="text" id="dir_code" name="code" class="form-control" required placeholder="DRH, DAF...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Téléphone</label>
+                        <input type="tel" id="dir_telephone" name="telephone" class="form-control" placeholder="+226 XX XX XX XX">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="dir_email" name="email" class="form-control" placeholder="direction@lonab.bf">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Directeur</label>
+                        <select id="dir_directeur" name="directeur" class="form-control">
+                            <option value="">Aucun</option>
+                            {% for admin in utilisateurs %}
+                            <option value="{{ admin.id }}">{{ admin.get_full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group form-grid-full">
+                        <label class="form-label">Description</label>
+                        <textarea id="dir_description" name="description" class="form-control" rows="2" placeholder="Description de la direction..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('directionFormModal')">
+                    <i class="fas fa-times"></i> Annuler
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('directionForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const dirId = document.getElementById('direction_id').value;
+    const isEdit = !!dirId;
+    const url = isEdit ? `/accounts/directions/${dirId}/edit/` : `/accounts/directions/create/`;
+
+    const btn = this.querySelector('[type="submit"]');
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
+
+    fetch(url, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        body: new FormData(this),
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false; btn.innerHTML = orig;
+        if (data.success) {
+            showToast(data.message || 'Direction enregistrée', 'success');
+            closeModal('directionFormModal');
+            setTimeout(() => window.location.reload(), 700);
+        } else {
+            showToast(data.error || 'Erreur', 'error');
+        }
+    })
+    .catch(() => { btn.disabled = false; btn.innerHTML = orig; showToast('Erreur réseau', 'error'); });
+});
+</script>

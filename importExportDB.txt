@@ -1,0 +1,14 @@
+PowerShell 
+
+Pour exporter la base de données:
+
+& "C:\Program Files\PostgreSQL\15\bin\pg_dump.exe" -U postgres -h localhost -p 5432 -d lonab_restaurant_db -F p -f "C:\Users\$env:USERNAME\Documents\lonab_restaurant_db.sql"
+
+
+Importer le fichier lonab_restaurant_db.sql
+
+Étape 1 : Créer une base de données vide : 
+& "C:\Program Files\PostgreSQL\15\bin\createdb.exe" -U postgres -h localhost -p 5432 lonab_restaurant_db
+
+Étape 2 : Importer le fichier lonab_restaurant_db.sql dans cette base
+& "C:\Program Files\PostgreSQL\15\bin\psql.exe" -U postgres -h localhost -p 5432 -d lonab_restaurant_db -f "C:\Users\$env:USERNAME\Documents\lonab_restaurant_db.sql"

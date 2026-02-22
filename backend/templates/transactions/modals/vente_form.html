@@ -1,0 +1,149 @@
+<div class="modal-overlay" id="venteModal">
+    <div class="modal" style="max-width:640px;width:100%;">
+
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="fas fa-ticket-alt"></i>
+                <span id="venteModalTitle" data-default-title="Vente de tickets">Vente de tickets</span>
+            </div>
+            <button class="modal-close" type="button" onclick="closeModal('venteModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="modal-body" style="padding:20px;max-height:70vh;overflow-y:auto;">
+
+            <!-- Validité du mois -->
+            <div style="background:var(--light-green);border-radius:8px;padding:10px 14px;margin-bottom:18px;font-size:13px;color:var(--primary-green);font-weight:600;">
+                <i class="fas fa-calendar-check"></i>
+                Tickets valides du {{ debut_mois|date:"d/m/Y" }} au {{ fin_mois|date:"d/m/Y" }}
+            </div>
+
+            <!-- Grille 2 colonnes -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+                <!-- ── Ligne 1 col 1 : Client ── -->
+                <div class="form-group">
+                    <label class="form-label">Client <span>*</span></label>
+                    <div style="position:relative;">
+                        <i class="fas fa-search"
+                           style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);z-index:1;"></i>
+                        <input type="text" id="clientSearch" class="form-control"
+                               placeholder="Rechercher par nom ou matricule..."
+                               style="padding-left:33px;"
+                               oninput="filtrerClients(this.value)" autocomplete="off">
+                    </div>
+                    <div id="clientList"
+                         style="max-height:160px;overflow-y:auto;border:1px solid var(--border-color);border-radius:6px;margin-top:6px;">
+                        {% for c in clients %}
+                        <div class="client-row"
+                             data-id="{{ c.id }}"
+                             data-nom="{{ c.get_full_name|escapejs }}"
+                             data-matricule="{{ c.matricule|default:''|escapejs }}"
+                             data-search="{{ c.prenom|lower }} {{ c.nom|lower }} {{ c.matricule|lower|default:'' }}"
+                             data-eligible="{{ c.eligible|default:True|yesno:'true,false' }}"
+                             onclick="selectClient(this)"
+                             style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border-color);transition:.1s;">
+                            <div style="width:30px;height:30px;border-radius:50%;background:var(--light-green);
+                                        display:flex;align-items:center;justify-content:center;
+                                        font-weight:700;color:var(--primary-green);font-size:11px;flex-shrink:0;">
+                                {{ c.prenom.0 }}{{ c.nom.0 }}
+                            </div>
+                            <div style="flex:1;">
+                                <div style="font-size:13px;font-weight:600;">{{ c.get_full_name }}</div>
+                                <div style="font-size:11px;color:var(--text-muted);">
+                                    {{ c.matricule|default:"—" }} · {{ c.agence.nom|default:"—" }}
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">
+                            Aucun client disponible
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" id="clientId">
+                    <div id="clientSelected"
+                         style="display:none;margin-top:8px;padding:8px 12px;background:var(--light-green);
+                                border-radius:6px;font-size:13px;color:var(--primary-green);font-weight:600;">
+                        <i class="fas fa-user-check"></i> <span id="clientSelectedName"></span>
+                    </div>
+                </div>
+
+                <!-- ── Ligne 1 col 2 : Mode de paiement ── -->
+                <div class="form-group">
+                    <label class="form-label">Mode de paiement</label>
+                    <input type="text" value="Espèces" class="form-control" readonly
+                           style="background:var(--bg-light);color:var(--text-muted);">
+                    <div class="form-helper">
+                        <i class="fas fa-info-circle"></i> Paiement en espèces uniquement
+                    </div>
+                </div>
+
+                <!-- ── Ligne 2 col 1 : Nombre de tickets ── -->
+                <div class="form-group">
+                    <label class="form-label">Nombre de tickets <span>*</span></label>
+                    <input type="number" id="nbTickets"
+                           class="form-control"
+                           value="{{ max_tickets|default:22 }}"
+                           min="{{ min_tickets|default:1 }}"
+                           max="{{ max_tickets|default:22 }}"
+                           style="font-size:18px;font-weight:700;text-align:center;"
+                           oninput="majRecap()">
+                    <div style="display:flex;gap:6px;margin-top:6px;">
+                        <button type="button" onclick="setNb(5)"
+                                style="flex:1;padding:5px;border:1px solid var(--border-color);border-radius:4px;background:white;font-size:12px;cursor:pointer;font-weight:600;">5</button>
+                        <button type="button" onclick="setNb(10)"
+                                style="flex:1;padding:5px;border:1px solid var(--border-color);border-radius:4px;background:white;font-size:12px;cursor:pointer;font-weight:600;">10</button>
+                        <button type="button" onclick="setNb(15)"
+                                style="flex:1;padding:5px;border:1px solid var(--border-color);border-radius:4px;background:white;font-size:12px;cursor:pointer;font-weight:600;">15</button>
+                        <button type="button" onclick="setNb({{ max_tickets|default:22 }})"
+                                style="flex:1;padding:5px;border:1px solid var(--border-color);border-radius:4px;background:white;font-size:12px;cursor:pointer;font-weight:600;">{{ max_tickets|default:22 }}</button>
+                    </div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">
+                        Min {{ min_tickets|default:1 }} — Max {{ max_tickets|default:22 }}
+                    </div>
+                </div>
+
+                <!-- ── Ligne 2 col 2 : Récapitulatif ── -->
+                <div class="form-group">
+                    <label class="form-label">Récapitulatif</label>
+                    <div style="background:var(--bg-light);border-radius:8px;padding:12px;font-size:13px;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                            <span style="color:var(--text-muted);">Prix unitaire</span>
+                            <span style="font-weight:600;">{{ prix_ticket|floatformat:0 }} FCFA</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                            <span style="color:var(--text-muted);">Subvention / ticket</span>
+                            <span style="font-weight:600;">{{ subvention|floatformat:0 }} FCFA</span>
+                        </div>
+                        <div style="border-top:1px solid var(--border-color);padding-top:8px;margin-top:4px;
+                                    display:flex;justify-content:space-between;">
+                            <span style="font-weight:700;">À encaisser</span>
+                            <span id="totalDisplay"
+                                  style="font-weight:800;font-size:16px;color:var(--primary-green);">0 FCFA</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Ligne 3 : Notes (pleine largeur) ── -->
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label class="form-label">Notes</label>
+                    <input type="text" id="ventNotes" class="form-control" placeholder="Optionnel...">
+                </div>
+
+            </div>{# /grid #}
+        </div>{# /modal-body #}
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="closeModal('venteModal')">
+                <i class="fas fa-times"></i> Annuler
+            </button>
+            <button type="button" id="btnValider" class="btn btn-primary"
+                    onclick="soumettreVente()" disabled>
+                <i class="fas fa-check-circle"></i> Valider la vente
+            </button>
+        </div>
+
+    </div>
+</div>

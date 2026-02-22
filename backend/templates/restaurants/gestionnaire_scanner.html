@@ -1,0 +1,645 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Scanner QR — {{ restaurant.nom }}{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
+<style>
+/* ═══ Layout scanner ═══════════════════════════════════════════ */
+.scanner-hero {
+    background: linear-gradient(135deg, #1a472a 0%, #2d6a4f 100%);
+    border-radius: 16px;
+    padding: 24px;
+    color: white;
+}
+.tab-bar {
+    display: flex;
+    gap: 4px;
+    background: rgba(0,0,0,.25);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 20px;
+}
+.tab-btn {
+    flex: 1;
+    padding: 9px 6px;
+    border: none;
+    border-radius: 7px;
+    color: rgba(255,255,255,.7);
+    background: transparent;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+.tab-btn.active {
+    background: white;
+    color: #1a472a;
+}
+
+/* ── Caméra ── */
+#cameraZone {
+    position: relative;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    aspect-ratio: 4/3;
+    max-height: 280px;
+}
+#videoEl {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+#cameraOverlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+.scan-frame {
+    width: 180px;
+    height: 180px;
+    border: 3px solid rgba(255,255,255,.8);
+    border-radius: 12px;
+    box-shadow: 0 0 0 9999px rgba(0,0,0,.45);
+    position: relative;
+}
+.scan-frame::before, .scan-frame::after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-color: #4ade80;
+    border-style: solid;
+}
+.scan-frame::before { top: -3px; left: -3px; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+.scan-frame::after  { bottom: -3px; right: -3px; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+
+.scan-line {
+    position: absolute;
+    left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #4ade80, transparent);
+    animation: scanLine 2s linear infinite;
+}
+@keyframes scanLine {
+    0%   { top: 10px; opacity: 1; }
+    90%  { top: calc(100% - 10px); opacity: 1; }
+    100% { top: 10px; opacity: 0; }
+}
+#cameraStatus {
+    position: absolute;
+    bottom: 0;
+    left: 0; right: 0;
+    background: rgba(0,0,0,.6);
+    color: white;
+    font-size: 12px;
+    text-align: center;
+    padding: 6px;
+}
+
+/* ── Saisie manuelle ── */
+.manual-input {
+    background: rgba(255,255,255,.12);
+    border: 2px solid rgba(255,255,255,.3);
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: white;
+    font-size: 15px;
+    width: 100%;
+    outline: none;
+    transition: border-color .2s;
+    box-sizing: border-box;
+}
+.manual-input:focus { border-color: rgba(255,255,255,.8); }
+.manual-input::placeholder { color: rgba(255,255,255,.5); }
+
+/* ── Résultat ── */
+.result-card {
+    display: none;
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-top: 16px;
+    animation: fadeSlide .25s ease;
+}
+@keyframes fadeSlide { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+.result-ok  { background: rgba(74,222,128,.15); border: 2px solid rgba(74,222,128,.6); }
+.result-err { background: rgba(248,113,113,.15); border: 2px solid rgba(248,113,113,.6); }
+
+.client-avatar {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(255,255,255,.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 800; flex-shrink: 0; overflow: hidden;
+}
+.confirm-btn {
+    width: 100%; margin-top: 14px;
+    padding: 13px;
+    background: #16a34a; color: white;
+    border: none; border-radius: 10px;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background .2s;
+}
+.confirm-btn:hover { background: #15803d; }
+.confirm-btn:disabled { background: #6b7280; cursor: not-allowed; }
+
+/* ── Historique ── */
+.scan-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border-color);
+    transition: background .15s;
+}
+.scan-row:hover { background: var(--bg-light); }
+.scan-row:last-child { border-bottom: none; }
+</style>
+{% endblock %}
+
+{% block sidebar_menu %}{% include 'dashboards/sidebars/restaurant_sidebar.html' %}{% endblock %}
+
+{% block page_content %}
+<div id="page-urls"
+     data-verify-url="{% url 'restaurants:verifier_qr_code' %}"
+     data-valider-url="{% url 'restaurants:valider_qr_code' %}"
+     style="display:none;"></div>
+
+<!-- En-tête -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
+    <div>
+        <h1 style="font-size:22px;font-weight:700;color:var(--text-primary);margin:0;">
+            <i class="fas fa-qrcode" style="color:var(--primary-green);margin-right:10px;"></i>Scanner QR Code
+        </h1>
+        <p style="color:var(--text-muted);font-size:13px;margin:4px 0 0;">
+            {{ restaurant.nom }} · {{ aujourd_hui|date:"l d F Y" }}
+        </p>
+    </div>
+    <div style="text-align:right;">
+        <div style="font-size:28px;font-weight:800;color:var(--primary-green);" id="counterDisplay">{{ nb_scans_aujourd_hui }}</div>
+        <div style="font-size:12px;color:var(--text-muted);">tickets validés aujourd'hui</div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+    <!-- ═══ Zone Scanner ════════════════════════════════════════ -->
+    <div>
+        <div class="scanner-hero">
+
+            <!-- Onglets : Caméra / Image / Saisie -->
+            <div class="tab-bar" role="tablist">
+                <button class="tab-btn active" id="tab-camera" onclick="switchTab('camera')">
+                    <i class="fas fa-camera"></i> Caméra
+                </button>
+                <button class="tab-btn" id="tab-image" onclick="switchTab('image')">
+                    <i class="fas fa-image"></i> Photo
+                </button>
+                <button class="tab-btn" id="tab-manual" onclick="switchTab('manual')">
+                    <i class="fas fa-keyboard"></i> Manuel
+                </button>
+            </div>
+
+            <!-- Onglet Caméra -->
+            <div id="panel-camera">
+                <div id="cameraZone">
+                    <video id="videoEl" playsinline autoplay muted></video>
+                    <canvas id="cameraCanvas" style="display:none;"></canvas>
+                    <div class="cameraOverlay" id="cameraOverlay">
+                        <div class="scan-frame">
+                            <div class="scan-line"></div>
+                        </div>
+                    </div>
+                    <div id="cameraStatus">
+                        <i class="fas fa-spinner fa-spin"></i> Démarrage de la caméra...
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:10px;">
+                    <button class="btn" id="btnStartCamera"
+                            style="flex:1;background:rgba(255,255,255,.2);color:white;border:1px solid rgba(255,255,255,.4);font-size:13px;"
+                            onclick="startCamera()">
+                        <i class="fas fa-video"></i> Activer la caméra
+                    </button>
+                    <button class="btn" id="btnStopCamera"
+                            style="flex:1;background:rgba(220,53,69,.3);color:white;border:1px solid rgba(220,53,69,.5);font-size:13px;display:none;"
+                            onclick="stopCamera()">
+                        <i class="fas fa-stop"></i> Arrêter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Onglet Image -->
+            <div id="panel-image" style="display:none;">
+                <div style="background:rgba(255,255,255,.1);border:2px dashed rgba(255,255,255,.4);
+                             border-radius:12px;padding:32px 20px;text-align:center;cursor:pointer;"
+                     id="dropZone"
+                     onclick="document.getElementById('qrImageInput').click()"
+                     ondrop="handleDrop(event)" ondragover="event.preventDefault()">
+                    <i class="fas fa-cloud-upload-alt" style="font-size:36px;opacity:.8;display:block;margin-bottom:10px;"></i>
+                    <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Importer une photo de QR code</div>
+                    <div style="font-size:12px;opacity:.7;">Glissez-déposez ou cliquez pour choisir</div>
+                    <input type="file" id="qrImageInput" accept="image/*" style="display:none;" onchange="handleImageFile(event)">
+                </div>
+                <canvas id="imageCanvas" style="display:none;"></canvas>
+                <div id="imagePreviewWrap" style="display:none;margin-top:10px;text-align:center;">
+                    <img id="imagePreview" src="" style="max-width:100%;max-height:160px;border-radius:10px;object-fit:contain;">
+                    <div id="imageDecodeStatus" style="font-size:12px;margin-top:8px;opacity:.85;"></div>
+                </div>
+            </div>
+
+            <!-- Onglet Manuel -->
+            <div id="panel-manual" style="display:none;">
+                <div style="margin-bottom:14px;">
+                    <input type="text" id="qrManualInput" class="manual-input"
+                           placeholder="Saisir ou coller le code QR..."
+                           autocomplete="off"
+                           onkeydown="if(event.key==='Enter') verifierCode(document.getElementById('qrManualInput').value)">
+                </div>
+                <button class="btn"
+                        style="width:100%;background:rgba(255,255,255,.2);color:white;border:1px solid rgba(255,255,255,.4);padding:12px;font-size:14px;font-weight:700;"
+                        onclick="verifierCode(document.getElementById('qrManualInput').value)">
+                    <i class="fas fa-search"></i> Vérifier le code
+                </button>
+            </div>
+
+            <!-- ── Carte Résultat OK ──────────────────────────── -->
+            <div class="result-card result-ok" id="resultSuccess">
+                <div style="display:flex;gap:14px;align-items:flex-start;">
+                    <div class="client-avatar" id="clientAvatar">?</div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:800;font-size:16px;margin-bottom:3px;" id="clientNom">—</div>
+                        <div style="font-size:12px;opacity:.9;line-height:1.8;">
+                            <i class="fas fa-id-card" style="width:14px;"></i> <span id="clientMatricule">—</span><br>
+                            <i class="fas fa-building" style="width:14px;"></i> <span id="clientAgence">—</span>
+                        </div>
+                        <div style="margin-top:8px;padding:6px 10px;background:rgba(255,255,255,.15);
+                                    border-radius:6px;font-size:12px;display:inline-block;">
+                            <i class="fas fa-ticket-alt"></i>
+                            Ticket : <strong id="ticketNumero">—</strong>
+                            &nbsp;·&nbsp;
+                            <span id="ticketsRestants">?</span> disponible(s)
+                        </div>
+                    </div>
+                    <i class="fas fa-check-circle" style="font-size:26px;color:#4ade80;flex-shrink:0;"></i>
+                </div>
+                <button class="confirm-btn" id="btnValider" onclick="validerCode()">
+                    <i class="fas fa-check"></i> Confirmer la validation
+                </button>
+            </div>
+
+            <!-- ── Carte Résultat Erreur ─────────────────────── -->
+            <div class="result-card result-err" id="resultError">
+                <div style="display:flex;gap:14px;align-items:center;">
+                    <i class="fas fa-times-circle" style="font-size:30px;color:#f87171;flex-shrink:0;"></i>
+                    <div>
+                        <div style="font-weight:700;font-size:14px;margin-bottom:3px;">Validation impossible</div>
+                        <div style="font-size:13px;opacity:.85;" id="errorMessage">—</div>
+                    </div>
+                </div>
+            </div>
+        </div><!-- /.scanner-hero -->
+
+        <!-- Aide -->
+        <div style="margin-top:14px;padding:14px 16px;background:var(--bg-secondary);
+                    border-radius:10px;border-left:4px solid var(--primary-green);font-size:12px;">
+            <strong style="color:var(--text-primary);">
+                <i class="fas fa-info-circle" style="color:var(--primary-green);margin-right:5px;"></i>Comment valider un ticket ?
+            </strong>
+            <div style="color:var(--text-muted);margin-top:5px;line-height:1.7;">
+                <b>Caméra</b> — Pointez vers le QR code affiché sur le téléphone de l'employé<br>
+                <b>Photo</b> — Importez une capture d'écran du QR code<br>
+                <b>Manuel</b> — Saisissez le code manuellement si nécessaire<br>
+                Le résultat s'affiche <em>avant</em> validation — vérifiez l'identité puis confirmez.
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Historique du jour ════════════════════════════════════ -->
+    <div class="card" style="overflow:hidden;display:flex;flex-direction:column;">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border-color);
+                    display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+            <h3 style="font-size:15px;font-weight:700;margin:0;">
+                <i class="fas fa-history" style="color:var(--primary-green);margin-right:8px;"></i>
+                Validations du jour
+            </h3>
+            <span class="badge badge-success" id="histoCount">{{ nb_scans_aujourd_hui }}</span>
+        </div>
+        <div style="flex:1;overflow-y:auto;max-height:520px;" id="histoList">
+            {% for t in derniers_scans %}
+            <div class="scan-row">
+                <div style="width:36px;height:36px;border-radius:50%;background:var(--light-green);
+                            display:flex;align-items:center;justify-content:center;
+                            font-weight:700;color:var(--primary-green);font-size:13px;flex-shrink:0;overflow:hidden;">
+                    {% if t.proprietaire.photo_profil %}
+                    <img src="{{ t.proprietaire.photo_profil.url }}" style="width:100%;height:100%;object-fit:cover;">
+                    {% else %}
+                    {{ t.proprietaire.prenom.0 }}{{ t.proprietaire.nom.0 }}
+                    {% endif %}
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:600;font-size:13px;color:var(--text-primary);">
+                        {{ t.proprietaire.get_full_name }}
+                    </div>
+                    <div style="font-size:11px;color:var(--text-muted);">
+                        {{ t.proprietaire.agence.nom|default:"—" }} ·
+                        <span style="font-family:monospace;">{{ t.numero_ticket }}</span>
+                    </div>
+                </div>
+                <div style="font-size:11px;color:var(--text-muted);flex-shrink:0;">
+                    {{ t.date_consommation|date:"H:i" }}
+                </div>
+            </div>
+            {% empty %}
+            <div id="emptyHisto" style="text-align:center;padding:48px 20px;color:var(--text-muted);">
+                <i class="fas fa-qrcode" style="font-size:36px;display:block;margin-bottom:14px;opacity:.25;"></i>
+                Aucun scan aujourd'hui — commencez à valider des tickets
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Canvas caché pour jsQR -->
+<canvas id="workerCanvas" style="display:none;"></canvas>
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{% static 'js/components.js' %}"></script>
+<!-- jsQR : décodage QR en pur JS côté navigateur -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<script>
+(function () {
+'use strict';
+
+/* ─────────────────────────────────────────────────────────────
+   ÉTAT GLOBAL
+   ───────────────────────────────────────────────────────────── */
+var urls          = document.getElementById('page-urls').dataset;
+var codeEnCours   = '';          // code vérifié en attente de confirmation
+var cameraStream  = null;        // MediaStream actif
+var rafId         = null;        // requestAnimationFrame id pour le scan continu
+var lastScanned   = '';          // évite les doubles déclenchements caméra
+var scanPaused    = false;       // pause pendant l'affichage du résultat
+
+/* ─────────────────────────────────────────────────────────────
+   ONGLETS
+   ───────────────────────────────────────────────────────────── */
+window.switchTab = function (tab) {
+    ['camera','image','manual'].forEach(function (t) {
+        document.getElementById('panel-' + t).style.display = (t === tab) ? 'block' : 'none';
+        document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+    });
+    if (tab !== 'camera') stopCamera();
+    resetResult();
+};
+
+/* ─────────────────────────────────────────────────────────────
+   CAMÉRA
+   ───────────────────────────────────────────────────────────── */
+window.startCamera = function () {
+    var status = document.getElementById('cameraStatus');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        status.textContent = '⚠ Caméra non supportée par ce navigateur';
+        return;
+    }
+    status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Accès à la caméra...';
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(function (stream) {
+            cameraStream = stream;
+            var video = document.getElementById('videoEl');
+            video.srcObject = stream;
+            video.play();
+            document.getElementById('btnStartCamera').style.display = 'none';
+            document.getElementById('btnStopCamera').style.display  = '';
+            status.textContent = '● Scan en cours — pointez vers le QR code';
+            status.style.color = '#4ade80';
+            tickScan();
+        })
+        .catch(function (err) {
+            status.textContent = '⚠ Caméra refusée : ' + err.message;
+        });
+};
+
+window.stopCamera = function () {
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(function (t) { t.stop(); });
+        cameraStream = null;
+    }
+    var video = document.getElementById('videoEl');
+    video.srcObject = null;
+    document.getElementById('btnStartCamera').style.display = '';
+    document.getElementById('btnStopCamera').style.display  = 'none';
+    document.getElementById('cameraStatus').textContent = 'Caméra arrêtée';
+    document.getElementById('cameraStatus').style.color = '';
+};
+
+function tickScan () {
+    if (!cameraStream || scanPaused) { rafId = requestAnimationFrame(tickScan); return; }
+    var video  = document.getElementById('videoEl');
+    if (video.readyState < video.HAVE_ENOUGH_DATA) { rafId = requestAnimationFrame(tickScan); return; }
+
+    var canvas = document.getElementById('cameraCanvas');
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var code = window.jsQR && jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+    if (code && code.data && code.data !== lastScanned) {
+        lastScanned = code.data;
+        scanPaused = true;
+        document.getElementById('cameraStatus').innerHTML = '<i class="fas fa-check" style="color:#4ade80;"></i> Code détecté — vérification...';
+        verifierCode(code.data);
+    }
+    rafId = requestAnimationFrame(tickScan);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   IMAGE / PHOTO
+   ───────────────────────────────────────────────────────────── */
+window.handleDrop = function (e) {
+    e.preventDefault();
+    var file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) decodeImageFile(file);
+};
+
+window.handleImageFile = function (e) {
+    var file = e.target.files[0];
+    if (file) decodeImageFile(file);
+};
+
+function decodeImageFile(file) {
+    var status = document.getElementById('imageDecodeStatus');
+    var preview = document.getElementById('imagePreview');
+    var wrap    = document.getElementById('imagePreviewWrap');
+
+    status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyse du QR code...';
+    wrap.style.display = 'block';
+
+    var reader = new FileReader();
+    reader.onload = function (e) {
+        preview.src = e.target.result;
+        var img = new Image();
+        img.onload = function () {
+            var canvas = document.getElementById('imageCanvas');
+            canvas.width  = img.width;
+            canvas.height = img.height;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            var code = window.jsQR && jsQR(data.data, data.width, data.height, { inversionAttempts: 'attemptBoth' });
+            if (code && code.data) {
+                status.innerHTML = '<i class="fas fa-check" style="color:#4ade80;"></i> QR détecté — vérification...';
+                verifierCode(code.data);
+            } else {
+                status.innerHTML = '<i class="fas fa-times" style="color:#f87171;"></i> Aucun QR code trouvé dans cette image';
+            }
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   VÉRIFICATION (sans consommer)
+   ───────────────────────────────────────────────────────────── */
+window.verifierCode = function (code) {
+    code = (code || '').trim();
+    if (!code) { if (scanPaused) { scanPaused = false; } showWarning('Saisissez un code QR'); return; }
+
+    resetResult();
+
+    fetch(urls.verifyUrl + '?code=' + encodeURIComponent(code))
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (d.valide) {
+                codeEnCours = d.code;
+                /* Remplir la carte */
+                document.getElementById('clientNom').textContent       = d.client;
+                document.getElementById('clientMatricule').textContent = d.matricule;
+                document.getElementById('clientAgence').textContent    = d.agence;
+                document.getElementById('ticketNumero').textContent    = d.ticket_numero;
+                document.getElementById('ticketsRestants').textContent = d.tickets_restants;
+                /* Avatar */
+                var av = document.getElementById('clientAvatar');
+                if (d.photo_url) {
+                    av.innerHTML = '<img src="' + d.photo_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+                } else {
+                    av.textContent = d.client.split(' ').map(function (w) { return w[0]; }).slice(0, 2).join('');
+                }
+                document.getElementById('resultSuccess').style.display = 'block';
+                document.getElementById('btnValider').disabled = false;
+                /* Mettre à jour le statut caméra */
+                if (cameraStream) {
+                    document.getElementById('cameraStatus').innerHTML =
+                        '<i class="fas fa-pause"></i> Scan suspendu — confirmez ou fermez pour continuer';
+                }
+            } else {
+                document.getElementById('errorMessage').textContent = d.error || 'Code invalide';
+                document.getElementById('resultError').style.display = 'block';
+                codeEnCours = '';
+                /* Reprend le scan caméra après 3s */
+                setTimeout(function () { resetResult(); scanPaused = false; lastScanned = ''; }, 3000);
+            }
+        })
+        .catch(function () {
+            showError('Erreur réseau');
+            scanPaused = false;
+        });
+};
+
+/* ─────────────────────────────────────────────────────────────
+   VALIDATION (consomme le ticket)
+   ───────────────────────────────────────────────────────────── */
+window.validerCode = function () {
+    if (!codeEnCours) return;
+    var btn = document.getElementById('btnValider');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validation en cours...';
+
+    var fd = new FormData();
+    fd.append('code', codeEnCours);
+
+    fetch(urls.validerUrl, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCsrfToken() },
+        body: fd
+    })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (d.valide) {
+                showSuccess('✓ ' + d.message);
+                /* Compteur */
+                var ctr = document.getElementById('counterDisplay');
+                ctr.textContent = parseInt(ctr.textContent || 0) + 1;
+                document.getElementById('histoCount').textContent = ctr.textContent;
+                /* Injecter dans l'historique */
+                var histo = document.getElementById('histoList');
+                var empty = document.getElementById('emptyHisto');
+                if (empty) empty.remove();
+                var now = new Date();
+                var hhmm = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+                var initiales = d.client.split(' ').map(function(w){return w[0];}).slice(0,2).join('');
+                var row = document.createElement('div');
+                row.className = 'scan-row';
+                row.style.background = 'rgba(74,222,128,.06)';
+                row.innerHTML =
+                    '<div style="width:36px;height:36px;border-radius:50%;background:var(--light-green);' +
+                    'display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--primary-green);font-size:13px;flex-shrink:0;">' +
+                    initiales + '</div>' +
+                    '<div style="flex:1;min-width:0;">' +
+                    '<div style="font-weight:600;font-size:13px;color:var(--text-primary);">' + d.client + '</div>' +
+                    '<div style="font-size:11px;color:var(--text-muted);">' + (d.agence||'—') +
+                    ' · <span style="font-family:monospace;">' + d.ticket_numero + '</span></div>' +
+                    '</div>' +
+                    '<div style="font-size:11px;color:var(--primary-green);font-weight:600;flex-shrink:0;">' + hhmm + '</div>';
+                histo.insertBefore(row, histo.firstChild);
+                /* Reset pour prochain scan */
+                codeEnCours = ''; resetResult(); scanPaused = false; lastScanned = '';
+                /* Remettre status caméra */
+                if (cameraStream) document.getElementById('cameraStatus').textContent = '● Scan en cours — pointez vers le QR code';
+                /* Vider l'input manuel */
+                document.getElementById('qrManualInput').value = '';
+                /* Reset image */
+                document.getElementById('qrImageInput').value = '';
+                document.getElementById('imagePreviewWrap').style.display = 'none';
+            } else {
+                showError(d.error || 'Validation échouée');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check"></i> Confirmer la validation';
+                scanPaused = false;
+            }
+        })
+        .catch(function () {
+            showError('Erreur réseau');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check"></i> Confirmer la validation';
+        });
+};
+
+/* ─────────────────────────────────────────────────────────────
+   HELPERS
+   ───────────────────────────────────────────────────────────── */
+function resetResult() {
+    document.getElementById('resultSuccess').style.display = 'none';
+    document.getElementById('resultError').style.display   = 'none';
+    codeEnCours = '';
+}
+
+/* Démarrage auto caméra */
+document.addEventListener('DOMContentLoaded', function () {
+    startCamera();
+});
+
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,84 @@
+<!-- Modal Restaurant -->
+<div class="modal-overlay" id="restaurantModal" style="display:none;">
+    <div class="modal" style="max-width:580px;width:100%;">
+        <div class="modal-header">
+            <h3 class="modal-title" id="restaurantModalTitle">Nouveau restaurant</h3>
+            <button class="modal-close" onclick="closeModal('restaurantModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="restaurantForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" id="r_id" name="r_id">
+            <div class="modal-body" style="padding:20px;max-height:70vh;overflow-y:auto;">
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Nom du restaurant <span style="color:red">*</span></label>
+                        <input type="text" id="r_nom" name="nom" class="form-control" required placeholder="Ex: Restaurant Central">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Code unique <span style="color:red">*</span></label>
+                        <input type="text" id="r_code" name="code" class="form-control" required
+                               placeholder="Ex: REST-001" style="text-transform:uppercase;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Statut</label>
+                        <select id="r_statut" name="statut" class="form-control">
+                            <option value="ACTIF">Actif</option>
+                            <option value="INACTIF">Inactif</option>
+                            <option value="SUSPENDU">Suspendu</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Description</label>
+                        <textarea id="r_description" name="description" class="form-control" rows="2"
+                                  placeholder="Description du restaurant..."></textarea>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Adresse <span style="color:red">*</span></label>
+                        <input type="text" id="r_adresse" name="adresse" class="form-control" required placeholder="Adresse complète">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Ville <span style="color:red">*</span></label>
+                        <input type="text" id="r_ville" name="ville" class="form-control" required placeholder="Ex: Ouagadougou">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Téléphone <span style="color:red">*</span></label>
+                        <input type="text" id="r_telephone" name="telephone" class="form-control" required placeholder="+226 XX XX XX XX">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="r_email" name="email" class="form-control" placeholder="contact@restaurant.bf">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Logo</label>
+                        <input type="file" id="r_logo" name="logo" class="form-control" accept="image/*"
+                               onchange="previewLogo(this)">
+                        <img id="logo_preview" src="" alt="Logo" style="display:none;width:60px;height:60px;border-radius:8px;object-fit:cover;margin-top:8px;">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding:16px 20px;border-top:1px solid var(--border-color);display:flex;gap:10px;justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('restaurantModal')">Annuler</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function previewLogo(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var prev = document.getElementById('logo_preview');
+            prev.src = e.target.result;
+            prev.style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>

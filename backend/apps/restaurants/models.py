@@ -27,10 +27,6 @@ class Restaurant(models.Model):
     telephone = models.CharField('Téléphone', max_length=17)
     email = models.EmailField('Email', blank=True)
 
-    # Informations légales
-    numero_enregistrement = models.CharField('Numéro d\'enregistrement', max_length=100, blank=True)
-    numero_fiscal = models.CharField('Numéro fiscal', max_length=100, blank=True)
-
     # Statut
     statut = models.CharField('Statut', max_length=20, choices=STATUT_CHOICES, default='ACTIF')
     en_service_actuel = models.BooleanField('En service actuellement', default=False)

@@ -10,7 +10,6 @@
 <div class="dashboard-wrapper">
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
-        <!-- Logo -->
         <div class="sidebar-logo">
             <div class="sidebar-logo-icon">
                 <i class="fas fa-utensils"></i>
@@ -21,14 +20,10 @@
             </div>
         </div>
 
-        <!-- Navigation -->
         <nav class="sidebar-nav">
-            {% block sidebar_menu %}
-            <!-- Menu items will be inserted here by child templates -->
-            {% endblock %}
+            {% block sidebar_menu %}{% endblock %}
         </nav>
 
-        <!-- Sidebar Footer -->
         <div class="sidebar-footer">
             <button class="sidebar-toggle" onclick="toggleSidebar()">
                 <i class="fas fa-chevron-left"></i>
@@ -41,13 +36,11 @@
     <div class="main-content">
         <!-- Navbar -->
         <header class="navbar">
-            <!-- Search -->
             <div class="navbar-search">
                 <i class="fas fa-search"></i>
                 <input type="text" placeholder="Rechercher..." id="globalSearch">
             </div>
 
-            <!-- Right Section -->
             <div class="navbar-right">
                 <!-- Notifications -->
                 <div class="dropdown" id="notificationDropdown">
@@ -57,28 +50,24 @@
                         <span class="notification-badge">{{ unread_notifications_count }}</span>
                         {% endif %}
                     </button>
-
                     <div class="dropdown-menu">
-                        <div class="dropdown-item" style="font-weight: 600; color: var(--text-primary);">
-                            Notifications
-                        </div>
+                        <div class="dropdown-item" style="font-weight:600;color:var(--text-primary);">Notifications</div>
                         <div class="dropdown-divider"></div>
                         {% if notifications %}
                             {% for notification in notifications|slice:":5" %}
                             <a href="#" class="dropdown-item">
                                 <i class="fas fa-info-circle"></i>
                                 <div>
-                                    <div style="font-weight: 500;">{{ notification.title }}</div>
-                                    <div style="font-size: 11px; color: var(--text-muted);">{{ notification.created_at|timesince }}</div>
+                                    <div style="font-weight:500;">{{ notification.title }}</div>
+                                    <div style="font-size:11px;color:var(--text-muted);">{{ notification.created_at|timesince }}</div>
                                 </div>
                             </a>
                             {% endfor %}
                             <div class="dropdown-divider"></div>
-                            <a href="{% url 'accounts:notifications_list' %}" class="dropdown-item" style="text-align: center; color: var(--primary-green);">
-                                Voir tout
-                            </a>
+                            <a href="{% url 'accounts:notifications_list' %}" class="dropdown-item"
+                               style="text-align:center;color:var(--primary-green);">Voir tout</a>
                         {% else %}
-                            <div class="dropdown-item" style="color: var(--text-muted); text-align: center;">
+                            <div class="dropdown-item" style="color:var(--text-muted);text-align:center;">
                                 Aucune notification
                             </div>
                         {% endif %}
@@ -88,29 +77,32 @@
                 <!-- User Profile -->
                 <div class="dropdown" id="userDropdown">
                     <div class="navbar-user" onclick="toggleDropdown('userDropdown')">
+
+                        {# ── Avatar : photo si disponible, initiales sinon ── #}
                         <div class="navbar-user-avatar">
-                            {{ user.first_name.0 }}{{ user.last_name.0 }}
+                            {% if user.photo_profil %}
+                                <img src="{{ user.photo_profil.url }}"
+                                     alt="{{ user.get_full_name }}"
+                                     style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">
+                            {% else %}
+                                {{ user.prenom.0 }}{{ user.nom.0 }}
+                            {% endif %}
                         </div>
+
                         <div class="navbar-user-info">
                             <span class="navbar-user-name">{{ user.get_full_name }}</span>
-                            <span class="navbar-user-role">{{ user.get_user_type_display }}</span>
+                            <span class="navbar-user-role">{{ user.get_type_utilisateur_display }}</span>
                         </div>
-                        <i class="fas fa-chevron-down" style="font-size: 12px; color: var(--text-muted);"></i>
+                        <i class="fas fa-chevron-down" style="font-size:12px;color:var(--text-muted);"></i>
                     </div>
 
                     <div class="dropdown-menu">
                         <a href="{% url 'accounts:profile' %}" class="dropdown-item">
-                            <i class="fas fa-user"></i>
-                            Mon profil
-                        </a>
-                        <a href="{% url 'accounts:settings' %}" class="dropdown-item">
-                            <i class="fas fa-cog"></i>
-                            Paramètres
+                            <i class="fas fa-user"></i> Mon profil
                         </a>
                         <div class="dropdown-divider"></div>
-                        <a href="{% url 'accounts:logout' %}" class="dropdown-item" style="color: var(--accent-red);">
-                            <i class="fas fa-sign-out-alt"></i>
-                            Déconnexion
+                        <a href="{% url 'accounts:logout' %}" class="dropdown-item" style="color:var(--accent-red);">
+                            <i class="fas fa-sign-out-alt"></i> Déconnexion
                         </a>
                     </div>
                 </div>
@@ -119,24 +111,9 @@
 
         <!-- Page Content -->
         <main class="page-content">
-            {% if messages %}
-                {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}" style="animation: fadeIn 0.3s ease;">
-                    <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
-                    {{ message }}
-                    <button onclick="this.parentElement.remove()" style="margin-left: auto; padding: 4px 8px; background: none; border: none; color: inherit; cursor: pointer;">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                {% endfor %}
-            {% endif %}
-
-            {% block page_content %}
-            <!-- Page content will be inserted here -->
-            {% endblock %}
+            {% block page_content %}{% endblock %}
         </main>
 
-        <!-- Footer -->
         <footer class="footer">
             <div>&copy; {{ current_year }} LONAB - MUTRALO. Tous droits réservés.</div>
             <div class="footer-links">
@@ -152,4 +129,20 @@
 {% block extra_js %}
 <script src="{% static 'js/dashboard.js' %}"></script>
 {% block dashboard_js %}{% endblock %}
+
+{# ── Messages Django → showToast (haut droite) ── #}
+{% if messages %}
+<script>
+(function dispatchMessages() {
+    if (typeof showToast !== 'function') { setTimeout(dispatchMessages, 60); return; }
+    {% for message in messages %}
+    showToast(
+        "{{ message|escapejs }}",
+        "{% if message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% elif message.tags == 'success' %}success{% else %}info{% endif %}",
+        4500
+    );
+    {% endfor %}
+}());
+</script>
+{% endif %}
 {% endblock %}

@@ -1,0 +1,89 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
+<style>
+    .tx-card { background:white;border-radius:10px;padding:16px 20px;box-shadow:0 1px 6px rgba(0,0,0,.06);margin-bottom:10px;display:flex;align-items:center;gap:16px;transition:.15s; }
+    .tx-card:hover { box-shadow:0 4px 14px rgba(0,0,0,.1); }
+    .tx-icon { width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0; }
+</style>
+{% endblock %}
+
+{% block sidebar_menu %}{% include 'dashboards/sidebars/client_sidebar.html' %}{% endblock %}
+
+{% block page_content %}
+<div style="background:linear-gradient(135deg,#1a5c2e,#28a745);border-radius:12px;padding:20px 24px;margin-bottom:24px;color:white;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+    <div style="display:flex;gap:28px;">
+        <div style="text-align:center;">
+            <div style="font-size:40px;font-weight:900;line-height:1;">{{ tickets_valides }}</div>
+            <div style="font-size:12px;opacity:.85;margin-top:3px;">Tickets valides</div>
+        </div>
+        <div style="width:1px;background:rgba(255,255,255,.3);"></div>
+        <div style="text-align:center;">
+            <div style="font-size:40px;font-weight:900;line-height:1;">{{ tickets_consommes_mois }}</div>
+            <div style="font-size:12px;opacity:.85;margin-top:3px;">Consommés ce mois</div>
+        </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <a href="# url 'tickets:mes_tickets' %}"
+           style="color:white;font-size:13px;text-decoration:none;background:rgba(255,255,255,.2);padding:8px 16px;border-radius:20px;">
+            <i class="fas fa-ticket-alt"></i> Mes tickets
+        </a>
+        <a href="{% url 'restaurants:client_menus' %}"
+           style="color:white;font-size:13px;text-decoration:none;background:rgba(255,255,255,.2);padding:8px 16px;border-radius:20px;">
+            <i class="fas fa-book-open"></i> Menus du jour
+        </a>
+    </div>
+</div>
+
+<h1 style="font-size:20px;font-weight:700;color:var(--text-primary);margin:0 0 20px;">
+    <i class="fas fa-history" style="color:var(--primary-green);margin-right:8px;"></i>Historique des transactions
+</h1>
+
+{% for t in transactions %}
+<div class="tx-card">
+    <div class="tx-icon"
+         style="background:{% if t.type_transaction == 'ACHAT' %}var(--light-green){% else %}#fff3cd{% endif %};">
+        {% if t.type_transaction == 'ACHAT' %}<i class="fas fa-ticket-alt" style="color:var(--primary-green);"></i>
+        {% else %}<i class="fas fa-undo" style="color:#f59e0b;"></i>{% endif %}
+    </div>
+    <div style="flex:1;">
+        <div style="font-weight:700;font-size:14px;color:var(--text-primary);">
+            {% if t.type_transaction == 'ACHAT' %}Achat de {{ t.nombre_tickets }} ticket(s){% else %}Remboursement{% endif %}
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">N° {{ t.numero_transaction }}</div>
+        <div style="font-size:12px;color:var(--text-muted);">
+            <i class="fas fa-calendar"></i> {{ t.date_transaction|date:"d/m/Y à H:i" }}
+            &nbsp;·&nbsp; Validité : {{ t.valide_de|date:"d/m" }} → {{ t.valide_jusqu_a|date:"d/m/Y" }}
+        </div>
+    </div>
+    <div style="text-align:right;flex-shrink:0;">
+        <div style="font-weight:800;font-size:16px;color:{% if t.type_transaction == 'ACHAT' %}var(--primary-green){% else %}#dc3545{% endif %};">
+            {{ t.montant_total|floatformat:0 }} FCFA
+        </div>
+        <div style="margin-top:4px;">
+            {% if t.statut == 'TERMINEE' %}
+                <span class="badge badge-success">Complété</span>
+            {% elif t.statut == 'REMBOURSE' %}
+                <span class="badge" style="background:#6c757d;color:white;">Remboursé</span>
+            {% else %}
+                <span class="badge badge-warning">{{ t.get_statut_display }}</span>
+            {% endif %}
+        </div>
+        <a href="{% url 'transactions:transaction_detail' t.id %}"
+           style="font-size:12px;color:var(--primary-green);text-decoration:none;display:block;margin-top:6px;">Détail →</a>
+    </div>
+</div>
+{% empty %}
+<div class="card" style="padding:48px;text-align:center;color:var(--text-muted);">
+    <i class="fas fa-inbox" style="font-size:40px;opacity:.3;display:block;margin-bottom:12px;"></i>
+    <p style="margin:0 0 4px;font-weight:600;">Aucune transaction</p>
+    <p style="font-size:13px;margin:0;">Contactez votre caissier pour acheter des tickets.</p>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{% static 'js/components.js' %}"></script>
+{% endblock %}

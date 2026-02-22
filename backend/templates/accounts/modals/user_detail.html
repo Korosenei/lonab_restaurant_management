@@ -1,0 +1,100 @@
+<!-- User Detail Modal -->
+<div class="modal-overlay" id="userDetailModal">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="fas fa-user"></i>
+                Détails de l'utilisateur
+            </div>
+            <button class="modal-close" onclick="closeModal('userDetailModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <!-- Avatar -->
+            <div style="text-align: center; margin-bottom: var(--spacing-md);">
+                <div id="detailAvatar" style="width: 80px; height: 80px; background: var(--light-green); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; color: var(--primary-green);"></div>
+                <h3 id="detailFullName" style="margin-top: var(--spacing-sm); margin-bottom: 4px; font-size: 18px;"></h3>
+                <span id="detailType" class="badge"></span>
+            </div>
+
+            <!-- Info Grid -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--spacing-md);">
+                <div class="profile-field">
+                    <div class="profile-field-label">Email</div>
+                    <div id="detailEmail" class="profile-field-value"></div>
+                </div>
+
+                <div class="profile-field">
+                    <div class="profile-field-label">Téléphone</div>
+                    <div id="detailPhone" class="profile-field-value"></div>
+                </div>
+
+                <div class="profile-field">
+                    <div class="profile-field-label">Matricule</div>
+                    <div id="detailMatricule" class="profile-field-value"></div>
+                </div>
+
+                <div class="profile-field">
+                    <div class="profile-field-label">Genre</div>
+                    <div id="detailGender" class="profile-field-value"></div>
+                </div>
+
+                <div class="profile-field">
+                    <div class="profile-field-label">Direction</div>
+                    <div id="detailDirection" class="profile-field-value"></div>
+                </div>
+
+                <div class="profile-field">
+                    <div class="profile-field-label">Agence</div>
+                    <div id="detailAgence" class="profile-field-value"></div>
+                </div>
+
+                <div class="profile-field">
+                    <div class="profile-field-label">Statut</div>
+                    <div id="detailStatus" class="profile-field-value"></div>
+                </div>
+
+                <div class="profile-field">
+                    <div class="profile-field-label">Date inscription</div>
+                    <div id="detailDateJoined" class="profile-field-value"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="closeModal('userDetailModal')">
+                <i class="fas fa-times"></i> Fermer
+            </button>
+            <button type="button" class="btn btn-primary" onclick="editUserFromDetail()">
+                <i class="fas fa-edit"></i> Modifier
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function populateUserDetail(data) {
+    document.getElementById('detailAvatar').textContent = data.prenom.charAt(0) + data.nom.charAt(0);
+    document.getElementById('detailFullName').textContent = data.prenom + ' ' + data.nom;
+    document.getElementById('detailType').textContent = data.get_type_utilisateur_display || data.type_utilisateur;
+    document.getElementById('detailEmail').textContent = data.email;
+    document.getElementById('detailPhone').textContent = data.telephone || '-';
+    document.getElementById('detailMatricule').textContent = data.matricule || '-';
+    document.getElementById('detailGender').textContent = data.get_genre_display || '-';
+    document.getElementById('detailDirection').textContent = data.direction_name || '-';
+    document.getElementById('detailAgence').textContent = data.agence_name || '-';
+    document.getElementById('detailStatus').innerHTML = data.est_actif ?
+        '<span class="badge badge-success"><i class="fas fa-check"></i> Actif</span>' :
+        '<span class="badge badge-danger"><i class="fas fa-times"></i> Inactif</span>';
+    document.getElementById('detailDateJoined').textContent = new Date(data.date_inscription).toLocaleDateString('fr-FR');
+}
+
+function editUserFromDetail() {
+    closeModal('userDetailModal');
+    // Get user ID from the modal data
+    const userId = document.getElementById('detailEmail').dataset.userId;
+    editUser(userId);
+}
+</script>

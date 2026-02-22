@@ -1,0 +1,85 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block dashboard_css %}<link rel="stylesheet" href="{% static 'css/components.css' %}">{% endblock %}
+{% block sidebar_menu %}{% include 'dashboards/sidebars/caissier_sidebar.html' %}{% endblock %}
+
+{% block page_content %}
+<div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;">
+    <a href="{% url 'transactions:caissier_clients' %}" class="btn btn-secondary" style="padding:8px 14px;"><i class="fas fa-arrow-left"></i></a>
+    <div>
+        <h1 style="font-size:22px;font-weight:700;color:var(--text-primary);margin:0;">{{ client.get_full_name }}</h1>
+        <p style="color:var(--text-muted);font-size:13px;margin:2px 0 0;">Matricule: {{ client.matricule|default:"—" }} · {{ client.agence.nom|default:"—" }}</p>
+    </div>
+    {% if peut_acheter %}
+    <a href="{% url 'transactions:caissier_vente' %}?matricule={{ client.matricule }}" class="btn btn-primary" style="margin-left:auto;">
+        <i class="fas fa-ticket-alt"></i> Vendre des tickets
+    </a>
+    {% else %}
+    <div class="btn" style="margin-left:auto;background:#fff3cd;color:#856404;border:1px solid #ffc107;cursor:default;">
+        <i class="fas fa-exclamation-triangle"></i> Quota mensuel atteint
+    </div>
+    {% endif %}
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;">
+    <div class="card" style="padding:18px;text-align:center;">
+        <div style="font-size:36px;font-weight:800;color:var(--primary-green);">{{ nb_tickets_valides }}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Tickets valides ce mois</div>
+    </div>
+    <div class="card" style="padding:18px;text-align:center;">
+        <div style="font-size:36px;font-weight:800;color:#f59e0b;">{{ nb_transactions_mois }}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Transactions ce mois</div>
+    </div>
+    <div class="card" style="padding:18px;text-align:center;">
+        <div style="font-size:36px;font-weight:800;color:{% if peut_acheter %}var(--primary-green){% else %}#dc3545{% endif %};">
+            {% if peut_acheter %}OK{% else %}MAX{% endif %}
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Quota mensuel ({{ debut_mois|date:"M Y" }})</div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <!-- Tickets valides -->
+    <div class="card" style="overflow:hidden;">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border-color);">
+            <h3 style="font-size:14px;font-weight:700;margin:0;"><i class="fas fa-ticket-alt" style="color:var(--primary-green);margin-right:8px;"></i>Tickets valides</h3>
+        </div>
+        <div style="max-height:280px;overflow-y:auto;">
+            {% for t in tickets_valides %}
+            <div style="padding:10px 16px;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;font-size:13px;">
+                <span style="font-weight:600;font-family:monospace;">{{ t.numero_ticket }}</span>
+                <span style="color:var(--text-muted);">→ {{ t.valide_jusqua|date:"d/m/Y" }}</span>
+            </div>
+            {% empty %}
+            <div style="padding:24px;text-align:center;color:var(--text-muted);">Aucun ticket valide</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Transactions récentes -->
+    <div class="card" style="overflow:hidden;">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border-color);">
+            <h3 style="font-size:14px;font-weight:700;margin:0;"><i class="fas fa-history" style="color:var(--primary-green);margin-right:8px;"></i>Transactions récentes</h3>
+        </div>
+        <div style="max-height:280px;overflow-y:auto;">
+            {% for t in transactions %}
+            <div style="padding:10px 16px;border-bottom:1px solid var(--border-color);">
+                <div style="display:flex;justify-content:space-between;font-size:13px;">
+                    <span style="font-weight:600;color:var(--primary-green);">{{ t.numero_transaction|slice:":16" }}…</span>
+                    <span>{{ t.nombre_tickets }} tickets</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-top:2px;">
+                    <span>{{ t.date_transaction|date:"d/m/Y" }}</span>
+                    {% if t.statut == 'TERMINEE' %}<span style="color:var(--primary-green);">✓ Complété</span>
+                    {% else %}<span style="color:#dc3545;">{{ t.get_statut_display }}</span>{% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div style="padding:24px;text-align:center;color:var(--text-muted);">Aucune transaction</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block dashboard_js %}<script src="{% static 'js/components.js' %}"></script>{% endblock %}

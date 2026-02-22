@@ -1,0 +1,249 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
+<style>
+    .stat-pill {
+        display:inline-flex; align-items:center; gap:8px;
+        background:white; border-radius:20px; padding:8px 16px;
+        box-shadow:0 1px 6px rgba(0,0,0,.07); font-size:13px; font-weight:600;
+    }
+</style>
+{% endblock %}
+
+{% block sidebar_menu %}{% include 'dashboards/sidebars/caissier_sidebar.html' %}{% endblock %}
+
+{% block page_content %}
+<div id="page-urls"
+     data-vente-url="{% url 'transactions:caissier_confirmer_vente' %}"
+     data-detail-base="{% url 'transactions:transaction_detail' pk=0 %}"
+     style="display:none;"></div>
+
+<!-- Header -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <div>
+        <h1 style="font-size:22px;font-weight:700;color:var(--text-primary);margin:0;">
+            <i class="fas fa-ticket-alt" style="color:var(--primary-green);margin-right:10px;"></i>Tickets
+        </h1>
+        <p style="color:var(--text-muted);font-size:13px;margin:4px 0 0;">Tous les tickets générés</p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('venteModal')">
+        <i class="fas fa-plus"></i> Nouvelle vente
+    </button>
+</div>
+
+<!-- Stats pills -->
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+    <div class="stat-pill">
+        <span style="color:var(--text-muted);">Total</span>
+        <span style="color:var(--text-primary);">{{ stats.total }}</span>
+    </div>
+    <div class="stat-pill">
+        <span style="color:var(--primary-green);">●</span>
+        <span>{{ stats.disponibles }} disponibles</span>
+    </div>
+    <div class="stat-pill">
+        <span style="color:#6c757d;">●</span>
+        <span>{{ stats.consommes }} consommés</span>
+    </div>
+    <div class="stat-pill">
+        <span style="color:#dc3545;">●</span>
+        <span>{{ stats.expires }} expirés</span>
+    </div>
+</div>
+
+<!-- Filtres -->
+<div class="card" style="padding:14px 16px;margin-bottom:18px;">
+    <form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+        <div style="flex:1;min-width:180px;">
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Recherche</label>
+            <div style="position:relative;">
+                <i class="fas fa-search"
+                   style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);"></i>
+                <input type="text" name="search" value="{{ request.GET.search }}"
+                       placeholder="N° ticket, client, matricule..."
+                       style="padding:8px 8px 8px 32px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;width:100%;box-sizing:border-box;">
+            </div>
+        </div>
+        <div>
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Statut</label>
+            <select name="statut" style="padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;">
+                <option value="">Tous</option>
+                {% for v,l in statuts %}
+                <option value="{{ v }}" {% if request.GET.statut == v %}selected{% endif %}>{{ l }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Mois validité</label>
+            <input type="month" name="mois" value="{{ request.GET.mois }}"
+                   style="padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;">
+        </div>
+        <button type="submit" class="btn btn-secondary">Filtrer</button>
+        {% if request.GET.search or request.GET.statut or request.GET.mois %}
+        <a href="{% url 'tickets:caissier_tickets' %}" class="btn"
+           style="background:var(--light-green);color:var(--primary-green);">
+            <i class="fas fa-times"></i> Reset
+        </a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Tableau tickets -->
+<div class="card" style="overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;">
+        <thead>
+            <tr style="background:var(--bg-light);border-bottom:2px solid var(--border-color);">
+                <th style="padding:11px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">N° Ticket</th>
+                <th style="padding:11px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Propriétaire</th>
+                <th style="padding:11px 16px;text-align:center;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Validité</th>
+                <th style="padding:11px 16px;text-align:center;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Statut</th>
+                <th style="padding:11px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Consommé chez</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in tickets %}
+            <tr style="border-top:1px solid var(--border-color);"
+                onmouseover="this.style.background='var(--bg-light)'"
+                onmouseout="this.style.background=''">
+                <td style="padding:11px 16px;font-family:monospace;font-size:12px;font-weight:600;color:var(--primary-green);">
+                    {{ t.numero_ticket }}
+                </td>
+                <td style="padding:11px 16px;">
+                    <div style="font-weight:600;font-size:13px;">{{ t.proprietaire.get_full_name }}</div>
+                    <div style="font-size:11px;color:var(--text-muted);">{{ t.proprietaire.matricule|default:"—" }}</div>
+                </td>
+                <td style="padding:11px 16px;text-align:center;font-size:12px;color:var(--text-secondary);">
+                    {{ t.valide_de|date:"d/m" }} → {{ t.valide_jusqua|date:"d/m/Y" }}
+                </td>
+                <td style="padding:11px 16px;text-align:center;">
+                    {% if t.statut == 'DISPONIBLE' %}
+                    <span class="badge badge-success">Disponible</span>
+                    {% elif t.statut == 'CONSOMME' %}
+                    <span class="badge" style="background:#6c757d;color:white;">Consommé</span>
+                    {% elif t.statut == 'EXPIRE' %}
+                    <span class="badge badge-warning">Expiré</span>
+                    {% else %}
+                    <span class="badge badge-danger">Annulé</span>
+                    {% endif %}
+                </td>
+                <td style="padding:11px 16px;font-size:12px;color:var(--text-secondary);">
+                    {% if t.restaurant_consommateur %}
+                    <i class="fas fa-utensils" style="color:var(--primary-green);margin-right:4px;"></i>
+                    {{ t.restaurant_consommateur.nom }}
+                    {% if t.date_consommation %}
+                    <div style="font-size:11px;color:var(--text-muted);">{{ t.date_consommation|date:"d/m/Y H:i" }}</div>
+                    {% endif %}
+                    {% else %}—{% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align:center;padding:48px;color:var(--text-muted);">
+                    <i class="fas fa-ticket-alt" style="font-size:36px;opacity:.3;display:block;margin-bottom:12px;"></i>
+                    Aucun ticket trouvé
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% include 'transactions/modals/vente_form.html' %}
+
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{% static 'js/components.js' %}"></script>
+<script>
+    var urls  = document.getElementById('page-urls').dataset;
+    var PRIX  = {{ prix_ticket }};
+    var MIN_T = {{ min_tickets|default:1 }};
+    var MAX_T = {{ max_tickets|default:20 }};
+
+    /* ── Filtrer clients ─────────────────────────────────────── */
+    function filtrerClients(val) {
+        val = val.toLowerCase();
+        document.querySelectorAll('.client-row').forEach(function(el) {
+            /* Ne jamais montrer les clients non éligibles */
+            if (el.dataset.eligible === 'false') return;
+            var key = el.dataset.search || '';
+            el.style.display = (!val || key.includes(val)) ? '' : 'none';
+        });
+    }
+
+    /* ── Sélectionner un client ──────────────────────────────── */
+    function selectClient(el) {
+        document.querySelectorAll('.client-row').forEach(function(r) { r.style.background = ''; });
+        el.style.background = 'var(--light-green)';
+        document.getElementById('clientId').value = el.dataset.id;
+        document.getElementById('clientSelectedName').textContent =
+            el.dataset.nom + (el.dataset.matricule ? ' — ' + el.dataset.matricule : '');
+        document.getElementById('clientSelected').style.display = 'block';
+        updateBtn();
+    }
+
+    /* ── Nombre de tickets ───────────────────────────────────── */
+    function setNb(n) {
+        document.getElementById('nbTickets').value = n;
+        majRecap();
+    }
+
+    function majRecap() {
+        var nb = Math.min(MAX_T, Math.max(MIN_T, parseInt(document.getElementById('nbTickets').value) || 0));
+        document.getElementById('nbTickets').value = nb;
+        document.getElementById('totalDisplay').textContent = (nb * PRIX).toLocaleString('fr-FR') + ' FCFA';
+        updateBtn();
+    }
+
+    function updateBtn() {
+        var ok = !!document.getElementById('clientId').value &&
+                 parseInt(document.getElementById('nbTickets').value) >= MIN_T;
+        document.getElementById('btnValider').disabled = !ok;
+    }
+
+    /* ── Soumettre vente ─────────────────────────────────────── */
+    function soumettreVente() {
+        var clientId = document.getElementById('clientId').value;
+        var nb       = parseInt(document.getElementById('nbTickets').value);
+        if (!clientId || nb < MIN_T) { showWarning('Vérifiez le formulaire'); return; }
+
+        document.getElementById('btnValider').disabled = true;
+        document.getElementById('btnValider').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement...';
+
+        var fd = new FormData();
+        fd.append('client_id',      clientId);
+        fd.append('nombre_tickets', nb);
+        fd.append('notes',          document.getElementById('ventNotes').value);
+
+        fetch(urls.venteUrl, { method:'POST', headers:{'X-CSRFToken': getCookie('csrftoken')}, body:fd })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.success) {
+                    showSuccess(d.message || 'Vente enregistrée');
+                    closeModal('venteModal');
+                    setTimeout(function() { window.location.reload(); }, 800);
+                } else {
+                    showError(d.error || 'Erreur lors de la vente');
+                    document.getElementById('btnValider').disabled = false;
+                    document.getElementById('btnValider').innerHTML = '<i class="fas fa-check-circle"></i> Valider la vente';
+                }
+            })
+            .catch(function() {
+                showError('Erreur réseau');
+                document.getElementById('btnValider').disabled = false;
+                document.getElementById('btnValider').innerHTML = '<i class="fas fa-check-circle"></i> Valider la vente';
+            });
+    }
+
+    /* ── Init ────────────────────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', function() {
+        majRecap();
+        /* Masquer les clients ayant déjà leur quota ce mois */
+        document.querySelectorAll('.client-row[data-eligible="false"]').forEach(function(el) {
+            el.style.display = 'none';
+        });
+    });
+</script>
+{% endblock %}

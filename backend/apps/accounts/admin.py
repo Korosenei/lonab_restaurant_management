@@ -99,20 +99,17 @@ class AgenceAdmin(admin.ModelAdmin):
             'fields': ('nom', 'code', 'type_agence', 'description')
         }),
         ('Localisation', {
-            'fields': ('adresse', 'ville', 'region', 'code_postal')
+            'fields': ('adresse', 'ville', 'region')
         }),
         ('Contact', {
-            'fields': ('telephone', 'email', 'fax')
+            'fields': ('telephone', 'email')
         }),
         ('Hiérarchie', {
             'fields': ('direction', 'agence_parente', 'responsable')
         }),
         ('Capacité et statut', {
             'fields': ('capacite_max_employes', 'est_active', 'date_ouverture', 'date_fermeture')
-        }),
-        ('Autres', {
-            'fields': ('notes',)
-        }),
+        })
     )
 
     readonly_fields = ['date_creation', 'date_modification']

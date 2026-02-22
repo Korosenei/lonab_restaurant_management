@@ -1,0 +1,242 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
+{% endblock %}
+
+{% block sidebar_menu %}{% include 'dashboards/sidebars/admin_sidebar.html' %}{% endblock %}
+
+{% block page_content %}
+<div id="page-urls"
+     data-create="{% url 'restaurants:planning_create' %}"
+     data-edit-base="{% url 'restaurants:planning_edit' pk=0 %}"
+     data-delete-base="{% url 'restaurants:planning_delete' pk=0 %}"
+     style="display:none;"></div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+    <div>
+        <h1 style="font-size:22px;font-weight:700;color:var(--text-primary);margin:0;">
+            <i class="fas fa-calendar-alt" style="color:var(--primary-green);margin-right:10px;"></i>Plannings
+        </h1>
+        <p style="color:var(--text-muted);font-size:13px;margin:4px 0 0;">
+            {% if request.user.est_caissier and agence_caissier %}
+            Plannings de votre agence : <strong>{{ agence_caissier.nom }}</strong>
+            {% else %}
+            Affectation restaurants ↔ agences
+            {% endif %}
+        </p>
+    </div>
+    {% if request.user.est_caissier %}
+    <a href="{% url 'restaurants:caissier_planifier' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Programmer un restaurant
+    </a>
+    {% else %}
+    <button class="btn btn-primary" onclick="openModal('planningModal')">
+        <i class="fas fa-plus"></i> Nouveau planning
+    </button>
+    {% endif %}
+</div>
+
+<!-- Filtres -->
+<div class="card" style="padding:14px 16px;margin-bottom:18px;">
+    <form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+        <div>
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Restaurant</label>
+            <select name="restaurant" style="padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;min-width:180px;">
+                <option value="">Tous</option>
+                {% for r in restaurants %}
+                <option value="{{ r.id }}" {% if request.GET.restaurant == r.id|stringformat:'s' %}selected{% endif %}>{{ r.nom }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Statut</label>
+            <select name="actif" style="padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;">
+                <option value="">Tous</option>
+                <option value="1" {% if request.GET.actif == '1' %}selected{% endif %}>Actifs</option>
+                <option value="0" {% if request.GET.actif == '0' %}selected{% endif %}>Inactifs</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-secondary">Filtrer</button>
+        {% if request.GET.restaurant or request.GET.actif %}
+        <a href="{% url 'restaurants:plannings_list' %}" class="btn" style="background:var(--light-green);color:var(--primary-green);">
+            <i class="fas fa-times"></i> Reset
+        </a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Tableau -->
+<div class="card" style="overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;">
+        <thead>
+            <tr style="background:var(--bg-light);border-bottom:2px solid var(--border-color);">
+                <th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Restaurant</th>
+                <th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Agence</th>
+                <th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Type</th>
+                <th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Période</th>
+                <th style="padding:12px 16px;text-align:center;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Statut</th>
+                <th style="padding:12px 16px;text-align:right;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in plannings %}
+            <tr style="border-bottom:1px solid var(--border-color);"
+                onmouseover="this.style.background='var(--bg-light)'" onmouseout="this.style.background=''">
+                <td style="padding:14px 16px;font-weight:600;color:var(--text-primary);">{{ p.restaurant.nom }}</td>
+                <td style="padding:14px 16px;color:var(--text-secondary);">{{ p.agence.nom }}</td>
+                <td style="padding:14px 16px;">
+                    <span style="font-size:12px;background:var(--light-green);color:var(--primary-green);padding:3px 9px;border-radius:12px;font-weight:600;">
+                        {{ p.get_type_planning_display }}
+                    </span>
+                </td>
+                <td style="padding:14px 16px;font-size:13px;color:var(--text-secondary);">
+                    {{ p.date_debut|date:"d/m/Y" }} → {{ p.date_fin|date:"d/m/Y" }}
+                    {% if p.est_actuel %}
+                    <span style="margin-left:6px;font-size:11px;color:var(--primary-green);font-weight:600;">● en cours</span>
+                    {% endif %}
+                </td>
+                <td style="padding:14px 16px;text-align:center;">
+                    {% if p.est_actif %}<span class="badge badge-success">Actif</span>
+                    {% else %}<span class="badge badge-danger">Inactif</span>{% endif %}
+                </td>
+                <td style="padding:14px 16px;text-align:right;">
+                    <div style="display:flex;gap:6px;justify-content:flex-end;">
+                        <button onclick="editPlanning({{ p.id }})" class="btn-icon" title="Modifier"><i class="fas fa-edit"></i></button>
+                        <button onclick="deletePlanning({{ p.id }})" class="btn-icon btn-icon-danger" title="Supprimer"><i class="fas fa-trash"></i></button>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align:center;padding:48px;color:var(--text-muted);">
+                    <i class="fas fa-calendar" style="font-size:32px;margin-bottom:12px;display:block;opacity:.3;"></i>
+                    Aucun planning —
+                    {% if request.user.est_caissier %}
+                    <a href="{% url 'restaurants:caissier_planifier' %}" class="btn btn-primary" style="margin-left:8px;">Programmer un restaurant</a>
+                    {% else %}
+                    <button class="btn btn-primary" style="margin-left:8px;" onclick="openModal('planningModal')">Créer le premier</button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- ═══ MODAL Planning ═══ -->
+<div class="modal-overlay" id="planningModal">
+    <div class="modal" style="max-width:500px;width:100%;">
+        <div class="modal-header">
+            <h3 class="modal-title" id="planningModalTitle" data-default-title="Nouveau planning">Nouveau planning</h3>
+            <button class="modal-close" onclick="closeModal('planningModal')"><i class="fas fa-times"></i></button>
+        </div>
+        <form id="planningForm">
+            {% csrf_token %}
+            <input type="hidden" id="p_id" name="p_id">
+            <div class="modal-body" style="padding:20px;">
+                <div style="display:grid;gap:14px;">
+                    <div class="form-group">
+                        <label class="form-label">Restaurant <span style="color:red">*</span></label>
+                        <select id="p_restaurant" name="restaurant" class="form-control" required>
+                            <option value="">-- Sélectionner --</option>
+                            {% for r in restaurants %}
+                            <option value="{{ r.id }}">{{ r.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Agence <span style="color:red">*</span></label>
+                        <select id="p_agence" name="agence" class="form-control" required>
+                            <option value="">-- Sélectionner --</option>
+                            {% for a in agences %}
+                            <option value="{{ a.id }}">{{ a.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Type de planning</label>
+                        <select id="p_type" name="type_planning" class="form-control">
+                            <option value="MENSUEL">Mensuel</option>
+                            <option value="HEBDOMADAIRE">Hebdomadaire</option>
+                        </select>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div class="form-group">
+                            <label class="form-label">Date début <span style="color:red">*</span></label>
+                            <input type="date" id="p_debut" name="date_debut" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Date fin <span style="color:red">*</span></label>
+                            <input type="date" id="p_fin" name="date_fin" class="form-control" required>
+                        </div>
+                    </div>
+                    <div id="p_actif_group" style="display:none;" class="form-group">
+                        <label class="form-label">Statut</label>
+                        <select id="p_actif" name="est_actif" class="form-control">
+                            <option value="1">Actif</option>
+                            <option value="0">Inactif</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding:14px 20px;border-top:1px solid var(--border-color);display:flex;gap:10px;justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('planningModal')">Annuler</button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{% static 'js/components.js' %}"></script>
+<script>
+var urls = document.getElementById('page-urls').dataset;
+
+function editPlanning(id) {
+    fetch(urls.editBase.replace('/0/', '/' + id + '/'))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            document.getElementById('p_id').value        = id;
+            document.getElementById('p_restaurant').value = d.restaurant_id;
+            document.getElementById('p_agence').value    = d.agence_id;
+            document.getElementById('p_type').value      = d.type_planning;
+            document.getElementById('p_debut').value     = d.date_debut;
+            document.getElementById('p_fin').value       = d.date_fin;
+            document.getElementById('p_actif').value     = d.est_actif ? '1' : '0';
+            document.getElementById('p_actif_group').style.display = 'block';
+            document.getElementById('planningModalTitle').textContent = 'Modifier le planning';
+            openModal('planningModal');
+        });
+}
+
+function deletePlanning(id) {
+    showConfirm('Supprimer ce planning ?', 'Cette action est irréversible.', function() {
+        fetch(urls.deleteBase.replace('/0/', '/' + id + '/'), {
+            method: 'POST', headers: {'X-CSRFToken': getCsrfToken()}
+        }).then(function(r) { return r.json(); }).then(function(d) {
+            if (d.success) { showToast(d.message, 'success'); setTimeout(function() { location.reload(); }, 1000); }
+            else showToast(d.error, 'error');
+        });
+    });
+}
+
+document.getElementById('planningForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var id  = document.getElementById('p_id').value;
+    var url = id ? urls.editBase.replace('/0/', '/' + id + '/') : urls.create;
+    fetch(url, { method: 'POST', headers: {'X-CSRFToken': getCsrfToken()}, body: new FormData(this) })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.success) {
+                showToast(d.message, 'success');
+                closeModal('planningModal');
+                setTimeout(function() { location.reload(); }, 900);
+            } else showToast(d.error, 'error');
+        });
+});
+</script>
+{% endblock %}

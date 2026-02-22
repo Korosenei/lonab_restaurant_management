@@ -1,0 +1,70 @@
+
+<div class="modal-overlay" id="successModal">
+    <div class="modal modal-small">
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="fas fa-check-circle"></i>
+                Vente confirmée
+            </div>
+            <button class="modal-close" type="button" onclick="closeModal('successModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="modal-body" style="text-align:center;">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <p id="sMsg" class="success-message"></p>
+            <div class="success-details">
+                <div class="success-detail-row">
+                    <span>Transaction</span>
+                    <strong id="sNum"></strong>
+                </div>
+                <div class="success-detail-row">
+                    <span>Tickets</span>
+                    <strong id="sTick"></strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="closeModal('successModal')">
+                Fermer
+            </button>
+            <button type="button" class="btn btn-primary" onclick="location.reload()">
+                <i class="fas fa-plus"></i> Nouvelle vente
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.success-icon {
+    font-size: 48px;
+    color: #28a745;
+    margin: 16px auto;
+}
+.success-message {
+    font-size: 14px;
+    color: #6c757d;
+    margin: 0 0 16px;
+}
+.success-details {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px 16px;
+    text-align: left;
+    margin-bottom: 4px;
+}
+.success-detail-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 4px 0;
+    color: #6c757d;
+    border-bottom: 1px solid #e9ecef;
+}
+.success-detail-row:last-child { border-bottom: none; }
+.success-detail-row strong { color: #2d3748; }
+</style>

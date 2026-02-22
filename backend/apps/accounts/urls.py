@@ -29,7 +29,7 @@ urlpatterns = [
     # ============================================
     path('dashboard/', views.dashboard_redirection, name='dashboard'),
     path('dashboard/client/', views.dashboard_client, name='client_dashboard'),
-    path('dashboard/cashier/', views.dashboard_caissier, name='cashier_dashboard'),
+    path('dashboard/caissier/', views.dashboard_caissier, name='caissier_dashboard'),
     path('dashboard/restaurant/', views.dashboard_restaurant, name='restaurant_dashboard'),
     path('dashboard/admin/', views.dashboard_admin, name='admin_dashboard'),
 

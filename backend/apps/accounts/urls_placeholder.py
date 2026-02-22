@@ -24,20 +24,9 @@ urlpatterns = [
     # Client URLs
     path('client/tickets/', placeholder_view, name='client_tickets'),
     path('client/qrcode/', placeholder_view, name='client_qrcode'),
-    path('client/history/', placeholder_view, name='client_history'),
-    path('client/restaurants/', placeholder_view, name='client_restaurants'),
-    path('client/menus/', placeholder_view, name='client_menus'),
-    path('client/reservations/', placeholder_view, name='client_reservations'),
 
-    # Cashier URLs
-    path('cashier/transactions/', placeholder_view, name='cashier_transactions'),
-    path('cashier/clients/', placeholder_view, name='cashier_clients'),
-    path('cashier/restaurants/', placeholder_view, name='cashier_restaurants'),
-    path('cashier/schedules/', placeholder_view, name='cashier_schedules'),
-    path('cashier/reports/', placeholder_view, name='cashier_reports'),
-    path('cashier/history/', placeholder_view, name='cashier_history'),
-    path('cashier/sell-tickets/', placeholder_view, name='cashier_sell_tickets'),
-    path('cashier/schedule-restaurant/', placeholder_view, name='cashier_schedule_restaurant'),
+    # Caissier URLs
+    path('caissier/reports/', placeholder_view, name='caissier_reports'),
 
     # Restaurant Manager URLs
     path('restaurant/scan/', placeholder_view, name='restaurant_scan'),
@@ -50,15 +39,7 @@ urlpatterns = [
 
     # Admin URLs
     path('admin/overview/', placeholder_view, name='admin_overview'),
-    path('admin/directions/', placeholder_view, name='admin_directions'),
-    path('admin/agences/', placeholder_view, name='admin_agences'),
-    path('admin/users/', placeholder_view, name='admin_users'),
-    path('admin/tickets/', placeholder_view, name='admin_tickets'),
-    path('admin/transactions/', placeholder_view, name='admin_transactions'),
-    path('admin/restaurants/', placeholder_view, name='admin_restaurants'),
-    path('admin/schedules/', placeholder_view, name='admin_schedules'),
     path('admin/reports/', placeholder_view, name='admin_reports'),
-    path('admin/stats/', placeholder_view, name='admin_stats'),
     path('admin/audit/', placeholder_view, name='admin_audit'),
     path('admin/settings/', placeholder_view, name='admin_settings'),
     path('admin/notifications/', placeholder_view, name='admin_notifications'),

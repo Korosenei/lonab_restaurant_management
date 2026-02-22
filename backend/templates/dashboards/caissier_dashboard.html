@@ -1,0 +1,220 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Tableau de bord — Caissier{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
+{% endblock %}
+
+{% block sidebar_menu %}
+{% include 'dashboards/sidebars/caissier_sidebar.html' %}
+{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1 class="page-title">Tableau de bord — Caissier</h1>
+    <p class="page-subtitle">
+        {% if user.agence %}{{ user.agence.nom }}{% else %}Toutes les agences{% endif %} ·
+        {{ aujourd_hui|date:"l d F Y" }}
+    </p>
+    <div class="page-actions">
+        <a href="{% url 'tickets:caissier_tickets' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Vendre des tickets
+        </a>
+        <a href="{% url 'restaurants:plannings_list' %}" class="btn btn-outline">
+            <i class="fas fa-calendar-plus"></i> Programmations
+        </a>
+    </div>
+</div>
+
+<!-- ═══ Stats Cards ════════════════════════════════════════════ -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--spacing-md);margin-bottom:var(--spacing-lg);">
+
+    <!-- Ventes du jour -->
+    <div class="card" style="border-left:4px solid var(--primary-green);">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+                <div style="color:var(--text-muted);font-size:12px;margin-bottom:4px;">Ventes du jour</div>
+                <div style="font-size:28px;font-weight:700;color:var(--primary-green);">{{ stats.aujourd_hui }}</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">transactions</div>
+            </div>
+            <div style="width:50px;height:50px;background:var(--light-green);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                <i class="fas fa-cash-register" style="font-size:22px;color:var(--primary-green);"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tickets vendus ce mois -->
+    <div class="card" style="border-left:4px solid #17a2b8;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+                <div style="color:var(--text-muted);font-size:12px;margin-bottom:4px;">Tickets vendus (mois)</div>
+                <div style="font-size:28px;font-weight:700;color:var(--text-primary);">{{ stats.tickets_mois }}</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">tickets</div>
+            </div>
+            <div style="width:50px;height:50px;background:#d1ecf1;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                <i class="fas fa-ticket-alt" style="font-size:22px;color:#17a2b8;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- CA du mois -->
+    <div class="card" style="border-left:4px solid #28a745;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+                <div style="color:var(--text-muted);font-size:12px;margin-bottom:4px;">CA du mois</div>
+                <div style="font-size:28px;font-weight:700;color:var(--text-primary);">{{ stats.ca_mois|floatformat:0 }}</div>
+                <div style="font-size:11px;color:var(--primary-green);margin-top:4px;">FCFA</div>
+            </div>
+            <div style="width:50px;height:50px;background:var(--light-green);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                <i class="fas fa-coins" style="font-size:22px;color:#28a745;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- En attente -->
+    <div class="card" style="border-left:4px solid #ffc107;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+                <div style="color:var(--text-muted);font-size:12px;margin-bottom:4px;">En attente</div>
+                <div style="font-size:28px;font-weight:700;color:var(--text-primary);">{{ stats.en_attente }}</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">transactions</div>
+            </div>
+            <div style="width:50px;height:50px;background:#fff3cd;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                <i class="fas fa-hourglass-half" style="font-size:22px;color:#ffc107;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Chart + Transactions récentes ══════════════════════════ -->
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:var(--spacing-md);margin-bottom:var(--spacing-md);">
+
+    <!-- Transactions récentes -->
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-receipt"></i> Transactions récentes
+            <a href="{% url 'transactions:caissier_historique' %}" class="btn btn-outline btn-sm" style="margin-left:auto;font-size:11px;">Voir tout</a>
+        </div>
+        {% if recentes %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>N° Transaction</th>
+                    <th>Client</th>
+                    <th>Tickets</th>
+                    <th>Montant</th>
+                    <th>Date</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in recentes %}
+                <tr>
+                    <td style="font-size:11px;font-family:monospace;color:var(--primary-green);font-weight:700;">{{ t.numero_transaction|truncatechars:16 }}</td>
+                    <td style="font-size:12px;font-weight:600;">{{ t.client.get_full_name|truncatechars:20 }}</td>
+                    <td style="font-size:12px;text-align:center;">{{ t.nombre_tickets }}</td>
+                    <td style="font-size:12px;font-weight:600;">{{ t.montant_total|floatformat:0 }} <small style="color:var(--text-muted);">FCFA</small></td>
+                    <td style="font-size:11px;color:var(--text-muted);">{{ t.date_transaction|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        <span class="badge {% if t.statut == 'TERMINEE' %}badge-success{% elif t.statut == 'EN_ATTENTE' %}badge-warning{% else %}badge-danger{% endif %}" style="font-size:10px;">
+                            {{ t.get_statut_display }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="text-align:center;padding:var(--spacing-xl);color:var(--text-muted);">
+            <i class="fas fa-inbox" style="font-size:40px;display:block;margin-bottom:12px;opacity:.3;"></i>
+            <p>Aucune transaction récente</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Graphe + Actions rapides -->
+    <div style="display:flex;flex-direction:column;gap:var(--spacing-md);">
+
+        <!-- Mini graphe montants -->
+        <div class="card">
+            <div class="card-header"><i class="fas fa-chart-line"></i> Activité récente</div>
+            <div style="padding:12px 16px;">
+                <canvas id="caissierChart" height="140"></canvas>
+            </div>
+        </div>
+
+        <!-- Actions rapides -->
+        <div class="card">
+            <div class="card-header"><i class="fas fa-bolt"></i> Actions rapides</div>
+            <div style="display:flex;flex-direction:column;gap:var(--spacing-sm);padding:8px 0;">
+                <a href="{% url 'tickets:caissier_tickets' %}" class="btn btn-primary" style="width:100%;">
+                    <i class="fas fa-ticket-alt"></i> Vendre des tickets
+                </a>
+                <a href="{% url 'transactions:caissier_clients' %}" class="btn btn-outline" style="width:100%;">
+                    <i class="fas fa-users"></i> Mes clients
+                </a>
+                <a href="{% url 'restaurants:plannings_list' %}" class="btn btn-outline" style="width:100%;">
+                    <i class="fas fa-calendar-alt"></i> Programmations
+                </a>
+                <a href="{% url 'transactions:caissier_historique' %}" class="btn btn-outline" style="width:100%;">
+                    <i class="fas fa-history"></i> Historique
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+(function () {
+    Chart.defaults.font.family = "'Inter','Segoe UI',sans-serif";
+    Chart.defaults.font.size   = 12;
+
+    /* Données injectées directement depuis le template Django */
+    var labels   = [{% for t in recentes|slice:":8" %}'{{ t.numero_transaction|slice:"-6:" }}'{% if not forloop.last %},{% endif %}{% endfor %}].reverse();
+    var montants = [{% for t in recentes|slice:":8" %}{{ t.montant_total|default:0 }}{% if not forloop.last %},{% endif %}{% endfor %}].reverse();
+
+    if (labels.length === 0) { labels = ['—']; montants = [0]; }
+
+    new Chart(document.getElementById('caissierChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Montant',
+                data: montants,
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40,167,69,.1)',
+                borderWidth: 2,
+                pointRadius: 3,
+                pointBackgroundColor: '#28a745',
+                fill: true,
+                tension: 0.4,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: { label: function(c) { return c.parsed.y.toLocaleString('fr-FR') + ' FCFA'; } }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0,0,0,.05)' },
+                    ticks: { callback: function(v) { return v >= 1000 ? (v/1000).toFixed(0)+'k' : v; } }
+                },
+                x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+            }
+        }
+    });
+})();
+</script>
+{% endblock %}

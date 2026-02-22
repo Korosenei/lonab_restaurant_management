@@ -1,0 +1,133 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Statistiques Tickets{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
+{% endblock %}
+
+{% block sidebar_menu %}
+{% include 'dashboards/sidebars/admin_sidebar.html' %}
+{% endblock %}
+
+{% block page_content %}
+<div class="page-header-with-actions">
+    <div class="page-header">
+        <h1 class="page-title">Statistiques Tickets</h1>
+        <p class="page-subtitle">{{ debut_mois|date:"F Y" }}</p>
+    </div>
+    <div class="page-header-actions">
+        <a href="{% url 'tickets:admin_tickets' %}" class="btn btn-outline">
+            <i class="fas fa-list"></i> Liste tickets
+        </a>
+    </div>
+</div>
+
+<!-- KPIs -->
+<div class="stats-grid">
+    <div class="stat-card stat-card-green">
+        <div class="stat-card-icon"><i class="fas fa-ticket-alt"></i></div>
+        <div class="stat-card-content">
+            <div class="stat-card-label">Total tickets</div>
+            <div class="stat-card-value">{{ stats.total_tickets }}</div>
+        </div>
+    </div>
+    <div class="stat-card stat-card-green">
+        <div class="stat-card-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-card-content">
+            <div class="stat-card-label">Disponibles</div>
+            <div class="stat-card-value">{{ stats.disponibles }}</div>
+        </div>
+    </div>
+    <div class="stat-card stat-card-blue">
+        <div class="stat-card-icon"><i class="fas fa-utensils"></i></div>
+        <div class="stat-card-content">
+            <div class="stat-card-label">Consommés ce mois</div>
+            <div class="stat-card-value">{{ stats.consommes_mois }}</div>
+        </div>
+    </div>
+    <div class="stat-card stat-card-purple">
+        <div class="stat-card-icon"><i class="fas fa-qrcode"></i></div>
+        <div class="stat-card-content">
+            <div class="stat-card-label">QR Générés ce mois</div>
+            <div class="stat-card-value">{{ stats.qr_generes_mois }}</div>
+        </div>
+    </div>
+    <div class="stat-card stat-card-yellow">
+        <div class="stat-card-icon"><i class="fas fa-qrcode"></i></div>
+        <div class="stat-card-content">
+            <div class="stat-card-label">QR Utilisés ce mois</div>
+            <div class="stat-card-value">{{ stats.qr_utilises_mois }}</div>
+        </div>
+    </div>
+    <div class="stat-card stat-card-red">
+        <div class="stat-card-icon"><i class="fas fa-clock"></i></div>
+        <div class="stat-card-content">
+            <div class="stat-card-label">Expirés / Annulés</div>
+            <div class="stat-card-value">{{ stats.expires|add:stats.annules }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Graphique consommations -->
+<div class="data-table-wrapper">
+    <div class="data-table-header">
+        <div class="data-table-title">
+            <i class="fas fa-chart-bar text-green"></i>
+            Consommations journalières — 30 derniers jours
+        </div>
+    </div>
+    <div style="padding:20px;">
+        <canvas id="consoChart" height="80"></canvas>
+    </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{% static 'js/components.js' %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var labels = [{% for j in conso_jour %}'{{ j.date }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+    var data   = [{% for j in conso_jour %}{{ j.nb }}{% if not forloop.last %},{% endif %}{% endfor %}];
+
+    new Chart(document.getElementById('consoChart'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Tickets consommés',
+                data: data,
+                backgroundColor: 'rgba(40,167,69,0.7)',
+                borderColor: '#28a745',
+                borderWidth: 1,
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) { return ctx.raw + ' ticket(s)'; }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1, precision: 0 },
+                    grid: { color: '#f0f0f0' },
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 10 } },
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
