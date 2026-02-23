@@ -1,151 +1,67 @@
 {% extends 'dashboards/base_dashboard.html' %}
 {% load static %}
 
-{% block title %}Restaurants — Mon Agence{% endblock %}
+{% block title %}Restaurants{% endblock %}
+{% block dashboard_css %}<link rel="stylesheet" href="{% static 'css/components.css' %}">{% endblock %}
 
-{% block dashboard_css %}
-<link rel="stylesheet" href="{% static 'css/components.css' %}">
-{% endblock %}
-
-{% block sidebar_menu %}
-{% include 'dashboards/sidebars/client_sidebar.html' %}
-{% endblock %}
+{% block sidebar_menu %}{% include 'dashboards/sidebars/client_sidebar.html' %}{% endblock %}
 
 {% block page_content %}
-<div class="page-header-with-actions">
-    <div class="page-header">
-        <h1 class="page-title">Restaurants</h1>
-        <p class="page-subtitle">
-            Restaurants programmés pour
-            <strong>{{ agence.nom|default:"votre agence" }}</strong>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+    <div>
+        <h1 style="font-size:20px;font-weight:700;margin:0;color:var(--text-primary);">
+            <i class="fas fa-utensils" style="color:var(--primary-green);margin-right:8px;"></i>Restaurants disponibles
+        </h1>
+        <p style="color:var(--text-muted);font-size:12px;margin:3px 0 0;">
+            {{ aujourd_hui|date:"l d F Y" }}
+            {% if agence %} · <strong>{{ agence.nom }}</strong>{% endif %}
         </p>
     </div>
-    <div class="page-header-actions">
-        <a href="{% url 'restaurants:client_menus' %}" class="btn btn-primary">
-            <i class="fas fa-utensils"></i> Voir les menus
-        </a>
-    </div>
+    <a href="{% url 'restaurants:client_menus' %}" class="btn btn-primary" style="font-size:13px;padding:8px 14px;">
+        <i class="fas fa-book-open"></i> Menus du jour
+    </a>
 </div>
 
 {% if restaurants_programmes %}
-
-<!-- Grille restaurants -->
-<div class="stats-grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr));">
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;">
     {% for restaurant in restaurants_programmes %}
-    <div class="profile-section" style="padding:0;overflow:hidden;">
-        <div class="restaurant-cover">
+    <div class="card" style="overflow:hidden;transition:.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 16px rgba(0,0,0,.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <!-- Logo / visuel -->
+        <div style="height:100px;background:linear-gradient(135deg,#1a5c2e,#28a745);display:flex;align-items:center;justify-content:center;position:relative;">
             {% if restaurant.logo %}
-            <img src="{{ restaurant.logo.url }}" alt="{{ restaurant.nom }}" class="restaurant-logo">
+            <img src="{{ restaurant.logo.url }}" alt="{{ restaurant.nom }}" style="width:100%;height:100%;object-fit:cover;">
             {% else %}
-            <i class="fas fa-store restaurant-icon"></i>
+            <i class="fas fa-utensils" style="font-size:36px;color:rgba(255,255,255,.5);"></i>
             {% endif %}
+            <span class="badge badge-success" style="position:absolute;top:10px;right:10px;font-size:10px;">Programmé</span>
         </div>
         <div style="padding:14px;">
-            <div class="user-name" style="font-size:14px;margin-bottom:4px;">{{ restaurant.nom }}</div>
-            <div class="user-meta">
-                <i class="fas fa-map-marker-alt"></i> {{ restaurant.adresse|default:"—" }}
+            <h3 style="font-size:14px;font-weight:700;margin:0 0 4px;color:var(--text-primary);">{{ restaurant.nom }}</h3>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.6;">
+                {% if restaurant.adresse %}<div><i class="fas fa-map-marker-alt" style="width:14px;color:var(--primary-green);"></i> {{ restaurant.adresse }}</div>{% endif %}
+                {% if restaurant.ville %}<div><i class="fas fa-city" style="width:14px;color:var(--primary-green);"></i> {{ restaurant.ville }}</div>{% endif %}
+                {% if restaurant.telephone %}<div><i class="fas fa-phone" style="width:14px;color:var(--primary-green);"></i> {{ restaurant.telephone }}</div>{% endif %}
             </div>
-            {% if restaurant.telephone %}
-            <div class="user-meta">
-                <i class="fas fa-phone"></i> {{ restaurant.telephone }}
-            </div>
-            {% endif %}
-            <div style="margin-top:10px;">
-                <span class="badge badge-success">
-                    <i class="fas fa-check-circle"></i> Programmé
-                </span>
-            </div>
+            <a href="{% url 'restaurants:client_menus' %}?restaurant={{ restaurant.id }}" class="btn btn-outline" style="width:100%;font-size:12px;text-align:center;">
+                <i class="fas fa-book-open"></i> Voir les plats du jour
+            </a>
         </div>
     </div>
     {% endfor %}
 </div>
-
-<!-- Tableau plannings actifs -->
-<div class="data-table-wrapper" style="margin-top:20px;">
-    <div class="data-table-header">
-        <div class="data-table-title">
-            <i class="fas fa-calendar-check"></i>
-            Plannings actifs au {{ aujourd_hui|date:"d/m/Y" }}
-        </div>
-    </div>
-    <div class="data-table-body">
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Restaurant</th>
-                        <th>Type</th>
-                        <th>Période</th>
-                        <th>Statut</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for planning in plannings_actifs %}
-                <tr>
-                    <td>
-                        <div class="user-cell">
-                            <div class="user-avatar-sm">{{ planning.restaurant.nom.0 }}</div>
-                            <div class="user-name">{{ planning.restaurant.nom }}</div>
-                        </div>
-                    </td>
-                    <td class="text-sm">
-                        {% if planning.get_type_repas_display %}
-                            {{ planning.get_type_repas_display }}
-                        {% elif planning.type_repas %}
-                            {# Fallback au cas où le champ existerait mais pas la méthode display #}
-                            {{ planning.type_repas }}
-                        {% elif planning.type %}
-                            {# Alternative si le champ s'appelle 'type' #}
-                            {{ planning.type }}
-                        {% elif planning.categorie %}
-                            {# Alternative si le champ s'appelle 'categorie' #}
-                            {{ planning.categorie }}
-                        {% else %}
-                            <span class="text-muted">Non spécifié</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-sm text-muted">
-                        {{ planning.date_debut|date:"d/m/Y" }} → {{ planning.date_fin|date:"d/m/Y" }}
-                    </td>
-                    <td><span class="badge badge-success">Actif</span></td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
 {% else %}
-
-<div class="data-table-wrapper">
-    <div class="empty-state" style="padding:60px 20px;">
-        <i class="fas fa-store"></i>
-        <p>Aucun restaurant programmé pour votre agence ce mois-ci.</p>
-        <p style="font-size:12px;margin-top:8px;">Contactez votre administrateur pour plus d'informations.</p>
-    </div>
+<div style="background:white;border-radius:12px;padding:48px;text-align:center;box-shadow:0 1px 6px rgba(0,0,0,.07);">
+    {% if not agence %}
+    <i class="fas fa-building" style="font-size:40px;color:#adb5bd;display:block;margin-bottom:14px;"></i>
+    <h2 style="font-size:16px;font-weight:700;margin:0 0 8px;">Aucune agence assignée</h2>
+    <p style="color:var(--text-muted);font-size:13px;margin:0;">Votre compte n'est pas encore rattaché à une agence. Contactez votre administrateur.</p>
+    {% else %}
+    <i class="fas fa-calendar-times" style="font-size:40px;color:#adb5bd;display:block;margin-bottom:14px;"></i>
+    <h2 style="font-size:16px;font-weight:700;margin:0 0 8px;">Aucun restaurant programmé</h2>
+    <p style="color:var(--text-muted);font-size:13px;margin:0;">Aucun restaurant n'est actuellement programmé pour votre agence <strong>{{ agence.nom }}</strong>.</p>
+    {% endif %}
 </div>
-
 {% endif %}
-
-<style>
-.restaurant-cover {
-    height: 110px;
-    background: linear-gradient(135deg, #e8f5e9, #f0fff4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-.restaurant-logo {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-.restaurant-icon {
-    font-size: 36px;
-    color: #28a745;
-    opacity: 0.5;
-}
-</style>
 {% endblock %}
+
+{% block dashboard_js %}<script src="{% static 'js/components.js' %}"></script>{% endblock %}

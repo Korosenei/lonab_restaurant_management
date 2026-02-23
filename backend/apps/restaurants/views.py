@@ -450,17 +450,32 @@ def gestionnaire_dashboard(request):
     restaurant = request.user.restaurant_gere
     aujourd_hui = timezone.now().date()
     debut_semaine = aujourd_hui - timezone.timedelta(days=aujourd_hui.weekday())
+    debut_mois, _ = _debut_fin_mois(aujourd_hui)
     reservations = Reservation.objects.filter(
         restaurant=restaurant, date_reservation=aujourd_hui
     ).select_related('client', 'menu').order_by('statut')
+
+    # Données graphe 7 jours pour Chart.js
+    graph_7j = []
+    for i in range(6, -1, -1):
+        j = aujourd_hui - timezone.timedelta(days=i)
+        nb = restaurant.tickets_consommes.filter(date_consommation__date=j).count()
+        graph_7j.append({'label': j.strftime('%a %d/%m'), 'value': nb})
+
     return render(request, 'restaurants/gestionnaire_dashboard.html', {
         'restaurant': restaurant,
         'menus_aujourd_hui': restaurant.menus.filter(date=aujourd_hui, est_disponible=True),
         'reservations_aujourd_hui': reservations,
-        'tickets_aujourd_hui': restaurant.tickets_consommes.filter(date_consommation__date=aujourd_hui).count(),
-        'tickets_semaine': restaurant.tickets_consommes.filter(date_consommation__date__gte=debut_semaine).count(),
+        'tickets_aujourd_hui': restaurant.tickets_consommes.filter(
+            date_consommation__date=aujourd_hui).count(),
+        'tickets_semaine': restaurant.tickets_consommes.filter(
+            date_consommation__date__gte=debut_semaine).count(),
+        'tickets_ce_mois': restaurant.tickets_consommes.filter(
+            date_consommation__date__gte=debut_mois).count(),
         'nb_attente': reservations.filter(statut='EN_ATTENTE').count(),
         'nb_confirme': reservations.filter(statut='CONFIRME').count(),
+        'nb_termine': reservations.filter(statut='TERMINE').count(),
+        'graph_7j': graph_7j,
         'aujourd_hui': aujourd_hui,
     })
 
@@ -484,12 +499,15 @@ def gestionnaire_scanner(request):
 def verifier_qr_code(request):
     redir = _verifier_acces_gestionnaire(request)
     if redir: return JsonResponse({'valide': False, 'error': 'Accès refusé'}, status=403)
+    restaurant = request.user.restaurant_gere
     code = request.GET.get('code', '').strip()
     if not code:
         return JsonResponse({'valide': False, 'error': 'Code manquant'})
     try:
         from apps.tickets.models import CodeQR, Ticket
-        qr = CodeQR.objects.select_related('utilisateur', 'utilisateur__agence', 'utilisateur__direction').get(code=code)
+        qr = CodeQR.objects.select_related(
+            'utilisateur', 'utilisateur__agence', 'utilisateur__direction'
+        ).get(code=code)
         est_valide, message = qr.verifier_validite()
         if not est_valide:
             return JsonResponse({'valide': False, 'error': message})
@@ -501,7 +519,25 @@ def verifier_qr_code(request):
         ticket = tickets_qs.first()
         if not ticket:
             return JsonResponse({'valide': False, 'error': 'Aucun ticket valide disponible pour cet employé'})
-        return JsonResponse({
+
+        # ── Réservation du client pour aujourd'hui dans CE restaurant ──────
+        reservation = Reservation.objects.filter(
+            client=qr.utilisateur,
+            restaurant=restaurant,
+            date_reservation=aujourd_hui,
+            statut__in=['EN_ATTENTE', 'CONFIRME'],
+        ).select_related('menu').first()
+
+        # ── Plats du jour dans CE restaurant (pour choix manuel) ──────────
+        plats_du_jour = list(
+            Menu.objects.filter(
+                restaurant=restaurant,
+                date=aujourd_hui,
+                est_disponible=True,
+            ).values('id', 'nom', 'quantite_disponible')
+        )
+
+        resp = {
             'valide': True, 'code': code,
             'client': qr.utilisateur.get_full_name(),
             'matricule': qr.utilisateur.matricule or '—',
@@ -509,7 +545,17 @@ def verifier_qr_code(request):
             'ticket_numero': ticket.numero_ticket,
             'tickets_restants': tickets_qs.count(),
             'photo_url': qr.utilisateur.photo_profil.url if qr.utilisateur.photo_profil else '',
-        })
+            'plats_du_jour': plats_du_jour,
+            'reservation': None,
+        }
+        if reservation:
+            resp['reservation'] = {
+                'id': reservation.id,
+                'menu_id': reservation.menu_id,
+                'menu_nom': reservation.menu.nom,
+                'statut': reservation.statut,
+            }
+        return JsonResponse(resp)
     except CodeQR.DoesNotExist:
         return JsonResponse({'valide': False, 'error': 'Code QR introuvable ou invalide'})
     except Exception as e:
@@ -522,6 +568,7 @@ def valider_qr_code(request):
     if redir: return JsonResponse({'error': 'Accès refusé'}, status=403)
     restaurant = request.user.restaurant_gere
     code = request.POST.get('code', '').strip()
+    menu_id = request.POST.get('menu_id', '').strip()  # optionnel
     if not code:
         return JsonResponse({'error': 'Code QR manquant'}, status=400)
     try:
@@ -537,8 +584,55 @@ def valider_qr_code(request):
         ).first()
         if not ticket:
             return JsonResponse({'error': 'Aucun ticket valide disponible', 'valide': False}, status=400)
+
+        # ── Traitement du plat consommé ────────────────────────────────────
+        plat_consomme = None
+        plat_nom = None
+
+        # Cas 1 : le gestionnaire a transmis un menu_id explicite
+        if menu_id:
+            try:
+                plat_consomme = Menu.objects.get(pk=menu_id, restaurant=restaurant)
+                plat_nom = plat_consomme.nom
+            except Menu.DoesNotExist:
+                pass
+
+        # Cas 2 : le client avait une réservation active → on l'utilise
+        reservation_active = Reservation.objects.filter(
+            client=qr.utilisateur, restaurant=restaurant,
+            date_reservation=aujourd_hui,
+            statut__in=['EN_ATTENTE', 'CONFIRME'],
+        ).select_related('menu').first()
+
+        if reservation_active:
+            # Si pas de plat choisi manuellement → on utilise le plat réservé
+            if not plat_consomme:
+                plat_consomme = reservation_active.menu
+                plat_nom = reservation_active.menu.nom
+            # Marquer la réservation comme terminée
+            reservation_active.statut = 'TERMINE'
+            reservation_active.save(update_fields=['statut'])
+        elif plat_consomme:
+            # Pas de réservation préalable → créer une réservation TERMINE comme trace
+            Reservation.objects.create(
+                client=qr.utilisateur,
+                restaurant=restaurant,
+                menu=plat_consomme,
+                date_reservation=aujourd_hui,
+                statut='TERMINE',
+            )
+
+        # Décrémenter quantité si applicable
+        if plat_consomme and plat_consomme.quantite_disponible is not None:
+            plat_consomme.quantite_disponible = max(0, plat_consomme.quantite_disponible - 1)
+            if plat_consomme.quantite_disponible == 0:
+                plat_consomme.est_disponible = False
+            plat_consomme.save(update_fields=['quantite_disponible', 'est_disponible'])
+
+        # ── Consommer le ticket ────────────────────────────────────────────
         ticket.marquer_comme_consomme(restaurant, request.user)
         qr.marquer_comme_utilise(restaurant)
+
         return JsonResponse({
             'valide': True,
             'message': f'Ticket validé — {qr.utilisateur.get_full_name()}',
@@ -546,6 +640,7 @@ def valider_qr_code(request):
             'matricule': qr.utilisateur.matricule or '',
             'agence': qr.utilisateur.agence.nom if qr.utilisateur.agence else '',
             'ticket_numero': ticket.numero_ticket,
+            'plat': plat_nom or '—',
         })
     except CodeQR.DoesNotExist:
         return JsonResponse({'error': 'Code QR invalide ou introuvable', 'valide': False}, status=404)
@@ -812,4 +907,3 @@ def caissier_planifier_restaurant(request):
         'agence_caissier': agence_caissier,
         'planning_actif_actuel': planning_actif_actuel,
     })
-

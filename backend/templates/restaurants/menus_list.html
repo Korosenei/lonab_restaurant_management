@@ -1,16 +1,55 @@
 {% extends 'dashboards/base_dashboard.html' %}
 {% load static %}
 
+{% block title %}Menus & Plats{% endblock %}
+
 {% block dashboard_css %}
 <link rel="stylesheet" href="{% static 'css/components.css' %}">
+<style>
+.date-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:9px 14px; background:var(--light-green); border-radius:10px; margin-bottom:10px;
+}
+.date-header h3 {
+    font-size:13px; font-weight:700; color:var(--primary-green);
+    margin:0; text-transform:capitalize;
+}
+.plat-card {
+    background:white; border-radius:10px; overflow:hidden;
+    box-shadow:0 1px 4px rgba(0,0,0,.07); transition:.15s;
+    border:1.5px solid transparent;
+}
+.plat-card:hover { border-color:var(--primary-green); box-shadow:0 3px 10px rgba(40,167,69,.12); }
+.plat-img  { width:100%; height:90px; object-fit:cover; }
+.plat-noimg {
+    width:100%; height:70px; background:var(--bg-secondary);
+    display:flex; align-items:center; justify-content:center;
+}
+.plat-body { padding:9px 11px; }
+.plat-name {
+    font-weight:700; font-size:13px; color:var(--text-primary); margin-bottom:2px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.plat-desc {
+    font-size:11px; color:var(--text-muted); margin-bottom:6px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.plat-footer { display:flex; align-items:center; justify-content:space-between; }
+.act-btn {
+    width:26px; height:26px; border:none; border-radius:6px;
+    display:inline-flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:11px; transition:.15s;
+}
+.act-edit   { background:#e3f2fd; color:#1976d2; }
+.act-edit:hover   { background:#1976d2; color:white; }
+.act-del    { background:#fde8e8; color:#dc3545; }
+.act-del:hover    { background:#dc3545; color:white; }
+</style>
 {% endblock %}
 
 {% block sidebar_menu %}
-{% if est_gestionnaire %}
-{% include 'dashboards/sidebars/restaurant_sidebar.html' %}
-{% else %}
-{% include 'dashboards/sidebars/admin_sidebar.html' %}
-{% endif %}
+{% if est_gestionnaire %}{% include 'dashboards/sidebars/restaurant_sidebar.html' %}
+{% else %}{% include 'dashboards/sidebars/admin_sidebar.html' %}{% endif %}
 {% endblock %}
 
 {% block page_content %}
@@ -18,139 +57,445 @@
      data-create="{% url 'restaurants:menu_create' %}"
      data-edit-base="{% url 'restaurants:menu_edit' pk=0 %}"
      data-delete-base="{% url 'restaurants:menu_delete' pk=0 %}"
+     data-duplicate-url="{% url 'restaurants:menu_duplicate' %}"
      style="display:none;"></div>
 
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
-    <h1 style="font-size:22px;font-weight:700;color:var(--text-primary);margin:0;">
-        <i class="fas fa-book-open" style="color:var(--primary-green);margin-right:10px;"></i>Menus
-    </h1>
-    <button class="btn btn-primary" onclick="openModal('menuModal')">
-        <i class="fas fa-plus"></i> Nouveau menu
-    </button>
+<!-- En-tête -->
+<div style="display:flex;align-items:flex-start;justify-content:space-between;
+            flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+    <div>
+        <h1 style="font-size:22px;font-weight:700;color:var(--text-primary);margin:0;">
+            <i class="fas fa-utensils" style="color:var(--primary-green);margin-right:10px;"></i>
+            Menus & Plats
+        </h1>
+        <p style="color:var(--text-muted);font-size:13px;margin:4px 0 0;">
+            {% if restaurant_gere %}{{ restaurant_gere.nom }}{% else %}Tous les restaurants{% endif %}
+            · {{ menus|length }} plat{{ menus|length|pluralize }}
+        </p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-outline" onclick="openModal('duplicateModal')">
+            <i class="fas fa-copy"></i> Dupliquer un jour
+        </button>
+        <button class="btn btn-primary" onclick="openPlatModal()">
+            <i class="fas fa-plus"></i> Nouveau plat
+        </button>
+    </div>
 </div>
 
 <!-- Filtres -->
-<div class="card" style="padding:14px 16px;margin-bottom:18px;">
-    <form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
-        {% if not est_gestionnaire %}
-        <div>
-            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Restaurant</label>
-            <select name="restaurant" class="form-control" style="min-width:180px;">
-                <option value="">Tous</option>
-                {% for r in restaurants %}
-                <option value="{{ r.id }}" {% if request.GET.restaurant == r.id|stringformat:'s' %}selected{% endif %}>{{ r.nom }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        {% endif %}
-        <div>
-            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Jour</label>
-            <select name="jour" class="form-control">
-                <option value="">Tous les jours</option>
-                {% for val, lib in jours %}
-                <option value="{{ val }}" {% if request.GET.jour == val %}selected{% endif %}>{{ lib }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <button type="submit" class="btn btn-secondary">Filtrer</button>
-    </form>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;align-items:flex-end;">
+    <div>
+        <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:3px;">Date</label>
+        <input type="date" id="dateFilter" class="form-control" style="font-size:13px;"
+               value="{{ request.GET.date }}"
+               onchange="window.location.search='?date='+this.value">
+    </div>
+    {% if not est_gestionnaire %}
+    <div>
+        <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:3px;">Restaurant</label>
+        <select class="form-control" style="font-size:13px;"
+                onchange="window.location.search='?restaurant='+this.value">
+            <option value="">Tous</option>
+            {% for r in restaurants %}
+            <option value="{{ r.id }}"
+                {% if request.GET.restaurant == r.id|stringformat:'s' %}selected{% endif %}>
+                {{ r.nom }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    {% endif %}
+    {% if request.GET.date or request.GET.restaurant %}
+    <a href="{% url 'restaurants:menus_list' %}" class="btn btn-outline" style="font-size:12px;">
+        <i class="fas fa-times"></i> Réinitialiser
+    </a>
+    {% endif %}
 </div>
 
-<!-- Grille menus -->
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
-    {% for m in menus %}
-    <div class="card" style="overflow:hidden;">
-        {% if m.image %}
-        <img src="{{ m.image.url }}" alt="{{ m.nom }}" style="width:100%;height:130px;object-fit:cover;">
+<!-- Plats groupés par date -->
+{% if menus_par_date %}
+{% for date_key, groupe in menus_par_date.items %}
+
+<div class="date-header" style="margin-top:{% if not forloop.first %}22px{% else %}0{% endif %};">
+    <h3>
+        <i class="fas fa-calendar-day" style="margin-right:6px;"></i>
+        {{ groupe.label }}
+        <span style="font-weight:400;font-size:11px;color:var(--text-secondary);margin-left:6px;">
+            ({{ groupe.plats|length }} plat{{ groupe.plats|length|pluralize }})
+        </span>
+    </h3>
+    <div style="display:flex;gap:6px;">
+        <button class="btn btn-outline" style="font-size:11px;padding:4px 10px;"
+                onclick="openDuplicateFromDate('{{ groupe.date|date:"Y-m-d" }}')">
+            <i class="fas fa-copy"></i> Dupliquer
+        </button>
+        <button class="btn btn-primary" style="font-size:11px;padding:4px 10px;"
+                onclick="openPlatModal('{{ groupe.date|date:"Y-m-d" }}')">
+            <i class="fas fa-plus"></i> Ajouter
+        </button>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:6px;">
+    {% for plat in groupe.plats %}
+    <div class="plat-card" id="plat-{{ plat.id }}">
+        {% if plat.image %}
+        <img src="{{ plat.image.url }}" alt="{{ plat.nom }}" class="plat-img">
         {% else %}
-        <div style="width:100%;height:80px;background:var(--light-green);display:flex;align-items:center;justify-content:center;">
-            <i class="fas fa-utensils" style="color:var(--primary-green);font-size:28px;opacity:.5;"></i>
+        <div class="plat-noimg">
+            <i class="fas fa-utensils" style="font-size:22px;color:var(--border-color);"></i>
         </div>
         {% endif %}
-        <div style="padding:14px;">
-            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">
-                {{ m.restaurant.nom }} · {{ m.get_jour_semaine_display }}
-            </div>
-            <div style="font-weight:700;font-size:14px;color:var(--text-primary);margin-bottom:6px;">{{ m.nom }}</div>
-            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">{{ m.plats|truncatechars:80 }}</div>
-            <div style="display:flex;align-items:center;justify-content:space-between;">
-                <div style="font-size:12px;color:var(--text-muted);">
-                    {% if m.quantite_disponible %}
-                    <span style="color:{% if m.quantite_restante < 5 %}#dc3545{% else %}var(--primary-green){% endif %};">
-                        {{ m.quantite_restante }}/{{ m.quantite_disponible }}
+        <div class="plat-body">
+            <div class="plat-name" title="{{ plat.nom }}">{{ plat.nom }}</div>
+            {% if plat.description %}
+            <div class="plat-desc" title="{{ plat.description }}">{{ plat.description }}</div>
+            {% endif %}
+            <div class="plat-footer">
+                <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+                    {% if plat.quantite_disponible is not None %}
+                    <span class="badge
+                        {% if plat.quantite_disponible == 0 %}badge-danger
+                        {% elif plat.quantite_disponible < 10 %}badge-warning
+                        {% else %}badge-success{% endif %}"
+                        style="font-size:10px;">
+                        <i class="fas fa-layer-group" style="margin-right:2px;"></i>
+                        {{ plat.quantite_disponible }}
                     </span>
                     {% endif %}
-                    {% if not m.est_disponible %}
-                    <span style="color:#dc3545;font-weight:600;">Épuisé</span>
+                    {% if not plat.est_disponible %}
+                    <span class="badge badge-danger" style="font-size:10px;">Épuisé</span>
+                    {% endif %}
+                    {% if plat.prix %}
+                    <span style="font-size:10px;color:var(--text-muted);">
+                        {{ plat.prix|floatformat:0 }}&nbsp;F
+                    </span>
                     {% endif %}
                 </div>
-                <div style="display:flex;gap:6px;">
-                    <button onclick="editMenu({{ m.id }})" class="btn-icon" title="Modifier">
+                <div style="display:flex;gap:4px;">
+                    <button class="act-btn act-edit"
+                            onclick="editPlat({{ plat.id }})" title="Modifier">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button onclick="deleteMenu({{ m.id }}, '{{ m.nom|escapejs }}')" class="btn-icon btn-icon-danger" title="Supprimer">
+                    <button class="act-btn act-del"
+                            onclick="deletePlat({{ plat.id }},'{{ plat.nom|escapejs }}')"
+                            title="Supprimer">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
             </div>
         </div>
     </div>
-    {% empty %}
-    <div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-muted);">
-        <i class="fas fa-book-open" style="font-size:36px;opacity:.3;display:block;margin-bottom:12px;"></i>
-        Aucun menu configuré
-    </div>
     {% endfor %}
 </div>
+{% endfor %}
 
-{% include 'restaurants/modals/menu_form.html' %}
+{% else %}
+<div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
+    <i class="fas fa-utensils" style="font-size:48px;display:block;margin-bottom:16px;opacity:.2;"></i>
+    <p style="margin-bottom:16px;font-size:15px;">Aucun plat pour cette sélection</p>
+    <button class="btn btn-primary" onclick="openPlatModal()">
+        <i class="fas fa-plus"></i> Créer le premier plat
+    </button>
+</div>
+{% endif %}
+
+<!-- ═══ MODAL Nouveau / Modifier plat ═══════════════════════════ -->
+<div class="modal-overlay" id="platModal">
+    <div class="modal" style="max-width:480px;width:100%;">
+        <div class="modal-header">
+            <h3 class="modal-title" id="platModalTitle">
+                <i class="fas fa-utensils" style="color:var(--primary-green);margin-right:8px;"></i>
+                Nouveau plat
+            </h3>
+            <button class="modal-close" onclick="closeModal('platModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="platForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" id="p_id" name="p_id">
+            <div class="modal-body" style="padding:18px 20px;max-height:72vh;overflow-y:auto;
+                                           display:grid;gap:13px;">
+
+                {% if not est_gestionnaire %}
+                <div class="form-group">
+                    <label class="form-label">Restaurant <span style="color:red;">*</span></label>
+                    <select name="restaurant" id="p_restaurant" class="form-control" required>
+                        <option value="">— Sélectionner —</option>
+                        {% for r in restaurants %}
+                        <option value="{{ r.id }}">{{ r.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label class="form-label">Date du plat <span style="color:red;">*</span></label>
+                    <input type="date" id="p_date" name="date" class="form-control" required>
+                    <small style="color:var(--text-muted);font-size:10px;">
+                        Le jour de semaine est déduit automatiquement
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Nom du plat <span style="color:red;">*</span></label>
+                    <input type="text" id="p_nom" name="nom" class="form-control" required
+                           placeholder="Ex : Riz sauce graine, Foutou banane...">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description / Accompagnements</label>
+                    <input type="text" id="p_description" name="description" class="form-control"
+                           placeholder="Ex : Avec salade et jus de bissap">
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="form-group">
+                        <label class="form-label">Quantité disponible</label>
+                        <input type="number" id="p_quantite" name="quantite_disponible"
+                               class="form-control" min="1" placeholder="Illimitée">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Prix (FCFA)</label>
+                        <input type="number" id="p_prix" name="prix" class="form-control"
+                               min="0" step="50" value="0">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Photo du plat</label>
+                    <input type="file" id="p_image" name="image" class="form-control"
+                           accept="image/*">
+                    <div id="p_img_preview" style="display:none;margin-top:8px;">
+                        <img id="p_img_thumb" src=""
+                             style="height:80px;border-radius:8px;object-fit:cover;
+                                    border:1px solid var(--border-color);">
+                    </div>
+                </div>
+
+                <!-- Disponibilité — visible uniquement en édition -->
+                <div class="form-group" id="p_dispo_group" style="display:none;">
+                    <label class="form-label">Disponibilité</label>
+                    <select id="p_disponible" name="est_disponible" class="form-control">
+                        <option value="1">✅ Disponible</option>
+                        <option value="0">❌ Épuisé / Indisponible</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline"
+                        onclick="closeModal('platModal')">Annuler</button>
+                <button type="submit" id="platFormBtn" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ═══ MODAL Dupliquer ══════════════════════════════════════════ -->
+<div class="modal-overlay" id="duplicateModal">
+    <div class="modal" style="max-width:420px;width:100%;">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="fas fa-copy" style="color:var(--primary-green);margin-right:8px;"></i>
+                Dupliquer un menu
+            </h3>
+            <button class="modal-close" onclick="closeModal('duplicateModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="duplicateForm">
+            {% csrf_token %}
+            <div class="modal-body" style="padding:18px 20px;display:grid;gap:13px;">
+                <p style="font-size:13px;color:var(--text-muted);margin:0;">
+                    Copiez tous les plats d'une journée vers une autre date.
+                </p>
+                {% if not est_gestionnaire %}
+                <div class="form-group">
+                    <label class="form-label">Restaurant</label>
+                    <select name="restaurant" id="dup_restaurant" class="form-control">
+                        <option value="">— Sélectionner —</option>
+                        {% for r in restaurants %}
+                        <option value="{{ r.id }}">{{ r.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+                <div class="form-group">
+                    <label class="form-label">Date source (à copier) <span style="color:red;">*</span></label>
+                    <input type="date" id="dup_source" name="date_source" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date cible (destination) <span style="color:red;">*</span></label>
+                    <input type="date" id="dup_cible" name="date_cible" class="form-control" required>
+                </div>
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                    <input type="checkbox" id="dup_remplacer" value="1"
+                           style="width:16px;height:16px;">
+                    Remplacer les plats existants à la date cible
+                </label>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline"
+                        onclick="closeModal('duplicateModal')">Annuler</button>
+                <button type="submit" id="dupBtn" class="btn btn-primary">
+                    <i class="fas fa-copy"></i> Dupliquer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block dashboard_js %}
 <script src="{% static 'js/components.js' %}"></script>
 <script>
+(function () {
+'use strict';
 var urls = document.getElementById('page-urls').dataset;
 
-function editMenu(id) {
-    fetch(urls.editBase.replace('/0/', '/' + id + '/'))
-        .then(r => r.json()).then(d => {
-            document.getElementById('m_id').value = id;
-            document.getElementById('m_nom').value = d.nom;
-            document.getElementById('m_plats').value = d.plats;
-            document.getElementById('m_description').value = d.description;
-            document.getElementById('m_jour').value = d.jour_semaine;
-            document.getElementById('m_date').value = d.date;
-            document.getElementById('m_prix').value = d.prix;
-            document.getElementById('m_quantite').value = d.quantite_disponible || '';
-            document.getElementById('m_disponible').value = d.est_disponible ? '1' : '0';
-            document.getElementById('m_dispo_group').style.display = 'block';
-            if (document.getElementById('m_restaurant'))
-                document.getElementById('m_restaurant').value = d.restaurant_id;
-            document.getElementById('menuModalTitle').textContent = 'Modifier le menu';
-            openModal('menuModal');
-        });
-}
+/* ── Prévisualisation image ─────────────────────── */
+document.getElementById('p_image').addEventListener('change', function () {
+    if (this.files[0]) {
+        var r = new FileReader();
+        r.onload = function (e) {
+            document.getElementById('p_img_thumb').src = e.target.result;
+            document.getElementById('p_img_preview').style.display = 'block';
+        };
+        r.readAsDataURL(this.files[0]);
+    }
+});
 
-function deleteMenu(id, nom) {
-    showConfirm('Supprimer « ' + nom + ' » ?', '', function() {
+/* ── Ouvrir modal Nouveau plat ──────────────────── */
+window.openPlatModal = function (date) {
+    document.getElementById('p_id').value          = '';
+    document.getElementById('p_nom').value         = '';
+    document.getElementById('p_description').value = '';
+    document.getElementById('p_quantite').value    = '';
+    document.getElementById('p_prix').value        = '0';
+    document.getElementById('p_img_preview').style.display = 'none';
+    document.getElementById('p_dispo_group').style.display = 'none';
+    document.getElementById('platModalTitle').innerHTML =
+        '<i class="fas fa-utensils" style="color:var(--primary-green);margin-right:8px;"></i>Nouveau plat';
+    document.getElementById('p_date').value = date || '';
+    openModal('platModal');
+};
+
+/* ── Modifier plat ──────────────────────────────── */
+window.editPlat = function (id) {
+    fetch(urls.editBase.replace('/0/', '/' + id + '/'))
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        document.getElementById('p_id').value          = d.id;
+        document.getElementById('p_nom').value         = d.nom;
+        document.getElementById('p_description').value = d.description || '';
+        document.getElementById('p_date').value        = d.date;
+        document.getElementById('p_quantite').value    = d.quantite_disponible || '';
+        document.getElementById('p_prix').value        = d.prix;
+        document.getElementById('p_disponible').value  = d.est_disponible ? '1' : '0';
+        document.getElementById('p_dispo_group').style.display = 'block';
+        if (d.image_url) {
+            document.getElementById('p_img_thumb').src = d.image_url;
+            document.getElementById('p_img_preview').style.display = 'block';
+        } else {
+            document.getElementById('p_img_preview').style.display = 'none';
+        }
+        if (document.getElementById('p_restaurant'))
+            document.getElementById('p_restaurant').value = d.restaurant_id;
+        document.getElementById('platModalTitle').innerHTML =
+            '<i class="fas fa-edit" style="color:var(--primary-green);margin-right:8px;"></i>Modifier le plat';
+        openModal('platModal');
+    })
+    .catch(function () { showError('Erreur de chargement'); });
+};
+
+/* ── Supprimer plat ─────────────────────────────── */
+window.deletePlat = function (id, nom) {
+    showConfirm('Supprimer « ' + nom + ' » ?', 'Cette action est irréversible.', function () {
         fetch(urls.deleteBase.replace('/0/', '/' + id + '/'), {
-            method:'POST', headers:{'X-CSRFToken':getCsrfToken()}
-        }).then(r => r.json()).then(d => {
-            if (d.success) { showToast(d.message, 'success'); setTimeout(() => location.reload(), 1000); }
-            else showToast(d.error, 'error');
+            method:  'POST',
+            headers: { 'X-CSRFToken': getCsrfToken() }
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (d.success) {
+                var el = document.getElementById('plat-' + id);
+                if (el) {
+                    el.style.opacity    = '0';
+                    el.style.transition = '.3s';
+                    setTimeout(function () { el.remove(); }, 300);
+                }
+                showSuccess(d.message);
+            } else { showError(d.error); }
         });
     });
-}
+};
 
-document.getElementById('menuForm').addEventListener('submit', function(e) {
+/* ── Soumettre formulaire plat ──────────────────── */
+document.getElementById('platForm').addEventListener('submit', function (e) {
     e.preventDefault();
-    var id  = document.getElementById('m_id').value;
+    var id  = document.getElementById('p_id').value;
     var url = id ? urls.editBase.replace('/0/', '/' + id + '/') : urls.create;
-    fetch(url, { method:'POST', headers:{'X-CSRFToken':getCsrfToken()}, body:new FormData(this) })
-        .then(r => r.json()).then(d => {
-            if (d.success) { showToast(d.message, 'success'); closeModal('menuModal'); setTimeout(() => location.reload(), 900); }
-            else showToast(d.error, 'error');
-        });
+    var btn = document.getElementById('platFormBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    fetch(url, {
+        method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() }, body: new FormData(this)
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
+        if (d.success) {
+            showSuccess(d.message);
+            closeModal('platModal');
+            setTimeout(function () { location.reload(); }, 600);
+        } else { showError(d.error); }
+    })
+    .catch(function () {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
+        showError('Erreur réseau');
+    });
 });
+
+/* ── Dupliquer depuis date ──────────────────────── */
+window.openDuplicateFromDate = function (date) {
+    document.getElementById('dup_source').value = date;
+    document.getElementById('dup_cible').value  = '';
+    openModal('duplicateModal');
+};
+
+document.getElementById('duplicateForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var btn = document.getElementById('dupBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    var fd = new FormData(this);
+    if (document.getElementById('dup_remplacer').checked) fd.set('remplacer', '1');
+    fetch(urls.duplicateUrl, {
+        method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() }, body: fd
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-copy"></i> Dupliquer';
+        if (d.success) {
+            showSuccess(d.message);
+            closeModal('duplicateModal');
+            setTimeout(function () { location.reload(); }, 800);
+        } else { showError(d.error); }
+    })
+    .catch(function () {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-copy"></i> Dupliquer';
+        showError('Erreur réseau');
+    });
+});
+
+})();
 </script>
 {% endblock %}

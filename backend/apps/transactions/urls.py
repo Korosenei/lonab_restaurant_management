@@ -24,4 +24,3 @@ urlpatterns = [
     # ── Client ─────────────────────────────────────────────────
     path('client/', views.client_historique, name='client_historique'),
 ]
-

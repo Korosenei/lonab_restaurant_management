@@ -1,112 +1,97 @@
-<!-- Modal Formulaire Menu — restaurants/modals/menu_form.html -->
-<div class="modal-overlay" id="menuModal">
-    <div class="modal" style="max-width:560px;width:100%;">
+
+<div class="modal-overlay" id="platModal">
+    <div class="modal" style="max-width:480px;width:100%;">
         <div class="modal-header">
-            <h3 class="modal-title" id="menuModalTitle">
-                <i class="fas fa-clipboard-list" style="color:var(--primary-green);margin-right:8px;"></i>
-                Nouveau menu
+            <h3 class="modal-title" id="platModalTitle">
+                <i class="fas fa-utensils" style="color:var(--primary-green);margin-right:8px;"></i>
+                Nouveau plat
             </h3>
-            <button class="modal-close" onclick="closeModal('menuModal')">
+            <button class="modal-close" onclick="closeModal('platModal')">
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        <form id="menuForm" enctype="multipart/form-data">
+        <form id="platForm" enctype="multipart/form-data">
             {% csrf_token %}
-            <input type="hidden" id="m_id" name="m_id">
-            <div class="modal-body" style="padding:20px;max-height:72vh;overflow-y:auto;">
-                <div style="display:grid;gap:14px;">
+            <input type="hidden" id="p_id" name="p_id">
+            <div class="modal-body" style="padding:18px 20px;max-height:72vh;overflow-y:auto;
+                                           display:grid;gap:13px;">
 
-                    {% if not est_gestionnaire %}
+                <!-- Restaurant (admin uniquement) -->
+                {% if not est_gestionnaire %}
+                <div class="form-group">
+                    <label class="form-label">Restaurant <span style="color:red;">*</span></label>
+                    <select name="restaurant" id="p_restaurant" class="form-control" required>
+                        <option value="">— Sélectionner —</option>
+                        {% for r in restaurants %}
+                        <option value="{{ r.id }}">{{ r.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                <!-- Date -->
+                <div class="form-group">
+                    <label class="form-label">Date du plat <span style="color:red;">*</span></label>
+                    <input type="date" id="p_date" name="date" class="form-control" required>
+                    <small style="color:var(--text-muted);font-size:10px;">
+                        Le jour de semaine est déduit automatiquement par le serveur.
+                    </small>
+                </div>
+
+                <!-- Nom -->
+                <div class="form-group">
+                    <label class="form-label">Nom du plat <span style="color:red;">*</span></label>
+                    <input type="text" id="p_nom" name="nom" class="form-control" required
+                           placeholder="Ex : Riz sauce graine, Foutou banane, Attiéké poisson…">
+                </div>
+
+                <!-- Description -->
+                <div class="form-group">
+                    <label class="form-label">Description / Accompagnements</label>
+                    <input type="text" id="p_description" name="description" class="form-control"
+                           placeholder="Ex : Avec salade verte et jus de bissap">
+                </div>
+
+                <!-- Quantité + Prix -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                     <div class="form-group">
-                        <label class="form-label">Restaurant <span style="color:red">*</span></label>
-                        <select id="m_restaurant" name="restaurant" class="form-control" required>
-                            <option value="">— Sélectionner —</option>
-                            {% for r in restaurants %}
-                            <option value="{{ r.id }}">{{ r.nom }}</option>
-                            {% endfor %}
-                        </select>
+                        <label class="form-label">Quantité disponible</label>
+                        <input type="number" id="p_quantite" name="quantite_disponible"
+                               class="form-control" min="1" placeholder="Illimitée si vide">
                     </div>
-                    {% endif %}
-
-                    <!-- Ligne 1 : Jour + Date -->
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                        <div class="form-group">
-                            <label class="form-label">Jour <span style="color:red">*</span></label>
-                            <select id="m_jour" name="jour_semaine" class="form-control" required>
-                                {% for val, lib in jours %}
-                                <option value="{{ val }}">{{ lib }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Date spécifique</label>
-                            <input type="date" id="m_date" name="date" class="form-control">
-                            <small style="color:var(--text-muted);font-size:10px;">Facultatif — précise le jour</small>
-                        </div>
-                    </div>
-
-                    <!-- Nom -->
                     <div class="form-group">
-                        <label class="form-label">Nom du menu <span style="color:red">*</span></label>
-                        <input type="text" id="m_nom" name="nom" class="form-control" required
-                               placeholder="Ex: Menu du lundi — Riz sauce graine">
+                        <label class="form-label">Prix (FCFA)</label>
+                        <input type="number" id="p_prix" name="prix" class="form-control"
+                               min="0" step="50" value="0">
                     </div>
+                </div>
 
-                    <!-- Plats -->
-                    <div class="form-group">
-                        <label class="form-label">Composition des plats <span style="color:red">*</span></label>
-                        <textarea id="m_plats" name="plats" class="form-control" rows="2" required
-                                  placeholder="Riz au gras, Salade verte, Jus de bissap, Dessert..."></textarea>
+                <!-- Image -->
+                <div class="form-group">
+                    <label class="form-label">Photo du plat</label>
+                    <input type="file" id="p_image" name="image" class="form-control"
+                           accept="image/*">
+                    <div id="p_img_preview" style="display:none;margin-top:8px;">
+                        <img id="p_img_thumb" src="" alt="Aperçu"
+                             style="height:80px;border-radius:8px;object-fit:cover;
+                                    border:1px solid var(--border-color);">
                     </div>
+                </div>
 
-                    <!-- Description -->
-                    <div class="form-group">
-                        <label class="form-label">Notes / Allergènes</label>
-                        <textarea id="m_description" name="description" class="form-control" rows="2"
-                                  placeholder="Informations complémentaires, allergènes..."></textarea>
-                    </div>
-
-                    <!-- Ligne 2 : Prix + Quantité -->
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                        <div class="form-group">
-                            <label class="form-label">Prix (FCFA)</label>
-                            <input type="number" id="m_prix" name="prix" class="form-control"
-                                   min="0" step="50" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Quantité disponible</label>
-                            <input type="number" id="m_quantite" name="quantite_disponible"
-                                   class="form-control" min="1" placeholder="Illimitée si vide">
-                        </div>
-                    </div>
-
-                    <!-- Image -->
-                    <div class="form-group">
-                        <label class="form-label">Photo du plat</label>
-                        <input type="file" id="m_image" name="image" class="form-control" accept="image/*">
-                        <div id="m_image_preview" style="display:none;margin-top:8px;">
-                            <img id="m_image_thumb" src="" alt="Aperçu"
-                                 style="height:80px;border-radius:8px;object-fit:cover;border:1px solid var(--border-color);">
-                        </div>
-                    </div>
-
-                    <!-- Disponibilité (visible en mode édition) -->
-                    <div class="form-group" id="m_dispo_group" style="display:none;">
-                        <label class="form-label">Disponibilité</label>
-                        <select id="m_disponible" name="est_disponible" class="form-control">
-                            <option value="1">✅ Disponible</option>
-                            <option value="0">❌ Indisponible / Épuisé</option>
-                        </select>
-                    </div>
-
+                <!-- Disponibilité (édition uniquement) -->
+                <div class="form-group" id="p_dispo_group" style="display:none;">
+                    <label class="form-label">Disponibilité</label>
+                    <select id="p_disponible" name="est_disponible" class="form-control">
+                        <option value="1">✅ Disponible</option>
+                        <option value="0">❌ Épuisé / Indisponible</option>
+                    </select>
                 </div>
             </div>
-            <div class="modal-footer" style="padding:14px 20px;border-top:1px solid var(--border-color);
-                         display:flex;gap:10px;justify-content:flex-end;">
-                <button type="button" class="btn btn-outline" onclick="closeModal('menuModal')">
-                    <i class="fas fa-times"></i> Annuler
-                </button>
-                <button type="submit" id="menuFormBtn" class="btn btn-primary">
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline"
+                        onclick="closeModal('platModal')">Annuler</button>
+                <button type="submit" id="platFormBtn" class="btn btn-primary">
                     <i class="fas fa-save"></i> Enregistrer
                 </button>
             </div>
@@ -115,16 +100,98 @@
 </div>
 
 <script>
-/* Prévisualisation image */
-document.getElementById('m_image').addEventListener('change', function () {
-    var file = this.files[0];
-    if (file) {
-        var reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById('m_image_thumb').src = e.target.result;
-            document.getElementById('m_image_preview').style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-    }
-});
+/* ── Prévisualisation image ─────────────────────── */
+(function () {
+    var imgInput = document.getElementById('p_image');
+    if (!imgInput) return;
+    imgInput.addEventListener('change', function () {
+        if (this.files[0]) {
+            var r = new FileReader();
+            r.onload = function (e) {
+                document.getElementById('p_img_thumb').src = e.target.result;
+                document.getElementById('p_img_preview').style.display = 'block';
+            };
+            r.readAsDataURL(this.files[0]);
+        }
+    });
+})();
+
+/* ── openPlatModal(date?) ────────────────────────
+   Appeler depuis n'importe où dans la page parente. */
+window.openPlatModal = function (date) {
+    document.getElementById('p_id').value          = '';
+    document.getElementById('p_nom').value         = '';
+    document.getElementById('p_description').value = '';
+    document.getElementById('p_quantite').value    = '';
+    document.getElementById('p_prix').value        = '0';
+    document.getElementById('p_img_preview').style.display = 'none';
+    document.getElementById('p_dispo_group').style.display = 'none';
+    document.getElementById('platModalTitle').innerHTML =
+        '<i class="fas fa-utensils" style="color:var(--primary-green);margin-right:8px;"></i>Nouveau plat';
+    document.getElementById('p_date').value = date || '';
+    openModal('platModal');
+};
+
+/* ── editPlat(id) ───────────────────────────────
+   Charge les données du plat via GET /menus/edit/<id>/ et ouvre le modal. */
+window.editPlat = function (id) {
+    var urls = document.getElementById('page-urls').dataset;
+    fetch(urls.editBase.replace('/0/', '/' + id + '/'))
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        document.getElementById('p_id').value          = d.id;
+        document.getElementById('p_nom').value         = d.nom;
+        document.getElementById('p_description').value = d.description || '';
+        document.getElementById('p_date').value        = d.date;
+        document.getElementById('p_quantite').value    = d.quantite_disponible || '';
+        document.getElementById('p_prix').value        = d.prix;
+        document.getElementById('p_disponible').value  = d.est_disponible ? '1' : '0';
+        document.getElementById('p_dispo_group').style.display = 'block';
+        if (d.image_url) {
+            document.getElementById('p_img_thumb').src = d.image_url;
+            document.getElementById('p_img_preview').style.display = 'block';
+        } else {
+            document.getElementById('p_img_preview').style.display = 'none';
+        }
+        var resEl = document.getElementById('p_restaurant');
+        if (resEl) resEl.value = d.restaurant_id;
+        document.getElementById('platModalTitle').innerHTML =
+            '<i class="fas fa-edit" style="color:var(--primary-green);margin-right:8px;"></i>Modifier le plat';
+        openModal('platModal');
+    })
+    .catch(function () { showError('Erreur de chargement'); });
+};
+
+/* ── Soumission formulaire plat ─────────────────── */
+(function () {
+    var form = document.getElementById('platForm');
+    if (!form) return;
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var urls = document.getElementById('page-urls').dataset;
+        var id   = document.getElementById('p_id').value;
+        var url  = id ? urls.editBase.replace('/0/', '/' + id + '/') : urls.create;
+        var btn  = document.getElementById('platFormBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        fetch(url, {
+            method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() }, body: new FormData(this)
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
+            if (d.success) {
+                showSuccess(d.message);
+                closeModal('platModal');
+                setTimeout(function () { location.reload(); }, 600);
+            } else { showError(d.error || 'Erreur'); }
+        })
+        .catch(function () {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
+            showError('Erreur réseau');
+        });
+    });
+})();
 </script>

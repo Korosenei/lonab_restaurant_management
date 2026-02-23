@@ -20,7 +20,7 @@ urlpatterns = [
     # ============================================
     # AUTHENTICATION (Template views)
     # ============================================
-    path('login/', views.login_view, name='login'),
+    path('', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('password-reset/', views.password_reset_view, name='password_reset'),
 

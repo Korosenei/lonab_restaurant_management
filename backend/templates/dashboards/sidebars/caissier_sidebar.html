@@ -3,7 +3,7 @@
     <div class="nav-section-title">Menu Principal</div>
     <ul class="nav-menu">
         <li class="nav-item">
-            <a href="{% url 'accounts:caissier_dashboard' %}"
+            <a href="{% url 'transactions:caissier_dashboard' %}"
                class="nav-link {% if request.resolver_match.url_name == 'caissier_dashboard' %}active{% endif %}">
                 <i class="fas fa-home"></i>
                 <span class="nav-link-text">Tableau de bord</span>

@@ -5,259 +5,373 @@
 
 {% block dashboard_css %}
 <link rel="stylesheet" href="{% static 'css/components.css' %}">
+<style>
+/* ── Stat cards (compactes, copie du caissier) ─────────────────── */
+.stat-card {
+    display:flex; align-items:center; justify-content:space-between;
+    background:white; border-radius:12px; padding:16px 18px;
+    box-shadow:0 1px 6px rgba(0,0,0,.07);
+}
+.stat-icon {
+    width:44px; height:44px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:19px; flex-shrink:0;
+}
+/* ── QR wrap — identique au caissier ─────────────────────────── */
+.qr-wrap {
+    background:linear-gradient(135deg,#1a472a 0%,#2d6a4f 100%);
+    border-radius:14px; padding:22px; color:white; text-align:center;
+}
+.qr-frame {
+    width:180px; height:180px; background:white; border-radius:12px;
+    margin:14px auto; padding:10px; box-sizing:border-box;
+    box-shadow:0 4px 16px rgba(0,0,0,.25);
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.qr-frame img { width:100%; height:100%; object-fit:contain; border-radius:6px; }
+.timer-display {
+    font-size:32px; font-weight:900; letter-spacing:2px;
+    margin:6px 0; font-variant-numeric:tabular-nums;
+}
+.btn-regen {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:9px 18px; border-radius:8px; font-size:13px; font-weight:700;
+    background:rgba(255,255,255,.15); color:white;
+    border:1px solid rgba(255,255,255,.4); cursor:pointer; transition:.2s; margin-top:10px;
+}
+.btn-regen:hover  { background:rgba(255,255,255,.25); }
+.btn-regen:disabled { opacity:.6; cursor:not-allowed; }
+</style>
 {% endblock %}
 
-{% block sidebar_menu %}
-{% include 'dashboards/sidebars/client_sidebar.html' %}
-{% endblock %}
+{% block sidebar_menu %}{% include 'dashboards/sidebars/client_sidebar.html' %}{% endblock %}
 
 {% block page_content %}
-<div class="page-header">
-    <h1 class="page-title">Bonjour, {{ user.prenom }} 👋</h1>
-    <p class="page-subtitle">Voici un aperçu de votre activité</p>
+<div id="page-urls"
+     data-generer-url="{% url 'tickets:generer_qrcode' %}"
+     style="display:none;"></div>
+
+<!-- ── En-tête ─────────────────────────────────────────────────── -->
+<div style="display:flex;align-items:flex-start;justify-content:space-between;
+            flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+    <div>
+        <h1 style="font-size:22px;font-weight:700;color:var(--text-primary);margin:0;">
+            Bonjour, {{ user.prenom }} 👋
+        </h1>
+        <p style="color:var(--text-muted);font-size:13px;margin:4px 0 0;">
+            {% if user.agence %}{{ user.agence.nom }} · {% endif %}
+            {{ aujourd_hui|date:"l d F Y" }}
+        </p>
+    </div>
+    <div style="display:flex;gap:8px;">
+        <a href="{% url 'restaurants:client_menus' %}" class="btn btn-primary">
+            <i class="fas fa-book-open"></i> Menus du jour
+        </a>
+        <a href="{% url 'tickets:client_tickets' %}" class="btn btn-outline">
+            <i class="fas fa-ticket-alt"></i> Mes tickets
+        </a>
+    </div>
 </div>
 
-<!-- ═══ Stats Cards ════════════════════════════════════════════ -->
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--spacing-md);margin-bottom:var(--spacing-lg);">
+<!-- ═══ Stats Cards (4 compactes) ═══════════════════════════════ -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+            gap:12px;margin-bottom:20px;">
 
     <!-- Tickets disponibles -->
-    <div class="card" style="border-left:4px solid var(--primary-green);">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div>
-                <div style="color:var(--text-muted);font-size:12px;margin-bottom:4px;">Tickets disponibles</div>
-                <div style="font-size:28px;font-weight:700;color:var(--primary-green);">{{ nombre_tickets_disponibles }}</div>
-                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">ce mois</div>
+    <div class="stat-card" style="border-left:4px solid var(--primary-green);">
+        <div>
+            <div style="color:var(--text-muted);font-size:11px;margin-bottom:3px;">Tickets disponibles</div>
+            <div style="font-size:28px;font-weight:800;color:var(--primary-green);line-height:1.1;">
+                {{ nombre_tickets_disponibles }}
             </div>
-            <div style="width:50px;height:50px;background:var(--light-green);border-radius:50%;display:flex;align-items:center;justify-content:center;">
-                <i class="fas fa-ticket-alt" style="font-size:22px;color:var(--primary-green);"></i>
-            </div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">ce mois</div>
+        </div>
+        <div class="stat-icon" style="background:var(--light-green);">
+            <i class="fas fa-ticket-alt" style="color:var(--primary-green);"></i>
         </div>
     </div>
 
     <!-- Tickets consommés -->
-    <div class="card" style="border-left:4px solid var(--accent-red);">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div>
-                <div style="color:var(--text-muted);font-size:12px;margin-bottom:4px;">Tickets consommés</div>
-                <div style="font-size:28px;font-weight:700;color:var(--text-primary);">{{ nombre_tickets_consommes }}</div>
-                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">au total</div>
+    <div class="stat-card" style="border-left:4px solid #dc3545;">
+        <div>
+            <div style="color:var(--text-muted);font-size:11px;margin-bottom:3px;">Tickets consommés</div>
+            <div style="font-size:28px;font-weight:800;color:var(--text-primary);line-height:1.1;">
+                {{ nombre_tickets_consommes }}
             </div>
-            <div style="width:50px;height:50px;background:var(--red-light);border-radius:50%;display:flex;align-items:center;justify-content:center;">
-                <i class="fas fa-check-circle" style="font-size:22px;color:var(--accent-red);"></i>
-            </div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">au total</div>
+        </div>
+        <div class="stat-icon" style="background:#fde8e8;">
+            <i class="fas fa-check-circle" style="color:#dc3545;"></i>
         </div>
     </div>
 
     <!-- Valeur totale -->
-    <div class="card" style="border-left:4px solid #ffc107;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div>
-                <div style="color:var(--text-muted);font-size:12px;margin-bottom:4px;">Valeur totale</div>
-                <div style="font-size:28px;font-weight:700;color:var(--text-primary);">{{ valeur_totale|floatformat:0 }}</div>
-                <div style="font-size:11px;color:var(--primary-green);margin-top:4px;">FCFA</div>
+    <div class="stat-card" style="border-left:4px solid #ffc107;">
+        <div>
+            <div style="color:var(--text-muted);font-size:11px;margin-bottom:3px;">Valeur totale</div>
+            <div style="font-size:28px;font-weight:800;color:var(--text-primary);line-height:1.1;">
+                {{ valeur_totale|floatformat:0 }}
             </div>
-            <div style="width:50px;height:50px;background:#fff3cd;border-radius:50%;display:flex;align-items:center;justify-content:center;">
-                <i class="fas fa-coins" style="font-size:22px;color:#ffc107;"></i>
-            </div>
+            <div style="font-size:10px;color:var(--primary-green);margin-top:2px;">FCFA</div>
+        </div>
+        <div class="stat-icon" style="background:#fff3cd;">
+            <i class="fas fa-coins" style="color:#ffc107;"></i>
         </div>
     </div>
 
     <!-- Réservations actives -->
-    <div class="card" style="border-left:4px solid #17a2b8;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div>
-                <div style="color:var(--text-muted);font-size:12px;margin-bottom:4px;">Réservations actives</div>
-                <div style="font-size:28px;font-weight:700;color:var(--text-primary);">{{ nombre_reservations_actives }}</div>
-                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">en cours</div>
+    <div class="stat-card" style="border-left:4px solid #17a2b8;">
+        <div>
+            <div style="color:var(--text-muted);font-size:11px;margin-bottom:3px;">Réservations actives</div>
+            <div style="font-size:28px;font-weight:800;color:var(--text-primary);line-height:1.1;">
+                {{ nombre_reservations_actives }}
             </div>
-            <div style="width:50px;height:50px;background:#d1ecf1;border-radius:50%;display:flex;align-items:center;justify-content:center;">
-                <i class="fas fa-calendar-check" style="font-size:22px;color:#17a2b8;"></i>
-            </div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">en cours</div>
+        </div>
+        <div class="stat-icon" style="background:#d1ecf1;">
+            <i class="fas fa-calendar-check" style="color:#17a2b8;"></i>
         </div>
     </div>
 </div>
 
-<!-- ═══ QR Code + Actions + Activité ═══════════════════════════ -->
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--spacing-md);margin-bottom:var(--spacing-md);">
+<!-- ═══ QR Code + Donut ═══════════════════════════════════════ -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
 
-    <!-- QR Code actif -->
-    <div class="card">
-        <div class="card-header"><i class="fas fa-qrcode"></i> Mon QR Code</div>
-        <div style="text-align:center;padding:var(--spacing-lg);">
-            {% if code_qr %}
-                <div style="width:200px;height:200px;margin:0 auto;background:var(--bg-secondary);
-                            border-radius:12px;padding:12px;border:2px solid var(--primary-green);
-                            display:inline-flex;align-items:center;justify-content:center;">
-                    {% if code_qr.image_qr %}
-                        <img src="{{ code_qr.image_qr.url }}" alt="QR Code"
-                             style="width:100%;height:100%;object-fit:contain;">
-                    {% else %}
-                        <i class="fas fa-qrcode" style="font-size:100px;color:var(--primary-green);"></i>
-                    {% endif %}
-                </div>
-                <div style="margin-top:16px;">
-                    <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">Expire dans</div>
-                    <div id="qrTimer" style="font-size:22px;font-weight:700;color:var(--primary-green);
-                                             font-family:monospace;letter-spacing:2px;">--:--</div>
-                </div>
-                <div style="margin-top:16px;display:flex;gap:10px;justify-content:center;">
-                    <a href="{% url 'tickets:client_qrcode' %}" class="btn btn-primary">
-                        <i class="fas fa-sync-alt"></i> Régénérer
-                    </a>
-                    <a href="{% url 'tickets:client_tickets' %}" class="btn btn-outline">
-                        <i class="fas fa-ticket-alt"></i> Mes tickets
-                    </a>
-                </div>
+    <!-- ── QR Code — pattern identique au caissier ───────────── -->
+    <div class="qr-wrap">
+        <div style="font-size:13px;font-weight:700;opacity:.85;
+                    text-transform:uppercase;letter-spacing:.5px;">
+            <i class="fas fa-qrcode"></i>&nbsp; Mon QR Code
+        </div>
+
+        <!-- Cadre image -->
+        <div class="qr-frame" id="qrFrame">
+            {% if code_qr and code_qr.image_qr %}
+                <img src="{{ code_qr.image_qr.url }}" alt="QR Code" id="qrImg">
             {% else %}
-                <div style="padding:var(--spacing-xl);">
-                    <i class="fas fa-qrcode" style="font-size:80px;color:var(--text-muted);
-                                                    display:block;margin-bottom:16px;opacity:.3;"></i>
-                    <p style="color:var(--text-muted);margin-bottom:16px;font-size:14px;">
+                <div id="qrPlaceholder" style="text-align:center;color:#adb5bd;">
+                    <i class="fas fa-qrcode"
+                       style="font-size:60px;display:block;margin-bottom:8px;"></i>
+                    <div style="font-size:11px;">
                         {% if nombre_tickets_disponibles > 0 %}
-                            Aucun QR Code actif
+                            Génération…
                         {% else %}
-                            Vous n'avez pas encore de tickets ce mois
+                            Aucun ticket
                         {% endif %}
-                    </p>
-                    {% if nombre_tickets_disponibles > 0 %}
-                    <a href="{% url 'tickets:client_qrcode' %}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Générer un QR Code
-                    </a>
-                    {% endif %}
+                    </div>
                 </div>
             {% endif %}
         </div>
+
+        <!-- Timer -->
+        <div class="timer-display" id="timerDisplay"
+             style="display:{% if code_qr %}block{% else %}none{% endif %};">--:--</div>
+        {% if code_qr %}
+        <div style="font-size:11px;opacity:.7;">Expire dans</div>
+        {% endif %}
+
+        <!-- Bouton -->
+        {% if nombre_tickets_disponibles > 0 %}
+        <button class="btn-regen" id="btnRegen" onclick="regenererQR()">
+            <i class="fas fa-sync-alt" id="regenIcon"></i> Régénérer
+        </button>
+        {% else %}
+        <a href="{% url 'transactions:client_historique' %}" class="btn-regen"
+           style="text-decoration:none;margin-top:10px;">
+            <i class="fas fa-shopping-cart"></i> Acheter des tickets
+        </a>
+        {% endif %}
+
+        <div style="font-size:11px;opacity:.6;margin-top:8px;line-height:1.5;">
+            Présentez ce code au gestionnaire du restaurant.<br>
+            Valide 30 min · Usage unique.
+        </div>
     </div>
 
-    <!-- Actions rapides + Mini graphe utilisation -->
-    <div style="display:flex;flex-direction:column;gap:var(--spacing-md);">
+    <!-- ── Donut tickets + liens rapides ─────────────────────── -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
 
-        <!-- Actions rapides -->
-        <div class="card">
-            <div class="card-header"><i class="fas fa-bolt"></i> Actions rapides</div>
-            <div style="display:flex;flex-direction:column;gap:var(--spacing-sm);padding:8px 0;">
-                <a href="{% url 'tickets:client_qrcode' %}" class="btn btn-primary" style="width:100%;">
-                    <i class="fas fa-qrcode"></i> Générer QR Code
-                </a>
-                <a href="{% url 'tickets:client_tickets' %}" class="btn btn-outline" style="width:100%;">
-                    <i class="fas fa-ticket-alt"></i> Voir mes tickets
-                </a>
-                <a href="{% url 'restaurants:client_menus' %}" class="btn btn-outline" style="width:100%;">
-                    <i class="fas fa-clipboard-list"></i> Menus du jour
-                </a>
-                <a href="{% url 'restaurants:client_reservations' %}" class="btn btn-outline" style="width:100%;">
-                    <i class="fas fa-calendar-check"></i> Mes réservations
-                </a>
+        <div class="card" style="padding:18px;flex:1;">
+            <div style="font-size:14px;font-weight:700;margin-bottom:14px;color:var(--text-primary);">
+                <i class="fas fa-chart-pie" style="color:var(--primary-green);margin-right:8px;"></i>
+                Mes tickets
             </div>
+            <canvas id="ticketsDonut" height="170"></canvas>
         </div>
 
-        <!-- Mini graphe tickets disponibles vs consommés -->
-        <div class="card">
-            <div class="card-header"><i class="fas fa-chart-pie"></i> Mes tickets</div>
-            <div style="padding:12px 16px;">
-                <canvas id="ticketsDonut" height="150"></canvas>
-            </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <a href="{% url 'restaurants:client_menus' %}" class="btn btn-primary"
+               style="text-align:center;font-size:12px;padding:10px 8px;">
+                <i class="fas fa-book-open" style="display:block;font-size:18px;margin-bottom:4px;"></i>
+                Menus du jour
+            </a>
+            <a href="{% url 'restaurants:client_reservations' %}" class="btn btn-outline"
+               style="text-align:center;font-size:12px;padding:10px 8px;">
+                <i class="fas fa-calendar-check" style="display:block;font-size:18px;margin-bottom:4px;"></i>
+                Réservations
+            </a>
+            <a href="{% url 'tickets:client_tickets' %}" class="btn btn-outline"
+               style="text-align:center;font-size:12px;padding:10px 8px;">
+                <i class="fas fa-ticket-alt" style="display:block;font-size:18px;margin-bottom:4px;"></i>
+                Mes tickets
+            </a>
+            <a href="{% url 'transactions:client_historique' %}" class="btn btn-outline"
+               style="text-align:center;font-size:12px;padding:10px 8px;">
+                <i class="fas fa-history" style="display:block;font-size:18px;margin-bottom:4px;"></i>
+                Historique
+            </a>
         </div>
     </div>
 </div>
 
-<!-- ═══ Activité récente ════════════════════════════════════════ -->
-<div class="card">
-    <div class="card-header"><i class="fas fa-history"></i> Activité récente</div>
-    {% if activite_recente %}
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Restaurant</th>
-                <th>Statut</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for a in activite_recente %}
-            <tr>
-                <td style="font-size:12px;color:var(--text-muted);">{{ a.date_consommation|date:"d/m/Y H:i" }}</td>
-                <td style="font-size:12px;font-weight:600;">
-                    {% if a.restaurant %}{{ a.restaurant.nom }}{% else %}—{% endif %}
-                </td>
-                <td><span class="badge badge-success" style="font-size:10px;">Consommé</span></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div style="text-align:center;padding:var(--spacing-xl);color:var(--text-muted);">
-        <i class="fas fa-inbox" style="font-size:40px;display:block;margin-bottom:12px;opacity:.3;"></i>
-        <p>Aucune activité récente</p>
-    </div>
-    {% endif %}
-</div>
+<!-- Données expiration QR -->
+{% if code_qr %}
+<script id="qrExpiryData" type="application/json">"{{ code_qr.expire_le|date:'c' }}"</script>
+{% endif %}
 {% endblock %}
 
 {% block dashboard_js %}
+<script src="{% static 'js/components.js' %}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
 (function () {
-    Chart.defaults.font.family = "'Inter','Segoe UI',sans-serif";
+'use strict';
+Chart.defaults.font.family = "'Inter','Segoe UI',sans-serif";
+Chart.defaults.font.size   = 12;
 
-    /* ── QR Code countdown timer ─────────────────────────────── */
-    {% if code_qr %}
-    var expiry = new Date("{{ code_qr.expire_le|date:'c' }}");
-    var timerEl = document.getElementById('qrTimer');
+/* ── Donut tickets ───────────────────────────────────────────── */
+var dispo = {{ nombre_tickets_disponibles|default:0 }};
+var conso = {{ nombre_tickets_consommes|default:0 }};
+var total = dispo + conso;
 
-    function majTimer() {
-        var diff = expiry - new Date();
-        if (!timerEl) return;
-        if (diff <= 0) {
-            timerEl.textContent = 'Expiré';
-            timerEl.style.color = 'var(--accent-red)';
-            return;
-        }
-        var min = Math.floor(diff / 60000);
-        var sec = Math.floor((diff % 60000) / 1000);
-        timerEl.textContent = min + ':' + String(sec).padStart(2, '0');
-        if (diff < 120000) timerEl.style.color = '#ffc107';  /* orange < 2 min */
-        if (diff < 60000)  timerEl.style.color = 'var(--accent-red)'; /* rouge < 1 min */
-    }
-    majTimer();
-    setInterval(majTimer, 1000);
-    {% endif %}
-
-    /* ── Donut tickets disponibles vs consommés ──────────────── */
-    var dispo  = {{ nombre_tickets_disponibles|default:0 }};
-    var conso  = {{ nombre_tickets_consommes|default:0 }};
-    var total  = dispo + conso;
-
-    new Chart(document.getElementById('ticketsDonut'), {
-        type: 'doughnut',
-        data: {
-            labels: ['Disponibles', 'Consommés'],
-            datasets: [{
-                data: total > 0 ? [dispo, conso] : [1, 0],
-                backgroundColor: total > 0
-                    ? ['rgba(40,167,69,.85)', 'rgba(220,53,69,.7)']
-                    : ['#e9ecef', '#e9ecef'],
-                borderWidth: 2,
-                borderColor: '#fff',
-            }]
-        },
-        options: {
-            responsive: true,
-            cutout: '68%',
-            plugins: {
-                legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } },
-                tooltip: {
-                    callbacks: {
-                        label: function(c) {
-                            return total > 0
-                                ? ' ' + c.label + ' : ' + c.parsed + ' (' + Math.round(c.parsed/total*100) + '%)'
-                                : ' Aucun ticket';
-                        }
+new Chart(document.getElementById('ticketsDonut'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Disponibles', 'Consommés'],
+        datasets: [{
+            data: total > 0 ? [dispo, conso] : [1, 0],
+            backgroundColor: total > 0
+                ? ['rgba(40,167,69,.85)', 'rgba(220,53,69,.7)']
+                : ['#e9ecef', '#e9ecef'],
+            borderWidth: 2,
+            borderColor: '#fff',
+        }]
+    },
+    options: {
+        responsive: true,
+        cutout: '68%',
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: { boxWidth: 12, padding: 12, font: { size: 11 } }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function (c) {
+                        return total > 0
+                            ? ' ' + c.label + ' : ' + c.parsed +
+                              ' (' + Math.round(c.parsed / total * 100) + '%)'
+                            : ' Aucun ticket';
                     }
                 }
             }
         }
+    }
+});
+
+/* ── Timer QR ────────────────────────────────────────────────── */
+var expiryEl = document.getElementById('qrExpiryData');
+var timerEl  = document.getElementById('timerDisplay');
+var timerInt = null;
+var expiry   = null;
+
+function majTimer() {
+    if (!expiry || !timerEl) return;
+    var diff = Math.max(0, Math.floor((expiry - new Date()) / 1000));
+    if (diff === 0) {
+        timerEl.textContent = 'Expiré';
+        timerEl.style.color = '#fca5a5';
+        clearInterval(timerInt);
+        return;
+    }
+    var m = Math.floor(diff / 60), s = diff % 60;
+    timerEl.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    timerEl.style.color = diff < 120 ? '#fca5a5' : 'white';
+}
+
+if (expiryEl && timerEl) {
+    expiry = new Date(JSON.parse(expiryEl.textContent));
+    timerEl.style.display = 'block';
+    majTimer();
+    timerInt = setInterval(majTimer, 1000);
+}
+
+/* ── Auto-génération QR si aucun actif ──────────────────────── */
+{% if not code_qr and nombre_tickets_disponibles > 0 %}
+(function autoGen() {
+    var url = document.getElementById('page-urls').dataset.genererUrl;
+    fetch(url, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() } })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        if (d.success && d.image_url) {
+            var frame = document.getElementById('qrFrame');
+            var ph    = document.getElementById('qrPlaceholder');
+            if (ph) ph.remove();
+            frame.innerHTML = '<img src="' + d.image_url + '" alt="QR Code" ' +
+                'style="width:100%;height:100%;object-fit:contain;border-radius:6px;">';
+            if (d.expire_le && timerEl) {
+                expiry = new Date(d.expire_le);
+                timerEl.style.display = 'block';
+                majTimer();
+                timerInt = setInterval(majTimer, 1000);
+            }
+        }
+    })
+    .catch(function () {});
+})();
+{% endif %}
+
+/* ── Régénérer QR ────────────────────────────────────────────── */
+var genUrl = document.getElementById('page-urls').dataset.genererUrl;
+
+window.regenererQR = function () {
+    var btn  = document.getElementById('btnRegen');
+    var icon = document.getElementById('regenIcon');
+    btn.disabled = true;
+    icon.className = 'fas fa-spinner fa-spin';
+
+    fetch(genUrl, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() } })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        btn.disabled = false;
+        icon.className = 'fas fa-sync-alt';
+        if (d.success) {
+            showSuccess(d.message || 'QR Code régénéré');
+            if (d.image_url) {
+                document.getElementById('qrFrame').innerHTML =
+                    '<img src="' + d.image_url + '" alt="QR Code" ' +
+                    'style="width:100%;height:100%;object-fit:contain;border-radius:6px;">';
+            }
+            if (d.expire_le && timerEl) {
+                expiry = new Date(d.expire_le);
+                timerEl.style.display = 'block';
+                clearInterval(timerInt);
+                majTimer();
+                timerInt = setInterval(majTimer, 1000);
+            } else {
+                setTimeout(function () { location.reload(); }, 800);
+            }
+        } else {
+            showError(d.error || 'Erreur lors de la régénération');
+        }
+    })
+    .catch(function () {
+        btn.disabled = false;
+        icon.className = 'fas fa-sync-alt';
+        showError('Erreur réseau');
     });
+};
+
 })();
 </script>
 {% endblock %}

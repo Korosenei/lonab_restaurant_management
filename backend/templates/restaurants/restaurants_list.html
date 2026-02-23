@@ -5,7 +5,13 @@
 <link rel="stylesheet" href="{% static 'css/components.css' %}">
 {% endblock %}
 
-{% block sidebar_menu %}{% include 'dashboards/sidebars/admin_sidebar.html' %}{% endblock %}
+{% block sidebar_menu %}
+{% if est_caissier %}
+{% include 'dashboards/sidebars/caissier_sidebar.html' %}
+{% else %}
+{% include 'dashboards/sidebars/admin_sidebar.html' %}
+{% endif %}
+{% endblock %}
 
 {% block page_content %}
 <div id="page-urls"

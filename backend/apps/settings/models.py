@@ -5,7 +5,6 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-
 class ParametresSysteme(models.Model):
     """Modèle pour les paramètres globaux du système"""
 

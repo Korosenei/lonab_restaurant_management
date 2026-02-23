@@ -3,8 +3,8 @@
     <div class="nav-section-title">Menu Principal</div>
     <ul class="nav-menu">
         <li class="nav-item">
-            <a href="{% url 'accounts:restaurant_dashboard' %}"
-               class="nav-link {% if request.resolver_match.url_name == 'restaurant_dashboard' %}active{% endif %}">
+            <a href="{% url 'restaurants:gestionnaire_dashboard' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'gestionnaire_dashboard' %}active{% endif %}">
                 <i class="fas fa-home"></i>
                 <span class="nav-link-text">Tableau de bord</span>
             </a>

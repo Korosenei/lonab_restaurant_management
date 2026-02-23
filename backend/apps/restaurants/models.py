@@ -157,7 +157,6 @@ class Menu(models.Model):
         verbose_name = 'Menu'
         verbose_name_plural = 'Menus'
         ordering = ['restaurant', 'jour_semaine']
-        unique_together = ['restaurant', 'jour_semaine', 'date']
 
     def __str__(self):
         jour = dict(self.JOUR_CHOICES).get(self.jour_semaine, self.jour_semaine)

@@ -290,6 +290,54 @@
                     </div>
                     <i class="fas fa-check-circle" style="font-size:26px;color:#4ade80;flex-shrink:0;"></i>
                 </div>
+
+                <!-- ── Plat consommé ── -->
+                <div style="margin-top:14px;padding:12px 14px;background:rgba(255,255,255,.12);
+                            border-radius:10px;border:1px solid rgba(255,255,255,.25);">
+
+                    <!-- Cas A : réservation existante -->
+                    <div id="platReservation" style="display:none;">
+                        <div style="font-size:11px;font-weight:600;opacity:.8;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
+                            <i class="fas fa-calendar-check" style="margin-right:4px;"></i> Plat réservé
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;
+                                        display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <i class="fas fa-utensils" style="font-size:14px;"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight:700;font-size:14px;" id="platReserveNom">—</div>
+                                <div style="font-size:11px;opacity:.8;">Réservation confirmée</div>
+                            </div>
+                            <i class="fas fa-check-circle" style="color:#4ade80;margin-left:auto;font-size:18px;"></i>
+                        </div>
+                        <input type="hidden" id="menuIdReserve" value="">
+                    </div>
+
+                    <!-- Cas B : pas de réservation → choisir le plat -->
+                    <div id="platPicker" style="display:none;">
+                        <div style="font-size:11px;font-weight:600;opacity:.8;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">
+                            <i class="fas fa-utensils" style="margin-right:4px;"></i> Choisir un plat du jour
+                        </div>
+                        <select id="platSelect"
+                                style="width:100%;padding:9px 12px;border-radius:8px;border:none;font-size:13px;
+                                       background:rgba(255,255,255,.9);color:#1a5c2e;font-weight:600;outline:none;">
+                            <option value="">— Aucun plat sélectionné (optionnel) —</option>
+                        </select>
+                        <div style="font-size:10px;opacity:.7;margin-top:5px;">
+                            Sélectionnez le plat si le client en consomme un en ce moment
+                        </div>
+                    </div>
+
+                    <!-- Cas C : aucun plat disponible -->
+                    <div id="platAucun" style="display:none;">
+                        <div style="font-size:12px;opacity:.8;">
+                            <i class="fas fa-info-circle" style="margin-right:5px;"></i>
+                            Aucun plat configuré pour aujourd'hui
+                        </div>
+                    </div>
+                </div>
+
                 <button class="confirm-btn" id="btnValider" onclick="validerCode()">
                     <i class="fas fa-check"></i> Confirmer la validation
                 </button>
@@ -523,7 +571,7 @@ window.verifierCode = function (code) {
         .then(function (d) {
             if (d.valide) {
                 codeEnCours = d.code;
-                /* Remplir la carte */
+                /* Infos client */
                 document.getElementById('clientNom').textContent       = d.client;
                 document.getElementById('clientMatricule').textContent = d.matricule;
                 document.getElementById('clientAgence').textContent    = d.agence;
@@ -536,9 +584,39 @@ window.verifierCode = function (code) {
                 } else {
                     av.textContent = d.client.split(' ').map(function (w) { return w[0]; }).slice(0, 2).join('');
                 }
+
+                /* ── Plat consommé ── */
+                var platReserv = document.getElementById('platReservation');
+                var platPicker = document.getElementById('platPicker');
+                var platAucun  = document.getElementById('platAucun');
+                platReserv.style.display = 'none';
+                platPicker.style.display = 'none';
+                platAucun.style.display  = 'none';
+
+                if (d.reservation && d.reservation.menu_id) {
+                    /* Cas A : reservation connue -> afficher le plat reserve */
+                    document.getElementById('platReserveNom').textContent = d.reservation.menu_nom;
+                    document.getElementById('menuIdReserve').value = d.reservation.menu_id;
+                    platReserv.style.display = 'block';
+                } else if (d.plats_du_jour && d.plats_du_jour.length > 0) {
+                    /* Cas B : pas de reservation -> proposer le choix */
+                    var sel = document.getElementById('platSelect');
+                    sel.innerHTML = '<option value="">— Aucun plat sélectionné (optionnel) —</option>';
+                    d.plats_du_jour.forEach(function(p) {
+                        var opt = document.createElement('option');
+                        opt.value = p.id;
+                        var qty = p.quantite_restante !== null ? ' (' + p.quantite_restante + ' restants)' : '';
+                        opt.textContent = p.nom + qty;
+                        sel.appendChild(opt);
+                    });
+                    platPicker.style.display = 'block';
+                } else {
+                    /* Cas C : aucun plat du jour */
+                    platAucun.style.display = 'block';
+                }
+
                 document.getElementById('resultSuccess').style.display = 'block';
                 document.getElementById('btnValider').disabled = false;
-                /* Mettre à jour le statut caméra */
                 if (cameraStream) {
                     document.getElementById('cameraStatus').innerHTML =
                         '<i class="fas fa-pause"></i> Scan suspendu — confirmez ou fermez pour continuer';
@@ -547,7 +625,6 @@ window.verifierCode = function (code) {
                 document.getElementById('errorMessage').textContent = d.error || 'Code invalide';
                 document.getElementById('resultError').style.display = 'block';
                 codeEnCours = '';
-                /* Reprend le scan caméra après 3s */
                 setTimeout(function () { resetResult(); scanPaused = false; lastScanned = ''; }, 3000);
             }
         })
@@ -568,6 +645,17 @@ window.validerCode = function () {
 
     var fd = new FormData();
     fd.append('code', codeEnCours);
+
+    /* Récupérer le menu_id selon le cas */
+    var menuIdReserve = document.getElementById('menuIdReserve');
+    var platSelect    = document.getElementById('platSelect');
+    var menuId = '';
+    if (menuIdReserve && menuIdReserve.value) {
+        menuId = menuIdReserve.value;  /* Cas A : réservation */
+    } else if (platSelect && platSelect.value) {
+        menuId = platSelect.value;     /* Cas B : choix manuel */
+    }
+    if (menuId) fd.append('menu_id', menuId);
 
     fetch(urls.validerUrl, {
         method: 'POST',
@@ -592,6 +680,8 @@ window.validerCode = function () {
                 var row = document.createElement('div');
                 row.className = 'scan-row';
                 row.style.background = 'rgba(74,222,128,.06)';
+                var platInfo = d.plat && d.plat !== '—' ?
+                    ' · <i class="fas fa-utensils" style="font-size:9px;"></i> ' + d.plat : '';
                 row.innerHTML =
                     '<div style="width:36px;height:36px;border-radius:50%;background:var(--light-green);' +
                     'display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--primary-green);font-size:13px;flex-shrink:0;">' +
@@ -599,7 +689,7 @@ window.validerCode = function () {
                     '<div style="flex:1;min-width:0;">' +
                     '<div style="font-weight:600;font-size:13px;color:var(--text-primary);">' + d.client + '</div>' +
                     '<div style="font-size:11px;color:var(--text-muted);">' + (d.agence||'—') +
-                    ' · <span style="font-family:monospace;">' + d.ticket_numero + '</span></div>' +
+                    ' · <span style="font-family:monospace;">' + d.ticket_numero + '</span>' + platInfo + '</div>' +
                     '</div>' +
                     '<div style="font-size:11px;color:var(--primary-green);font-weight:600;flex-shrink:0;">' + hhmm + '</div>';
                 histo.insertBefore(row, histo.firstChild);

@@ -23,6 +23,7 @@ def _debut_fin_mois(date=None):
 # ================================================================
 # ADMIN
 # ================================================================
+
 @login_required
 def admin_tickets_list(request):
     if not request.user.est_super_admin:
@@ -61,6 +62,7 @@ def admin_tickets_list(request):
         'totaux':  totaux,
     })
 
+
 @login_required
 def admin_tickets_stats(request):
     if not request.user.est_super_admin:
@@ -95,6 +97,7 @@ def admin_tickets_stats(request):
         'fin_mois':   fin_mois,
     })
 
+
 @login_required
 def ticket_detail(request, pk):
     t = get_object_or_404(Ticket, pk=pk)
@@ -106,6 +109,7 @@ def ticket_detail(request, pk):
 # ================================================================
 # CAISSIER
 # ================================================================
+
 @login_required
 def caissier_tickets(request):
     """Liste de tous les tickets + stats + modal vente."""
@@ -146,7 +150,7 @@ def caissier_tickets(request):
         type_utilisateur='CLIENT', est_actif=True
     ).select_related('agence').order_by('nom', 'prenom')
 
-    return render(request, 'transactions/caissier_tickets.html', {
+    return render(request, 'tickets/caissier_tickets.html', {
         'tickets':       qs.order_by('-date_creation')[:500],
         'total_tickets': qs.count(),
         'stats':         stats,
@@ -155,14 +159,13 @@ def caissier_tickets(request):
         'fin_mois':      fin_mois,
         'prix_ticket':   getattr(settings, 'TICKET_PRICE', 500),
         'subvention':    getattr(settings, 'TICKET_SUBSIDY', 1500),
-        'min_tickets':   getattr(settings, 'MIN_TICKETS_PER_TRANSACTION', 1),  # Valeur par défaut
-        'max_tickets':   getattr(settings, 'MAX_TICKETS_PER_TRANSACTION', 20), # Valeur par défaut
     })
 
 
 # ================================================================
 # CLIENT
 # ================================================================
+
 @login_required
 def client_tickets(request):
     """Mes tickets — vue client."""
@@ -175,8 +178,22 @@ def client_tickets(request):
     tous = request.user.tickets.select_related('transaction', 'restaurant_consommateur')
 
     valides     = tous.filter(statut='DISPONIBLE', valide_de__lte=aujourd_hui, valide_jusqua__gte=aujourd_hui)
-    consommes   = tous.filter(statut='CONSOMME').order_by('-date_consommation')[:20]
+    consommes   = list(tous.filter(statut='CONSOMME').order_by('-date_consommation')[:20])
     expires     = tous.filter(statut__in=['EXPIRE', 'ANNULE']).order_by('-valide_jusqua')[:10]
+
+    # Enrichir chaque ticket consommé avec le nom du plat (via Reservation TERMINE)
+    from apps.restaurants.models import Reservation
+    dates_consommes = {t.date_consommation.date() for t in consommes if t.date_consommation}
+    plats_par_date = {}
+    if dates_consommes:
+        for r in Reservation.objects.filter(
+            client=request.user, statut='TERMINE', date_reservation__in=list(dates_consommes)
+        ).select_related('menu', 'restaurant'):
+            plats_par_date.setdefault(r.date_reservation, {'menu': r.menu.nom, 'restaurant': r.restaurant.nom if r.restaurant else ''})
+    for t in consommes:
+        info = plats_par_date.get(t.date_consommation.date()) if t.date_consommation else None
+        t.plat_nom = info['menu'] if info else None
+        t.plat_restaurant = info['restaurant'] if info else None
 
     return render(request, 'tickets/client_tickets.html', {
         'tickets_valides':     valides,
@@ -188,6 +205,7 @@ def client_tickets(request):
         'debut_mois':          debut_mois,
         'fin_mois':            fin_mois,
     })
+
 
 @login_required
 def client_qrcode(request):
@@ -224,6 +242,7 @@ def client_qrcode(request):
         'aujourd_hui':     aujourd_hui,
     })
 
+
 @login_required
 @require_http_methods(["POST"])
 def generer_qrcode(request):
@@ -257,6 +276,7 @@ def generer_qrcode(request):
         })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
 
 @login_required
 @require_http_methods(["POST"])

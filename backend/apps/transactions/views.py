@@ -5,7 +5,6 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-from django.contrib import messages
 from django.db.models import Q, Sum, Count
 from django.utils import timezone
 from django.conf import settings
@@ -20,9 +19,10 @@ def _debut_fin_mois(date=None):
     return debut, fin
 
 
-# ───────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════
 # ADMIN
-# ───────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════
+
 @login_required
 def admin_transactions_list(request):
     if not request.user.est_super_admin:
@@ -52,6 +52,7 @@ def admin_transactions_list(request):
         'types': TransactionTicket.TYPE_TRANSACTION_CHOICES,
     })
 
+
 @login_required
 def transaction_detail(request, pk):
     t = get_object_or_404(TransactionTicket, pk=pk)
@@ -67,6 +68,7 @@ def transaction_detail(request, pk):
             not tickets.filter(statut='CONSOMME').exists()
         ),
     })
+
 
 @login_required
 def admin_stats(request):
@@ -102,6 +104,7 @@ def admin_stats(request):
 # ═══════════════════════════════════════════════════════════════
 # CAISSIER
 # ═══════════════════════════════════════════════════════════════
+
 @login_required
 def caissier_dashboard(request):
     if not (request.user.est_caissier or request.user.est_super_admin):
@@ -120,9 +123,17 @@ def caissier_dashboard(request):
         'en_attente': mes_transactions.filter(statut='EN_ATTENTE').count(),
     }
     recentes = mes_transactions.select_related('client').order_by('-date_transaction')[:8]
+    graph_7j = []
+    for i in range(6, -1, -1):
+        j = aujourd_hui - timezone.timedelta(days=i)
+        nb = mes_transactions.filter(
+            statut='TERMINEE', date_transaction__date=j
+        ).aggregate(t=Sum('nombre_tickets'))['t'] or 0
+        graph_7j.append({'label': j.strftime('%a %d/%m'), 'value': nb})
     return render(request, 'transactions/caissier_dashboard.html', {
-        'stats': stats, 'recentes': recentes, 'aujourd_hui': aujourd_hui,
+        'stats': stats, 'recentes': recentes, 'aujourd_hui': aujourd_hui, 'graph_7j': graph_7j,
     })
+
 
 @login_required
 def caissier_tickets_list(request):
@@ -179,6 +190,7 @@ def caissier_tickets_list(request):
                     ('EXPIRE','Expiré'),('ANNULE','Annulé')],
     })
 
+
 @login_required
 @require_http_methods(["POST"])
 def caissier_confirmer_vente(request):
@@ -233,6 +245,7 @@ def caissier_confirmer_vente(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
+
 @login_required
 def caissier_historique(request):
     if not (request.user.est_caissier or request.user.est_super_admin):
@@ -255,6 +268,7 @@ def caissier_historique(request):
         'statuts': TransactionTicket.STATUT_CHOICES,
     })
 
+
 @login_required
 def caissier_clients(request):
     if not (request.user.est_caissier or request.user.est_super_admin):
@@ -271,6 +285,7 @@ def caissier_clients(request):
     return render(request, 'transactions/caissier_clients.html', {
         'clients': qs.order_by('nom', 'prenom'),
     })
+
 
 @login_required
 def caissier_client_detail(request, pk):
@@ -298,6 +313,7 @@ def caissier_client_detail(request, pk):
         'debut_mois': debut_mois, 'fin_mois': fin_mois,
     })
 
+
 @login_required
 @require_http_methods(["POST"])
 def rembourser_transaction(request, pk):
@@ -310,9 +326,11 @@ def rembourser_transaction(request, pk):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
+
 # ═══════════════════════════════════════════════════════════════
 # CLIENT
 # ═══════════════════════════════════════════════════════════════
+
 @login_required
 def client_historique(request):
     if not request.user.est_client:
@@ -334,5 +352,3 @@ def client_historique(request):
         'tickets_consommes_mois': tickets_consommes_mois,
         'aujourd_hui': aujourd_hui,
     })
-
-

@@ -14,6 +14,7 @@ urlpatterns = [
     # Menus
     path('menus/', views.menus_list, name='menus_list'),
     path('menus/create/', views.menu_create, name='menu_create'),
+    path('menus/duplicate/', views.menu_duplicate, name='menu_duplicate'),
     path('menus/<int:pk>/edit/', views.menu_edit, name='menu_edit'),
     path('menus/<int:pk>/delete/', views.menu_delete, name='menu_delete'),
 
