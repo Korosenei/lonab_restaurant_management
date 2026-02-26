@@ -1,0 +1,176 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Restaurants — {{ request.user.agence.ville|default:"Mon Agence" }}{% endblock %}
+{% block dashboard_css %}<link rel="stylesheet" href="{% static 'css/components.css' %}">{% endblock %}
+{% block sidebar_menu %}{% include 'dashboards/sidebars/caissier_sidebar.html' %}{% endblock %}
+
+{% block page_content %}
+<div id="page-urls"
+     data-create-url="{% url 'restaurants:restaurant_create' %}"
+     data-edit-base="{% url 'restaurants:restaurant_edit' pk=0 %}"
+     data-delete-base="{% url 'restaurants:restaurant_delete' pk=0 %}"
+     style="display:none;"></div>
+
+<!-- En-tête -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px;">
+    <div>
+        <h1 style="font-size:22px;font-weight:700;color:var(--text-primary);margin:0;">
+            <i class="fas fa-store" style="color:var(--primary-green);margin-right:10px;"></i>Restaurants
+        </h1>
+        <p style="color:var(--text-muted);font-size:13px;margin:4px 0 0;">
+            Ville : <strong>{{ agence.ville|default:"—" }}</strong>
+            {% if agence %} · Agence <strong>{{ agence.nom }}</strong>{% endif %}
+        </p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('restaurantModal')">
+        <i class="fas fa-plus"></i> Nouveau restaurant
+    </button>
+</div>
+
+<!-- Filtres -->
+<div class="card" style="padding:12px 16px;margin-bottom:18px;">
+    <form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+        <div style="flex:1;min-width:200px;">
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">Recherche</label>
+            <div style="position:relative;">
+                <i class="fas fa-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:12px;"></i>
+                <input type="text" name="search" value="{{ request.GET.search|default:'' }}"
+                       placeholder="Nom ou code restaurant..."
+                       style="padding:8px 8px 8px 32px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;width:100%;box-sizing:border-box;">
+            </div>
+        </div>
+        <div>
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">Statut</label>
+            <select name="statut" style="padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;">
+                <option value="">Tous statuts</option>
+                <option value="ACTIF" {% if request.GET.statut == 'ACTIF' %}selected{% endif %}>Actif</option>
+                <option value="INACTIF" {% if request.GET.statut == 'INACTIF' %}selected{% endif %}>Inactif</option>
+                <option value="SUSPENDU" {% if request.GET.statut == 'SUSPENDU' %}selected{% endif %}>Suspendu</option>
+            </select>
+        </div>
+        <div style="display:flex;gap:6px;align-items:flex-end;">
+            <button type="submit" class="btn btn-secondary"><i class="fas fa-filter"></i> Filtrer</button>
+            {% if request.GET.search or request.GET.statut %}
+            <a href="{% url 'restaurants:caissier_restaurants' %}" class="btn" style="background:var(--light-green);color:var(--primary-green);">
+                <i class="fas fa-times"></i> Reset
+            </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Grille restaurants -->
+{% if restaurants %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:24px;">
+    {% for r in restaurants %}
+    <div class="card" style="overflow:hidden;transition:box-shadow .2s;"
+         onmouseover="this.style.boxShadow='0 6px 20px rgba(0,0,0,.1)'"
+         onmouseout="this.style.boxShadow=''">
+        <div style="height:4px;background:{% if r.statut == 'ACTIF' %}var(--primary-green){% elif r.statut == 'INACTIF' %}#6c757d{% else %}#ffc107{% endif %};"></div>
+        <div style="padding:16px;">
+            <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;">
+                <div style="width:48px;height:48px;border-radius:10px;flex-shrink:0;overflow:hidden;background:var(--light-green);display:flex;align-items:center;justify-content:center;">
+                    {% if r.logo %}<img src="{{ r.logo.url }}" style="width:100%;height:100%;object-fit:cover;">
+                    {% else %}<i class="fas fa-utensils" style="font-size:20px;color:var(--primary-green);"></i>{% endif %}
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:700;font-size:15px;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ r.nom }}</div>
+                    <div style="font-size:11px;color:var(--text-muted);font-family:monospace;">{{ r.code }}</div>
+                    <span style="display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;margin-top:3px;{% if r.statut == 'ACTIF' %}background:var(--light-green);color:var(--primary-green);{% elif r.statut == 'INACTIF' %}background:#f3f4f6;color:#6c757d;{% else %}background:#fff3cd;color:#856404;{% endif %}">{{ r.get_statut_display }}</span>
+                </div>
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);line-height:1.9;">
+                {% if r.adresse %}<div><i class="fas fa-map-marker-alt" style="width:14px;color:var(--primary-green);"></i> {{ r.adresse }}{% if r.ville %}, {{ r.ville }}{% endif %}</div>{% endif %}
+                {% if r.telephone %}<div><i class="fas fa-phone" style="width:14px;color:var(--primary-green);"></i> {{ r.telephone }}</div>{% endif %}
+                {% if r.email %}<div><i class="fas fa-envelope" style="width:14px;color:var(--primary-green);"></i> {{ r.email }}</div>{% endif %}
+            </div>
+            <div style="display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border-color);">
+                <button onclick="editRestaurant({{ r.id }}, '{{ r.nom|escapejs }}', '{{ r.code|escapejs }}', '{{ r.statut }}', '{{ r.description|default:''|escapejs }}', '{{ r.adresse|default:''|escapejs }}', '{{ r.ville|default:''|escapejs }}', '{{ r.telephone|default:''|escapejs }}', '{{ r.email|default:''|escapejs }}')"
+                    class="btn btn-secondary" style="flex:1;font-size:12px;padding:7px;">
+                    <i class="fas fa-edit"></i> Modifier
+                </button>
+                <button onclick="supprimerRestaurant({{ r.id }}, '{{ r.nom|escapejs }}')"
+                    class="btn" style="flex:1;font-size:12px;padding:7px;background:#fde8ea;color:#dc3545;border:none;">
+                    <i class="fas fa-trash"></i> Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card" style="padding:60px;text-align:center;">
+    <i class="fas fa-store" style="font-size:48px;color:var(--text-muted);opacity:.3;display:block;margin-bottom:16px;"></i>
+    <h3 style="color:var(--text-muted);font-weight:600;margin:0 0 8px;">Aucun restaurant trouvé</h3>
+    <p style="color:var(--text-muted);font-size:13px;margin:0 0 20px;">
+        {% if request.GET.search %}Aucun résultat pour cette recherche.{% else %}Aucun restaurant dans votre ville ({{ agence.ville|default:"—" }}).{% endif %}
+    </p>
+    <button class="btn btn-primary" onclick="openModal('restaurantModal')"><i class="fas fa-plus"></i> Créer un restaurant</button>
+</div>
+{% endif %}
+
+<!-- MODAL RESTAURANT (formulaire externe) -->
+{% include 'restaurants/modals/restaurant_form.html' %}
+
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{% static 'js/components.js' %}"></script>
+<script>
+var urls = document.getElementById('page-urls').dataset;
+
+function editRestaurant(id, nom, code, statut, desc, adresse, ville, tel, email) {
+    document.getElementById('r_id').value = id;
+    document.getElementById('r_nom').value = nom;
+    document.getElementById('r_code').value = code;
+    document.getElementById('r_statut').value = statut;
+    document.getElementById('r_description').value = desc;
+    document.getElementById('r_adresse').value = adresse;
+    document.getElementById('r_ville').value = ville;
+    document.getElementById('r_telephone').value = tel;
+    document.getElementById('r_email').value = email;
+    document.getElementById('restaurantModalTitle').textContent = 'Modifier — ' + nom;
+    document.getElementById('logo_preview').style.display = 'none';
+    openModal('restaurantModal');
+}
+
+document.getElementById('restaurantForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var id = document.getElementById('r_id').value;
+    var url = id ? urls.editBase.replace('/0/', '/' + id + '/') : urls.createUrl;
+    var btn = this.querySelector('[type=submit]');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    fetch(url, { method:'POST', headers:{'X-CSRFToken':getCsrfToken()}, body:new FormData(this) })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.success) {
+                showSuccess(d.message || 'Restaurant enregistré');
+                closeModal('restaurantModal');
+                setTimeout(function() { location.reload(); }, 900);
+            } else {
+                showError(d.error || 'Erreur');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
+            }
+        })
+        .catch(function() { showError('Erreur réseau'); btn.disabled = false; });
+});
+
+function supprimerRestaurant(id, nom) {
+    showConfirm('Supprimer le restaurant',
+        'Voulez-vous vraiment supprimer <strong>' + nom + '</strong> ? Cette action est irréversible.',
+        function() {
+            fetch(urls.deleteBase.replace('/0/', '/' + id + '/'), {
+                method:'POST', headers:{'X-CSRFToken':getCsrfToken(),'X-Requested-With':'XMLHttpRequest'}
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.success) { showSuccess('Supprimé'); setTimeout(function() { location.reload(); }, 900); }
+                else { showError(d.error || 'Impossible'); }
+            });
+        }, 'Supprimer');
+}
+</script>
+{% endblock %}

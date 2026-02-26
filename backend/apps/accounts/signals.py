@@ -44,7 +44,6 @@ def sauvegarder_profil_utilisateur(sender, instance, **kwargs):
         except Exception:
             pass
 
-
 @receiver(post_save, sender=Utilisateur)
 def envoyer_email_bienvenue(sender, instance, created, **kwargs):
     """
@@ -114,7 +113,6 @@ L'équipe MUTRALO/LONAB
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Erreur envoi email bienvenue pour {instance.email}: {erreur}")
-
 
 def envoyer_email_avec_mdp(instance, mot_de_passe):
     """Fonction standalone pour envoyer l'email avec le mdp connu"""

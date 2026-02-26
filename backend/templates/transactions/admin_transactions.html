@@ -1,74 +1,117 @@
 {% extends 'dashboards/base_dashboard.html' %}
 {% load static %}
 
+{% block title %}Transactions — Admin{% endblock %}
 {% block dashboard_css %}<link rel="stylesheet" href="{% static 'css/components.css' %}">{% endblock %}
 {% block sidebar_menu %}{% include 'dashboards/sidebars/admin_sidebar.html' %}{% endblock %}
 
 {% block page_content %}
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+
+<!-- En-tête -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
     <div>
         <h1 style="font-size:22px;font-weight:700;color:var(--text-primary);margin:0;">
             <i class="fas fa-exchange-alt" style="color:var(--primary-green);margin-right:10px;"></i>Transactions
         </h1>
         <p style="color:var(--text-muted);font-size:13px;margin:4px 0 0;">
-            {{ totaux.nb_transactions }} transaction(s) — {{ totaux.total_tickets|default:0 }} tickets — {{ totaux.total_montant|default:0|floatformat:0 }} FCFA
+            {{ totaux.nb_transactions }} transaction(s) ·
+            {{ totaux.total_tickets|default:0 }} tickets ·
+            <strong>{{ totaux.total_montant|default:0|floatformat:0 }} FCFA</strong> encaissés
         </p>
     </div>
-    <a href="{% url 'transactions:transaction_stats' %}" class="btn btn-secondary"><i class="fas fa-chart-bar"></i> Statistiques</a>
+    <a href="{% url 'transactions:transaction_stats' %}" class="btn btn-secondary">
+        <i class="fas fa-chart-bar"></i> Statistiques
+    </a>
 </div>
 
 <!-- Filtres -->
 <div class="card" style="padding:14px 16px;margin-bottom:18px;">
-    <form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
-        <div style="flex:1;min-width:180px;">
-            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Recherche</label>
+    <form method="get" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;align-items:flex-end;">
+
+        <div>
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">Recherche</label>
             <div style="position:relative;">
-                <i class="fas fa-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);"></i>
-                <input type="text" name="search" value="{{ request.GET.search }}" placeholder="N°, client, matricule..."
-                       style="padding:8px 8px 8px 32px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;width:100%;box-sizing:border-box;">
+                <i class="fas fa-search" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:12px;"></i>
+                <input type="text" name="search" value="{{ request.GET.search|default:'' }}"
+                       placeholder="N°, client, matricule..."
+                       style="padding:8px 8px 8px 30px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;width:100%;box-sizing:border-box;">
             </div>
         </div>
+
         <div>
-            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Statut</label>
-            <select name="statut" style="padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;">
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">Statut</label>
+            <select name="statut" style="padding:8px 10px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;width:100%;">
                 <option value="">Tous</option>
-                {% for val, lib in statuts %}
+                {% for val,lib in statuts %}
                 <option value="{{ val }}" {% if request.GET.statut == val %}selected{% endif %}>{{ lib }}</option>
                 {% endfor %}
             </select>
         </div>
+
         <div>
-            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Type</label>
-            <select name="type" style="padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;">
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">Agence</label>
+            <select name="agence" style="padding:8px 10px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;width:100%;">
+                <option value="">Toutes</option>
+                {% for a in agences %}
+                <option value="{{ a.id }}" {% if request.GET.agence == a.id|stringformat:"s" %}selected{% endif %}>{{ a.nom }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">Type</label>
+            <select name="type" style="padding:8px 10px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;width:100%;">
                 <option value="">Tous</option>
-                {% for val, lib in types %}
+                {% for val,lib in types %}
                 <option value="{{ val }}" {% if request.GET.type == val %}selected{% endif %}>{{ lib }}</option>
                 {% endfor %}
             </select>
         </div>
+
         <div>
-            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">Mois</label>
-            <input type="month" name="mois" value="{{ request.GET.mois }}"
-                   style="padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;">
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">Mois</label>
+            <input type="month" name="mois" value="{{ request.GET.mois|default:'' }}"
+                   style="padding:8px 10px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;width:100%;box-sizing:border-box;">
         </div>
-        <button type="submit" class="btn btn-secondary">Filtrer</button>
-        {% if request.GET.search or request.GET.statut or request.GET.type or request.GET.mois %}
-        <a href="{% url 'transactions:transactions_list' %}" class="btn" style="background:var(--light-green);color:var(--primary-green);">Reset</a>
-        {% endif %}
+
+        <div>
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">Période du</label>
+            <input type="date" name="date_debut" value="{{ request.GET.date_debut|default:'' }}"
+                   style="padding:8px 10px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;width:100%;box-sizing:border-box;">
+        </div>
+
+        <div>
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">Au</label>
+            <input type="date" name="date_fin" value="{{ request.GET.date_fin|default:'' }}"
+                   style="padding:8px 10px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;width:100%;box-sizing:border-box;">
+        </div>
+
+        <div style="display:flex;gap:6px;align-items:flex-end;">
+            <button type="submit" class="btn btn-secondary" style="flex:1;">
+                <i class="fas fa-filter"></i> Filtrer
+            </button>
+            {% if request.GET.search or request.GET.statut or request.GET.agence or request.GET.type or request.GET.mois or request.GET.date_debut or request.GET.date_fin %}
+            <a href="{% url 'transactions:admin_transactions' %}" class="btn" style="background:var(--light-green);color:var(--primary-green);">
+                <i class="fas fa-times"></i>
+            </a>
+            {% endif %}
+        </div>
+
     </form>
 </div>
 
+<!-- Tableau -->
 <div class="card" style="overflow:hidden;">
     <table style="width:100%;border-collapse:collapse;">
         <thead>
             <tr style="background:var(--bg-light);border-bottom:2px solid var(--border-color);">
-                <th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">N° Transaction</th>
-                <th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Client</th>
-                <th style="padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Caissier</th>
-                <th style="padding:12px 16px;text-align:center;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Tickets</th>
-                <th style="padding:12px 16px;text-align:center;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Montant</th>
-                <th style="padding:12px 16px;text-align:center;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Statut</th>
-                <th style="padding:12px 16px;text-align:center;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Date</th>
+                <th style="padding:11px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">N° Transaction</th>
+                <th style="padding:11px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Client</th>
+                <th style="padding:11px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Caissier · Agence</th>
+                <th style="padding:11px 16px;text-align:center;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Tickets</th>
+                <th style="padding:11px 16px;text-align:right;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Montant</th>
+                <th style="padding:11px 16px;text-align:center;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Statut</th>
+                <th style="padding:11px 16px;text-align:center;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Date</th>
             </tr>
         </thead>
         <tbody>
@@ -76,27 +119,39 @@
             <tr style="border-top:1px solid var(--border-color);cursor:pointer;"
                 onclick="location.href='{% url 'transactions:transaction_detail' t.id %}'"
                 onmouseover="this.style.background='var(--bg-light)'" onmouseout="this.style.background=''">
-                <td style="padding:12px 16px;font-weight:600;font-size:13px;color:var(--primary-green);">{{ t.numero_transaction|slice:":18" }}…</td>
-                <td style="padding:12px 16px;">
+                <td style="padding:11px 16px;font-size:12px;font-weight:700;color:var(--primary-green);font-family:monospace;">
+                    {{ t.numero_transaction|slice:":18" }}…
+                </td>
+                <td style="padding:11px 16px;">
                     <div style="font-weight:600;font-size:13px;">{{ t.client.get_full_name }}</div>
                     <div style="font-size:11px;color:var(--text-muted);">{{ t.client.matricule|default:"—" }}</div>
                 </td>
-                <td style="padding:12px 16px;font-size:13px;color:var(--text-secondary);">{{ t.caissier.get_full_name|default:"—" }}</td>
-                <td style="padding:12px 16px;text-align:center;font-weight:700;color:var(--primary-green);">{{ t.nombre_tickets }}</td>
-                <td style="padding:12px 16px;text-align:center;font-size:13px;font-weight:600;">{{ t.montant_total|floatformat:0 }} FCFA</td>
-                <td style="padding:12px 16px;text-align:center;">
+                <td style="padding:11px 16px;">
+                    <div style="font-size:13px;color:var(--text-secondary);">{{ t.caissier.get_full_name|default:"—" }}</div>
+                    <div style="font-size:11px;color:var(--text-muted);">{{ t.agence.nom|default:"—" }}</div>
+                </td>
+                <td style="padding:11px 16px;text-align:center;font-weight:700;font-size:15px;color:var(--primary-green);">{{ t.nombre_tickets }}</td>
+                <td style="padding:11px 16px;text-align:right;font-weight:600;font-size:13px;">{{ t.montant_total|floatformat:0 }} FCFA</td>
+                <td style="padding:11px 16px;text-align:center;">
                     {% if t.statut == 'TERMINEE' %}<span class="badge badge-success">Complété</span>
                     {% elif t.statut == 'EN_ATTENTE' %}<span class="badge badge-warning">En attente</span>
                     {% elif t.statut == 'ECHOUEE' %}<span class="badge badge-danger">Échoué</span>
                     {% else %}<span class="badge" style="background:#6c757d;color:white;">Remboursé</span>{% endif %}
                 </td>
-                <td style="padding:12px 16px;text-align:center;font-size:12px;color:var(--text-muted);">{{ t.date_transaction|date:"d/m/Y H:i" }}</td>
+                <td style="padding:11px 16px;text-align:center;font-size:12px;color:var(--text-muted);">{{ t.date_transaction|date:"d/m/Y H:i" }}</td>
             </tr>
             {% empty %}
-            <tr><td colspan="7" style="text-align:center;padding:48px;color:var(--text-muted);">Aucune transaction</td></tr>
+            <tr>
+                <td colspan="7" style="text-align:center;padding:48px;color:var(--text-muted);">
+                    <i class="fas fa-exchange-alt" style="font-size:36px;opacity:.25;display:block;margin-bottom:12px;"></i>
+                    Aucune transaction pour ces critères
+                </td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
+    {% include 'components/pagination.html' with page_obj=page_obj label="transaction(s)" %}
 </div>
+
 {% endblock %}
 {% block dashboard_js %}<script src="{% static 'js/components.js' %}"></script>{% endblock %}

@@ -2,8 +2,9 @@
 {% load static %}
 
 {% block title %}Réservations — {{ restaurant.nom }}{% endblock %}
-{% block dashboard_css %}<link rel="stylesheet" href="{% static 'css/components.css' %}">{% endblock %}
-{% block sidebar_menu %}{% include 'dashboards/sidebars/restaurant_sidebar.html' %}{% endblock %}
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">{% endblock %}
+{% block sidebar_menu %}{% include 'dashboards/sidebars/gestionnaire_sidebar.html' %}{% endblock %}
 
 {% block page_content %}
 <div id="page-urls"
@@ -64,13 +65,14 @@
             <select name="statut" id="statutFilter" onchange="applyFilters()">
                 <option value="">Tous statuts</option>
                 {% for v, l in statuts %}
-                <option value="{{ v }}" {% if filtre_statut == v %}selected{% endif %}>{{ l }}</option>
+                <option value="{{ v }}" {% if filtre_statut ==  v  %}selected{% endif %}>{{ l }}</option>
                 {% endfor %}
             </select>
         </div>
         {% if filtre_statut or request.GET.date %}
         <a href="{% url 'restaurants:gestionnaire_reservations' %}"
-           class="btn btn-outline" style="height:28px;padding:0 10px;font-size:12px;display:inline-flex;align-items:center;gap:5px;">
+           class="btn btn-outline"
+           style="height:28px;padding:0 10px;font-size:12px;display:inline-flex;align-items:center;gap:5px;">
             <i class="fas fa-times"></i> Reset
         </a>
         {% endif %}
@@ -83,37 +85,39 @@
         <div class="table-responsive">
             <table class="table" id="reservTable">
                 <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Employé</th>
-                        <th>Menu</th>
-                        <th>Date</th>
-                        <th>Agence</th>
-                        <th>Statut</th>
-                        <th class="actions-column">Actions</th>
-                    </tr>
+                <tr>
+                    <th>#</th>
+                    <th>Employé</th>
+                    <th>Menu</th>
+                    <th>Date</th>
+                    <th>Agence</th>
+                    <th>Statut</th>
+                    <th class="actions-column">Actions</th>
+                </tr>
                 </thead>
                 <tbody>
-                    {% for r in reservations %}
-                    <tr id="row-{{ r.id }}">
-                        <td style="color:var(--text-muted);font-size:12px;">{{ forloop.counter }}</td>
-                        <td>
-                            <div style="display:flex;align-items:center;gap:8px;">
-                                <div style="width:30px;height:30px;border-radius:50%;background:var(--light-green);
+                {% for r in reservations %}
+                <tr id="row-{{ r.id }}">
+                    <td style="color:var(--text-muted);font-size:12px;">{{ forloop.counter }}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:30px;height:30px;border-radius:50%;background:var(--light-green);
                                             display:flex;align-items:center;justify-content:center;
                                             font-size:11px;font-weight:700;color:var(--primary-green);">
-                                    {{ r.client.prenom.0 }}{{ r.client.nom.0 }}
-                                </div>
-                                <div>
-                                    <div style="font-weight:600;font-size:13px;">{{ r.client.get_full_name }}</div>
-                                    <div style="font-size:10px;color:var(--text-muted);">{{ r.client.matricule|default:"—" }}</div>
+                                {{ r.client.prenom.0 }}{{ r.client.nom.0 }}
+                            </div>
+                            <div>
+                                <div style="font-weight:600;font-size:13px;">{{ r.client.get_full_name }}</div>
+                                <div style="font-size:10px;color:var(--text-muted);">{{ r.client.matricule|default:"—"
+                                    }}
                                 </div>
                             </div>
-                        </td>
-                        <td style="font-size:13px;">{{ r.menu.nom }}</td>
-                        <td style="font-size:12px;color:var(--text-muted);">{{ r.date_reservation|date:"d/m/Y" }}</td>
-                        <td style="font-size:12px;">{{ r.client.agence.nom|default:"—" }}</td>
-                        <td>
+                        </div>
+                    </td>
+                    <td style="font-size:13px;">{{ r.menu.nom }}</td>
+                    <td style="font-size:12px;color:var(--text-muted);">{{ r.date_reservation|date:"d/m/Y" }}</td>
+                    <td style="font-size:12px;">{{ r.client.agence.nom|default:"—" }}</td>
+                    <td>
                             <span id="badge-{{ r.id }}" class="badge
                                 {% if r.statut == 'EN_ATTENTE' %}badge-warning
                                 {% elif r.statut == 'CONFIRME' %}badge-success
@@ -121,36 +125,36 @@
                                 {% else %}badge-secondary{% endif %}" style="font-size:10px;">
                                 {{ r.get_statut_display }}
                             </span>
-                        </td>
-                        <td class="actions-cell">
-                            {% if r.statut == 'EN_ATTENTE' %}
-                            <button class="action-btn" style="color:#28a745;" title="Confirmer"
-                                    onclick="changerStatut({{ r.id }},'confirmer')">
-                                <i class="fas fa-check"></i>
-                            </button>
-                            {% endif %}
-                            {% if r.statut in 'EN_ATTENTE CONFIRME' %}
-                            <button class="action-btn" style="color:#17a2b8;" title="Terminer"
-                                    onclick="changerStatut({{ r.id }},'terminer')">
-                                <i class="fas fa-flag-checkered"></i>
-                            </button>
-                            <button class="action-btn action-btn-delete" title="Annuler"
-                                    onclick="changerStatut({{ r.id }},'annuler')">
-                                <i class="fas fa-times"></i>
-                            </button>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="7">
-                            <div class="empty-state">
-                                <i class="fas fa-calendar-times"></i>
-                                <p>Aucune réservation pour ce filtre</p>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
+                    </td>
+                    <td class="actions-cell">
+                        {% if r.statut == 'EN_ATTENTE' %}
+                        <button class="action-btn" style="color:#28a745;" title="Confirmer"
+                                onclick="changerStatut({{ r.id }},'confirmer')">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        {% endif %}
+                        {% if r.statut in 'EN_ATTENTE CONFIRME' %}
+                        <button class="action-btn" style="color:#17a2b8;" title="Terminer"
+                                onclick="changerStatut({{ r.id }},'terminer')">
+                            <i class="fas fa-flag-checkered"></i>
+                        </button>
+                        <button class="action-btn action-btn-delete" title="Annuler"
+                                onclick="changerStatut({{ r.id }},'annuler')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <i class="fas fa-calendar-times"></i>
+                            <p>Aucune réservation pour ce filtre</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
                 </tbody>
             </table>
         </div>
@@ -161,48 +165,48 @@
 {% block dashboard_js %}
 <script src="{% static 'js/components.js' %}"></script>
 <script>
-var urls = document.getElementById('page-urls').dataset;
-document.addEventListener('DOMContentLoaded', function() { initDataTable('reservTable'); });
+    var urls = document.getElementById('page-urls').dataset;
+    document.addEventListener('DOMContentLoaded', function() { initDataTable('reservTable'); });
 
-function filtrerStatut(s) {
-    var params = new URLSearchParams(window.location.search);
-    if (s) params.set('statut', s); else params.delete('statut');
-    window.location.search = params.toString();
-}
+    function filtrerStatut(s) {
+        var params = new URLSearchParams(window.location.search);
+        if (s) params.set('statut', s); else params.delete('statut');
+        window.location.search = params.toString();
+    }
 
-function applyFilters() {
-    var params = new URLSearchParams();
-    var d = document.getElementById('dateFilter').value;
-    var s = document.getElementById('statutFilter').value;
-    if (d) params.set('date', d);
-    if (s) params.set('statut', s);
-    window.location.search = params.toString();
-}
+    function applyFilters() {
+        var params = new URLSearchParams();
+        var d = document.getElementById('dateFilter').value;
+        var s = document.getElementById('statutFilter').value;
+        if (d) params.set('date', d);
+        if (s) params.set('statut', s);
+        window.location.search = params.toString();
+    }
 
-function changerStatut(id, action) {
-    var labels = { confirmer: 'Confirmer', terminer: 'Terminer', annuler: 'Annuler' };
-    showConfirm(labels[action] + ' cette réservation ?', '', function() {
-        var fd = new FormData();
-        fd.append('action', action);
-        fetch(urls.statutBase.replace('/0/', '/' + id + '/'), {
-            method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') }, body: fd
-        }).then(function(r) { return r.json(); })
-          .then(function(d) {
-            if (d.success) {
-                showSuccess(d.message);
-                var badge = document.getElementById('badge-' + id);
-                if (badge) {
-                    var labels = { CONFIRME:'Confirmé', TERMINE:'Terminé', ANNULE:'Annulé' };
-                    var classes = { CONFIRME:'badge-success', TERMINE:'badge-secondary', ANNULE:'badge-danger' };
-                    badge.textContent = labels[d.statut] || d.statut;
-                    badge.className = 'badge ' + (classes[d.statut] || '');
+    function changerStatut(id, action) {
+        var labels = { confirmer: 'Confirmer', terminer: 'Terminer', annuler: 'Annuler' };
+        showConfirm(labels[action] + ' cette réservation ?', '', function() {
+            var fd = new FormData();
+            fd.append('action', action);
+            fetch(urls.statutBase.replace('/0/', '/' + id + '/'), {
+                method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') }, body: fd
+            }).then(function(r) { return r.json(); })
+              .then(function(d) {
+                if (d.success) {
+                    showSuccess(d.message);
+                    var badge = document.getElementById('badge-' + id);
+                    if (badge) {
+                        var labels = { CONFIRME:'Confirmé', TERMINE:'Terminé', ANNULE:'Annulé' };
+                        var classes = { CONFIRME:'badge-success', TERMINE:'badge-secondary', ANNULE:'badge-danger' };
+                        badge.textContent = labels[d.statut] || d.statut;
+                        badge.className = 'badge ' + (classes[d.statut] || '');
+                    }
+                    setTimeout(function() { location.reload(); }, 800);
+                } else {
+                    showError(d.error);
                 }
-                setTimeout(function() { location.reload(); }, 800);
-            } else {
-                showError(d.error);
-            }
-        }).catch(function() { showError('Erreur réseau'); });
-    });
-}
+            }).catch(function() { showError('Erreur réseau'); });
+        });
+    }
 </script>
 {% endblock %}

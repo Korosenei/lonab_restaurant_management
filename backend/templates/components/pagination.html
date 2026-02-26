@@ -1,0 +1,146 @@
+{% comment %}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  templates/components/pagination.html
+  Composant pagination réutilisable — 10 résultats / page par défaut
+
+  Usage :
+    {% include 'components/pagination.html' with page_obj=page_obj %}
+
+  Paramètres optionnels :
+    page_obj   — objet Page de Django (obligatoire)
+    label      — libellé affiché ex "ticket(s)" (défaut : "résultat(s)")
+    extra_qs   — paramètres GET supplémentaires ex "&search=foo&statut=OK"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{% endcomment %}
+{% if page_obj.has_other_pages %}
+<div style="display:flex;align-items:center;justify-content:space-between;
+            padding:14px 18px;border-top:1px solid var(--border-color);
+            background:var(--bg-light);flex-wrap:wrap;gap:10px;">
+
+    <!-- Info résultats -->
+    <div style="font-size:12px;color:var(--text-muted);">
+        <strong style="color:var(--text-primary);">
+            {{ page_obj.start_index }}–{{ page_obj.end_index }}
+        </strong>
+        sur
+        <strong style="color:var(--text-primary);">
+            {{ page_obj.paginator.count }}
+        </strong>
+        {{ label|default:"résultat(s)" }}
+        &nbsp;·&nbsp;
+        Page <strong>{{ page_obj.number }}</strong>
+        sur <strong>{{ page_obj.paginator.num_pages }}</strong>
+    </div>
+
+    <!-- Contrôles de navigation -->
+    <div style="display:flex;align-items:center;gap:4px;">
+
+        <!-- Première page -->
+        {% if page_obj.has_previous %}
+        <a href="?page=1{{ extra_qs }}"
+           style="display:inline-flex;align-items:center;justify-content:center;
+                  width:32px;height:32px;border-radius:6px;
+                  border:1px solid var(--border-color);background:white;
+                  color:var(--text-secondary);text-decoration:none;font-size:12px;
+                  transition:all .15s;"
+           onmouseover="this.style.background='var(--light-green)';this.style.color='var(--primary-green)';this.style.borderColor='var(--primary-green)';"
+           onmouseout="this.style.background='white';this.style.color='var(--text-secondary)';this.style.borderColor='var(--border-color)';"
+           title="Première page">
+            <i class="fas fa-angle-double-left"></i>
+        </a>
+        <!-- Page précédente -->
+        <a href="?page={{ page_obj.previous_page_number }}{{ extra_qs }}"
+           style="display:inline-flex;align-items:center;justify-content:center;
+                  width:32px;height:32px;border-radius:6px;
+                  border:1px solid var(--border-color);background:white;
+                  color:var(--text-secondary);text-decoration:none;font-size:12px;
+                  transition:all .15s;"
+           onmouseover="this.style.background='var(--light-green)';this.style.color='var(--primary-green)';this.style.borderColor='var(--primary-green)';"
+           onmouseout="this.style.background='white';this.style.color='var(--text-secondary)';this.style.borderColor='var(--border-color)';">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+        {% else %}
+        <span style="display:inline-flex;align-items:center;justify-content:center;
+                     width:32px;height:32px;border-radius:6px;
+                     border:1px solid var(--border-color);background:var(--bg-light);
+                     color:var(--text-muted);font-size:12px;cursor:not-allowed;">
+            <i class="fas fa-angle-double-left"></i>
+        </span>
+        <span style="display:inline-flex;align-items:center;justify-content:center;
+                     width:32px;height:32px;border-radius:6px;
+                     border:1px solid var(--border-color);background:var(--bg-light);
+                     color:var(--text-muted);font-size:12px;cursor:not-allowed;">
+            <i class="fas fa-chevron-left"></i>
+        </span>
+        {% endif %}
+
+        <!-- Pages numérotées (fenêtre glissante ±2) -->
+        {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+            <span style="display:inline-flex;align-items:center;justify-content:center;
+                         width:32px;height:32px;border-radius:6px;
+                         background:var(--primary-green);color:white;
+                         font-size:13px;font-weight:700;border:1px solid var(--primary-green);">
+                {{ num }}
+            </span>
+            {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+            <a href="?page={{ num }}{{ extra_qs }}"
+               style="display:inline-flex;align-items:center;justify-content:center;
+                      width:32px;height:32px;border-radius:6px;
+                      border:1px solid var(--border-color);background:white;
+                      color:var(--text-secondary);text-decoration:none;
+                      font-size:13px;font-weight:600;transition:all .15s;"
+               onmouseover="this.style.background='var(--light-green)';this.style.color='var(--primary-green)';this.style.borderColor='var(--primary-green)';"
+               onmouseout="this.style.background='white';this.style.color='var(--text-secondary)';this.style.borderColor='var(--border-color)';">
+                {{ num }}
+            </a>
+            {% elif num == page_obj.number|add:"-3" or num == page_obj.number|add:"3" %}
+            <span style="display:inline-flex;align-items:center;justify-content:center;
+                         width:32px;height:32px;color:var(--text-muted);font-size:13px;">
+                …
+            </span>
+            {% endif %}
+        {% endfor %}
+
+        <!-- Page suivante -->
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{{ extra_qs }}"
+           style="display:inline-flex;align-items:center;justify-content:center;
+                  width:32px;height:32px;border-radius:6px;
+                  border:1px solid var(--border-color);background:white;
+                  color:var(--text-secondary);text-decoration:none;font-size:12px;
+                  transition:all .15s;"
+           onmouseover="this.style.background='var(--light-green)';this.style.color='var(--primary-green)';this.style.borderColor='var(--primary-green)';"
+           onmouseout="this.style.background='white';this.style.color='var(--text-secondary)';this.style.borderColor='var(--border-color)';">
+            <i class="fas fa-chevron-right"></i>
+        </a>
+        <!-- Dernière page -->
+        <a href="?page={{ page_obj.paginator.num_pages }}{{ extra_qs }}"
+           style="display:inline-flex;align-items:center;justify-content:center;
+                  width:32px;height:32px;border-radius:6px;
+                  border:1px solid var(--border-color);background:white;
+                  color:var(--text-secondary);text-decoration:none;font-size:12px;
+                  transition:all .15s;"
+           onmouseover="this.style.background='var(--light-green)';this.style.color='var(--primary-green)';this.style.borderColor='var(--primary-green)';"
+           onmouseout="this.style.background='white';this.style.color='var(--text-secondary)';this.style.borderColor='var(--border-color)';"
+           title="Dernière page">
+            <i class="fas fa-angle-double-right"></i>
+        </a>
+        {% else %}
+        <span style="display:inline-flex;align-items:center;justify-content:center;
+                     width:32px;height:32px;border-radius:6px;
+                     border:1px solid var(--border-color);background:var(--bg-light);
+                     color:var(--text-muted);font-size:12px;cursor:not-allowed;">
+            <i class="fas fa-chevron-right"></i>
+        </span>
+        <span style="display:inline-flex;align-items:center;justify-content:center;
+                     width:32px;height:32px;border-radius:6px;
+                     border:1px solid var(--border-color);background:var(--bg-light);
+                     color:var(--text-muted);font-size:12px;cursor:not-allowed;">
+            <i class="fas fa-angle-double-right"></i>
+        </span>
+        {% endif %}
+
+    </div>
+</div>
+{% endif %}

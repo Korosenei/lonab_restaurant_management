@@ -1,7 +1,8 @@
 {% extends 'dashboards/base_dashboard.html' %}
 {% load static %}
 
-{% block dashboard_css %}<link rel="stylesheet" href="{% static 'css/components.css' %}">{% endblock %}
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">{% endblock %}
 {% block sidebar_menu %}{% include 'dashboards/sidebars/admin_sidebar.html' %}{% endblock %}
 
 {% block page_content %}
@@ -9,7 +10,7 @@
     <h1 style="font-size:22px;font-weight:700;color:var(--text-primary);margin:0;">
         <i class="fas fa-chart-line" style="color:var(--primary-green);margin-right:10px;"></i>Statistiques
     </h1>
-    <a href="{% url 'transactions:transactions_list' %}" class="btn btn-secondary">Voir les transactions</a>
+    <a href="{% url 'transactions:admin_transactions' %}" class="btn btn-secondary">Voir les transactions</a>
 </div>
 
 <!-- Stats -->
@@ -44,30 +45,30 @@
 {% block dashboard_js %}
 <script src="{% static 'js/components.js' %}"></script>
 <script>
-var data = {{ ventes_jour|safe }};
+    var data = {{ ventes_jour|safe }};
 
-// Simple bar chart without Chart.js dependency
-var canvas = document.getElementById('ventesChart');
-var ctx    = canvas.getContext('2d');
-canvas.width  = canvas.parentElement.offsetWidth;
-canvas.height = 200;
+    // Simple bar chart without Chart.js dependency
+    var canvas = document.getElementById('ventesChart');
+    var ctx    = canvas.getContext('2d');
+    canvas.width  = canvas.parentElement.offsetWidth;
+    canvas.height = 200;
 
-var max    = Math.max.apply(null, data.map(function(d) { return d.tickets; })) || 1;
-var barW   = Math.floor(canvas.width / data.length) - 2;
-var green  = '#28a745';
-var lightG = '#e8f5e9';
+    var max    = Math.max.apply(null, data.map(function(d) { return d.tickets; })) || 1;
+    var barW   = Math.floor(canvas.width / data.length) - 2;
+    var green  = '#28a745';
+    var lightG = '#e8f5e9';
 
-data.forEach(function(d, i) {
-    var x   = i * (canvas.width / data.length);
-    var h   = Math.round((d.tickets / max) * 160);
-    var y   = 190 - h;
-    ctx.fillStyle = green;
-    ctx.fillRect(x + 1, y, barW, h);
-    if (i % 7 === 0) {
-        ctx.fillStyle = '#6c757d';
-        ctx.font = '9px sans-serif';
-        ctx.fillText(d.date, x, 199);
-    }
-});
+    data.forEach(function(d, i) {
+        var x   = i * (canvas.width / data.length);
+        var h   = Math.round((d.tickets / max) * 160);
+        var y   = 190 - h;
+        ctx.fillStyle = green;
+        ctx.fillRect(x + 1, y, barW, h);
+        if (i % 7 === 0) {
+            ctx.fillStyle = '#6c757d';
+            ctx.font = '9px sans-serif';
+            ctx.fillText(d.date, x, 199);
+        }
+    });
 </script>
 {% endblock %}

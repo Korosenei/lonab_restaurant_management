@@ -88,46 +88,46 @@
 <script src="{% static 'js/components.js' %}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    var labels = [{% for j in conso_jour %}'{{ j.date }}'{% if not forloop.last %},{% endif %}{% endfor %}];
-    var data   = [{% for j in conso_jour %}{{ j.nb }}{% if not forloop.last %},{% endif %}{% endfor %}];
+    document.addEventListener('DOMContentLoaded', function () {
+        var labels = [{% for j in conso_jour %}'{{ j.date }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+        var data   = [{% for j in conso_jour %}{{ j.nb }}{% if not forloop.last %},{% endif %}{% endfor %}];
 
-    new Chart(document.getElementById('consoChart'), {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Tickets consommés',
-                data: data,
-                backgroundColor: 'rgba(40,167,69,0.7)',
-                borderColor: '#28a745',
-                borderWidth: 1,
-                borderRadius: 4,
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: function(ctx) { return ctx.raw + ' ticket(s)'; }
+        new Chart(document.getElementById('consoChart'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Tickets consommés',
+                    data: data,
+                    backgroundColor: 'rgba(40,167,69,0.7)',
+                    borderColor: '#28a745',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) { return ctx.raw + ' ticket(s)'; }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, precision: 0 },
+                        grid: { color: '#f0f0f0' },
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 10 } },
                     }
                 }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1, precision: 0 },
-                    grid: { color: '#f0f0f0' },
-                },
-                x: {
-                    grid: { display: false },
-                    ticks: { font: { size: 10 } },
-                }
             }
-        }
+        });
     });
-});
 </script>
 {% endblock %}

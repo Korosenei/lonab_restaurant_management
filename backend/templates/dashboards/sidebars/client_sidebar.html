@@ -59,3 +59,25 @@
         </li>
     </ul>
 </div>
+
+<div class="nav-section">
+    <div class="nav-section-title">Système</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                <i class="fas fa-user"></i>
+                <span class="nav-link-text">Mon compte</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'notifs:mes_notifications' %}" class="nav-link {% if request.resolver_match.url_name == 'mes_notifications' %}active{% endif %}">
+                <i class="fas fa-bell"></i>
+                <span class="nav-link-text">Notifications
+                    {% if unread_notifications_count > 0 %}
+                    <span style="background:#dc3545;color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;margin-left:4px;">{{ unread_notifications_count }}</span>
+                    {% endif %}
+                </span>
+            </a>
+        </li>
+    </ul>
+</div>

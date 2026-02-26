@@ -13,10 +13,12 @@
 
         <div class="modal-body" style="padding:20px;max-height:70vh;overflow-y:auto;">
 
-            <!-- Validité du mois -->
+            <!-- Info validité -->
             <div style="background:var(--light-green);border-radius:8px;padding:10px 14px;margin-bottom:18px;font-size:13px;color:var(--primary-green);font-weight:600;">
                 <i class="fas fa-calendar-check"></i>
-                Tickets valides du {{ debut_mois|date:"d/m/Y" }} au {{ fin_mois|date:"d/m/Y" }}
+                Tickets valides du <strong>{{ debut_mois|date:"d/m/Y" }}</strong> au <strong>{{ fin_mois|date:"d/m/Y" }}</strong>
+                &nbsp;·&nbsp;
+                Limite : <strong>{{ max_mensuel }} transaction(s) / mois</strong>
             </div>
 
             <!-- Grille 2 colonnes -->
@@ -58,7 +60,7 @@
                         </div>
                         {% empty %}
                         <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">
-                            Aucun client disponible
+                            Tous les clients ont atteint leur limite ce mois
                         </div>
                         {% endfor %}
                     </div>
@@ -85,9 +87,8 @@
                     <label class="form-label">Nombre de tickets <span>*</span></label>
                     <input type="number" id="nbTickets"
                            class="form-control"
-                           value="{{ max_tickets|default:22 }}"
-                           min="{{ min_tickets|default:1 }}"
-                           max="{{ max_tickets|default:22 }}"
+                           value="{{ max_tickets }}"
+                           min="{{ min_tickets }}" max="{{ max_tickets }}"
                            style="font-size:18px;font-weight:700;text-align:center;"
                            oninput="majRecap()">
                     <div style="display:flex;gap:6px;margin-top:6px;">
@@ -97,11 +98,11 @@
                                 style="flex:1;padding:5px;border:1px solid var(--border-color);border-radius:4px;background:white;font-size:12px;cursor:pointer;font-weight:600;">10</button>
                         <button type="button" onclick="setNb(15)"
                                 style="flex:1;padding:5px;border:1px solid var(--border-color);border-radius:4px;background:white;font-size:12px;cursor:pointer;font-weight:600;">15</button>
-                        <button type="button" onclick="setNb({{ max_tickets|default:22 }})"
+                        <button type="button" onclick="setNb({{ max_tickets }})"
                                 style="flex:1;padding:5px;border:1px solid var(--border-color);border-radius:4px;background:white;font-size:12px;cursor:pointer;font-weight:600;">{{ max_tickets|default:22 }}</button>
                     </div>
                     <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">
-                        Min {{ min_tickets|default:1 }} — Max {{ max_tickets|default:22 }}
+                        Min {{ min_tickets }} — Max {{ max_tickets }}
                     </div>
                 </div>
 
@@ -110,11 +111,11 @@
                     <label class="form-label">Récapitulatif</label>
                     <div style="background:var(--bg-light);border-radius:8px;padding:12px;font-size:13px;">
                         <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                            <span style="color:var(--text-muted);">Prix unitaire</span>
+                            <span style="color:var(--text-muted);">Prix unitaire employé</span>
                             <span style="font-weight:600;">{{ prix_ticket|floatformat:0 }} FCFA</span>
                         </div>
                         <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                            <span style="color:var(--text-muted);">Subvention / ticket</span>
+                            <span style="color:var(--text-muted);">Subvention MUTRALO / ticket</span>
                             <span style="font-weight:600;">{{ subvention|floatformat:0 }} FCFA</span>
                         </div>
                         <div style="border-top:1px solid var(--border-color);padding-top:8px;margin-top:4px;

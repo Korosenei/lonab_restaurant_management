@@ -96,7 +96,7 @@ class AgenceAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Informations générales', {
-            'fields': ('nom', 'code', 'type_agence', 'description')
+            'fields': ('nom', 'code', 'type_agence')
         }),
         ('Localisation', {
             'fields': ('adresse', 'ville', 'region')
@@ -108,22 +108,16 @@ class AgenceAdmin(admin.ModelAdmin):
             'fields': ('direction', 'agence_parente', 'responsable')
         }),
         ('Capacité et statut', {
-            'fields': ('capacite_max_employes', 'est_active', 'date_ouverture', 'date_fermeture')
+            'fields': ( 'est_active', 'date_ouverture', 'date_fermeture')
         })
     )
 
     readonly_fields = ['date_creation', 'date_modification']
 
-    def description(self, obj):
-        """Afficher une description courte"""
-        return f"{obj.get_type_agence_display()} - {obj.ville}"
-    description.short_description = 'Description'
-
     def total_employes(self, obj):
         """Afficher le total des employés"""
         count = obj.total_employes
-        capacite = obj.capacite_max_employes or '∞'
-        return f"{count}/{capacite}"
+        return f"{count}"
     total_employes.short_description = 'Employés'
 
     def has_capacity(self, obj):

@@ -20,6 +20,8 @@ urlpatterns = [
     path('restaurants/', include('apps.restaurants.urls')),
     path('transactions/', include('apps.transactions.urls')),
     path('tickets/', include('apps.tickets.urls')),
+    path('settings/', include('apps.settings.urls')),
+    path('notifications/', include('apps.notifs.urls')),
 
     # API Authentication
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

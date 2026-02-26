@@ -2,8 +2,9 @@
 {% load static %}
 
 {% block title %}Agences — {{ restaurant.nom }}{% endblock %}
-{% block dashboard_css %}<link rel="stylesheet" href="{% static 'css/components.css' %}">{% endblock %}
-{% block sidebar_menu %}{% include 'dashboards/sidebars/restaurant_sidebar.html' %}{% endblock %}
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">{% endblock %}
+{% block sidebar_menu %}{% include 'dashboards/sidebars/gestionnaire_sidebar.html' %}{% endblock %}
 
 {% block page_content %}
 <!-- En-tête -->
@@ -56,63 +57,63 @@
             <div class="table-responsive">
                 <table class="table">
                     <thead>
-                        <tr>
-                            <th>Agence</th>
-                            <th style="text-align:center;">Statut</th>
-                            <th style="text-align:center;">Tickets mois</th>
-                            <th style="text-align:center;">Total</th>
-                        </tr>
+                    <tr>
+                        <th>Agence</th>
+                        <th style="text-align:center;">Statut</th>
+                        <th style="text-align:center;">Tickets mois</th>
+                        <th style="text-align:center;">Total</th>
+                    </tr>
                     </thead>
                     <tbody>
-                        {% for a in agences %}
-                        <tr>
-                            <td>
-                                <div style="display:flex;align-items:center;gap:10px;">
-                                    <div style="width:34px;height:34px;border-radius:8px;
+                    {% for a in agences %}
+                    <tr>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <div style="width:34px;height:34px;border-radius:8px;
                                                 background:{% if a.id in agences_actives_ids %}var(--light-green){% else %}#f8f9fa{% endif %};
                                                 display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                        <i class="fas fa-building" style="font-size:14px;
+                                    <i class="fas fa-building" style="font-size:14px;
                                            color:{% if a.id in agences_actives_ids %}var(--primary-green){% else %}#adb5bd{% endif %};"></i>
-                                    </div>
-                                    <div>
-                                        <div style="font-weight:600;font-size:13px;">{{ a.nom }}</div>
-                                        {% if a.ville %}
-                                        <div style="font-size:11px;color:var(--text-muted);">
-                                            <i class="fas fa-map-marker-alt"></i> {{ a.ville }}
-                                        </div>
-                                        {% endif %}
-                                    </div>
                                 </div>
-                            </td>
-                            <td style="text-align:center;">
-                                {% if a.id in agences_actives_ids %}
-                                <span class="badge badge-success" style="font-size:10px;">
+                                <div>
+                                    <div style="font-weight:600;font-size:13px;">{{ a.nom }}</div>
+                                    {% if a.ville %}
+                                    <div style="font-size:11px;color:var(--text-muted);">
+                                        <i class="fas fa-map-marker-alt"></i> {{ a.ville }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td style="text-align:center;">
+                            {% if a.id in agences_actives_ids %}
+                            <span class="badge badge-success" style="font-size:10px;">
                                     <i class="fas fa-circle" style="font-size:6px;"></i> Active
                                 </span>
-                                {% else %}
-                                <span class="badge" style="background:#e9ecef;color:#6c757d;font-size:10px;">
+                            {% else %}
+                            <span class="badge" style="background:#e9ecef;color:#6c757d;font-size:10px;">
                                     Passée
                                 </span>
-                                {% endif %}
-                            </td>
-                            <td style="text-align:center;font-weight:700;font-size:14px;
+                            {% endif %}
+                        </td>
+                        <td style="text-align:center;font-weight:700;font-size:14px;
                                        color:{% if a.nb_tickets_mois > 0 %}var(--primary-green){% else %}var(--text-muted){% endif %};">
-                                {{ a.nb_tickets_mois }}
-                            </td>
-                            <td style="text-align:center;font-size:13px;color:var(--text-muted);">
-                                {{ a.nb_tickets_total }}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="4">
-                                <div class="empty-state">
-                                    <i class="fas fa-building"></i>
-                                    <p>Aucune agence desservie</p>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
+                            {{ a.nb_tickets_mois }}
+                        </td>
+                        <td style="text-align:center;font-size:13px;color:var(--text-muted);">
+                            {{ a.nb_tickets_total }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4">
+                            <div class="empty-state">
+                                <i class="fas fa-building"></i>
+                                <p>Aucune agence desservie</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -152,7 +153,8 @@
             </div>
             {% empty %}
             <div style="text-align:center;padding:32px;color:var(--text-muted);">
-                <i class="fas fa-calendar-times" style="font-size:28px;display:block;margin-bottom:10px;opacity:.3;"></i>
+                <i class="fas fa-calendar-times"
+                   style="font-size:28px;display:block;margin-bottom:10px;opacity:.3;"></i>
                 Aucun planning configuré
             </div>
             {% endfor %}

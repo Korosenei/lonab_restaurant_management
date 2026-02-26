@@ -1,0 +1,203 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Notifications — Administration{% endblock %}
+{% block dashboard_css %}<link rel="stylesheet" href="{% static 'css/components.css' %}">
+<style>
+.dc{background:#fff;border-radius:7px;box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden;margin-bottom:8px;}
+.dc-head{padding:8px 12px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#374151;}
+.dc-head i{color:#28a745;font-size:10px;}
+.dc-body{padding:10px 12px;}
+.filter-bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:8px 12px;border-bottom:1px solid #f3f4f6;}
+.filter-bar select,.filter-bar input{padding:4px 7px;border:1px solid #e5e7eb;border-radius:5px;font-size:10px;color:#374151;outline:none;}
+.filter-bar select:focus,.filter-bar input:focus{border-color:#28a745;}
+.btn-xs{padding:4px 10px;font-size:10px;border-radius:4px;border:none;cursor:pointer;font-weight:600;}
+.btn-g{background:#28a745;color:#fff;} .btn-o{background:#fff;border:1px solid #e5e7eb;color:#374151;text-decoration:none;}
+.stat-pill{display:inline-flex;align-items:center;gap:4px;padding:5px 9px;background:#f9fafb;border:1px solid #f3f4f6;border-radius:5px;font-size:10px;}
+.stat-pill strong{font-size:13px;font-weight:800;color:#111827;}
+.notif-item{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border-bottom:1px solid #f9fafb;transition:background .1s;cursor:pointer;}
+.notif-item:hover{background:#fafafa;}
+.notif-item:last-child{border-bottom:none;}
+.notif-item.unread{background:#f0fdf4;}
+.notif-item.unread:hover{background:#e8faf0;}
+.notif-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.notif-icon i{font-size:11px;}
+.ni-t{font-size:11px;font-weight:600;color:#111827;margin-bottom:2px;}
+.ni-m{font-size:10px;color:#6b7280;line-height:1.3;}
+.ni-meta{display:flex;gap:8px;align-items:center;margin-top:3px;}
+.ni-time{font-size:9px;color:#9ca3af;}
+.tp-badge{font-size:9px;padding:1px 6px;border-radius:8px;font-weight:600;}
+.tp-compte{background:#dbeafe;color:#1e40af;}
+.tp-achat{background:#fef3c7;color:#92400e;}
+.tp-conso{background:#ede7ff;color:#5b21b6;}
+.tp-prog{background:#d1fae5;color:#065f46;}
+.tp-menu{background:#fce7f3;color:#9d174d;}
+.tp-sys{background:#f3f4f6;color:#374151;}
+.tp-def{background:#f3f4f6;color:#374151;}
+.pr-badge{font-size:8px;padding:1px 5px;border-radius:8px;font-weight:700;text-transform:uppercase;}
+.pr-urgente{background:#fee2e2;color:#dc3545;}
+.pr-haute{background:#fef3c7;color:#e0a800;}
+.pr-moyenne{background:#f3f4f6;color:#6b7280;}
+.pr-basse{background:#f3f4f6;color:#9ca3af;}
+.unread-dot{width:7px;height:7px;border-radius:50%;background:#28a745;flex-shrink:0;margin-top:5px;}
+.bulk-bar{display:flex;gap:6px;align-items:center;padding:7px 12px;background:#f0faf4;border-bottom:1px solid #d1fae5;}
+.bulk-bar span{font-size:10px;color:#374151;}
+.bulk-bar button{padding:3px 8px;font-size:9px;border-radius:4px;border:none;cursor:pointer;font-weight:600;}
+.pg{display:flex;gap:4px;justify-content:center;align-items:center;padding:8px;border-top:1px solid #f3f4f6;}
+.pg a,.pg span{padding:3px 8px;border:1px solid #e5e7eb;border-radius:4px;font-size:10px;color:#374151;text-decoration:none;}
+.pg a:hover{border-color:#28a745;color:#28a745;}
+</style>{% endblock %}
+
+{% block sidebar_menu %}{% include 'dashboards/sidebars/admin_sidebar.html' %}{% endblock %}
+
+{% block page_content %}
+<div class="page-header" style="margin-bottom:12px;">
+    <h1 class="page-title" style="font-size:17px;">Notifications</h1>
+    <p class="page-subtitle" style="font-size:11px;">Centre de notifications du système</p>
+</div>
+
+<!-- Stats -->
+<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px;">
+    <div class="stat-pill"><strong>{{ total_notifs|default:0 }}</strong> total</div>
+    <div class="stat-pill"><strong style="color:#28a745;">{{ notifs_non_lues|default:0 }}</strong> non lues</div>
+    <div class="stat-pill"><strong>{{ notifs_aujourd_hui|default:0 }}</strong> aujourd'hui</div>
+    <div class="stat-pill"><strong>{{ notifs_semaine|default:0 }}</strong> cette semaine</div>
+</div>
+
+<div class="dc">
+    <div class="dc-head">
+        <i class="fas fa-bell"></i> Toutes les notifications
+        <div style="margin-left:auto;display:flex;gap:5px;">
+            {% if notifs_non_lues > 0 %}
+            <form method="post" action="{% url 'notifs:marquer_tout_lu' %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-xs btn-g">Tout marquer lu</button>
+            </form>
+            {% endif %}
+            <button class="btn-xs btn-o" onclick="document.getElementById('envoyerNotifModal').style.display='flex'">
+                <i class="fas fa-paper-plane"></i> Envoyer
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <form method="get">
+        <div class="filter-bar">
+            <input type="text" name="search" value="{{ filtres.search|default:'' }}" placeholder="Rechercher..." style="min-width:140px;">
+            <select name="type">
+                <option value="">Tous types</option>
+                <option value="COMPTE" {% if filtres.type == 'COMPTE' %}selected{% endif %}>Compte</option>
+                <option value="ACHAT" {% if filtres.type == 'ACHAT' %}selected{% endif %}>Achat</option>
+                <option value="CONSOMMATION" {% if filtres.type == 'CONSOMMATION' %}selected{% endif %}>Consommation</option>
+                <option value="PROGRAMMATION" {% if filtres.type == 'PROGRAMMATION' %}selected{% endif %}>Programmation</option>
+                <option value="MENU" {% if filtres.type == 'MENU' %}selected{% endif %}>Menu</option>
+                <option value="SYSTEME" {% if filtres.type == 'SYSTEME' %}selected{% endif %}>Système</option>
+            </select>
+            <select name="priorite">
+                <option value="">Toutes priorités</option>
+                <option value="URGENTE" {% if filtres.priorite == 'URGENTE' %}selected{% endif %}>Urgente</option>
+                <option value="HAUTE" {% if filtres.priorite == 'HAUTE' %}selected{% endif %}>Haute</option>
+                <option value="MOYENNE" {% if filtres.priorite == 'MOYENNE' %}selected{% endif %}>Moyenne</option>
+                <option value="BASSE" {% if filtres.priorite == 'BASSE' %}selected{% endif %}>Basse</option>
+            </select>
+            <select name="lu">
+                <option value="">Toutes</option>
+                <option value="0" {% if filtres.lu == '0' %}selected{% endif %}>Non lues</option>
+                <option value="1" {% if filtres.lu == '1' %}selected{% endif %}>Lues</option>
+            </select>
+            <button type="submit" class="btn-xs btn-g">Filtrer</button>
+            <a href="{% url 'notifs:admin_notifications' %}" class="btn-xs btn-o">Reset</a>
+        </div>
+    </form>
+
+    <!-- Liste -->
+    {% if notifs %}
+    {% for n in notifs %}
+    <div class="notif-item {% if not n.est_lu %}unread{% endif %}">
+        {% if not n.est_lu %}<div class="unread-dot"></div>{% else %}<div style="width:7px;flex-shrink:0;"></div>{% endif %}
+        <div class="notif-icon" style="background:{% if n.type_notification == 'ACHAT' %}#fef3c7{% elif n.type_notification == 'CONSOMMATION' %}#ede7ff{% elif n.type_notification == 'PROGRAMMATION' %}#d1fae5{% elif n.type_notification == 'MENU' %}#fce7f3{% elif n.type_notification == 'SYSTEME' %}#f3f4f6{% else %}#dbeafe{% endif %};">
+            <i class="fas fa-{% if n.type_notification == 'ACHAT' %}shopping-cart{% elif n.type_notification == 'CONSOMMATION' %}utensils{% elif n.type_notification == 'PROGRAMMATION' %}calendar-alt{% elif n.type_notification == 'MENU' %}list-alt{% elif n.type_notification == 'SYSTEME' %}cog{% else %}user{% endif %}"
+               style="color:{% if n.type_notification == 'ACHAT' %}#e0a800{% elif n.type_notification == 'CONSOMMATION' %}#6f42c1{% elif n.type_notification == 'PROGRAMMATION' %}#28a745{% elif n.type_notification == 'MENU' %}#be185d{% elif n.type_notification == 'SYSTEME' %}#6b7280{% else %}#3b82f6{% endif %};"></i>
+        </div>
+        <div style="flex:1;min-width:0;">
+            <div class="ni-t">{{ n.titre }}</div>
+            <div class="ni-m">{{ n.message|truncatechars:90 }}</div>
+            <div class="ni-meta">
+                <span class="ni-time">{{ n.cree_le|timesince }} ago</span>
+                <span class="tp-badge tp-{% if n.type_notification == 'COMPTE' %}compte{% elif n.type_notification == 'ACHAT' %}achat{% elif n.type_notification == 'CONSOMMATION' %}conso{% elif n.type_notification == 'PROGRAMMATION' %}prog{% elif n.type_notification == 'MENU' %}menu{% elif n.type_notification == 'SYSTEME' %}sys{% else %}def{% endif %}">{{ n.get_type_notification_display }}</span>
+                <span class="pr-badge pr-{{ n.priorite|lower }}">{{ n.get_priorite_display }}</span>
+                {% if n.est_lu %}<span style="font-size:9px;color:#9ca3af;">Lu {{ n.lu_le|timesince }} ago</span>{% endif %}
+            </div>
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0;">
+            {% if not n.est_lu %}
+            <form method="post" action="{% url 'notifs:marquer_lu' n.id %}">{% csrf_token %}
+                <button type="submit" style="padding:3px 7px;font-size:9px;border:1px solid #e5e7eb;border-radius:4px;background:#fff;cursor:pointer;color:#28a745;" title="Marquer lu"><i class="fas fa-check"></i></button>
+            </form>
+            {% endif %}
+            <form method="post" action="{% url 'notifs:supprimer' n.id %}">{% csrf_token %}
+                <button type="submit" style="padding:3px 7px;font-size:9px;border:1px solid #fca5a5;border-radius:4px;background:#fff;cursor:pointer;color:#dc3545;" title="Supprimer"><i class="fas fa-trash"></i></button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div style="text-align:center;padding:28px;color:#9ca3af;font-size:10px;">
+        <i class="fas fa-bell-slash" style="font-size:24px;display:block;margin-bottom:6px;opacity:.3;"></i>
+        Aucune notification
+    </div>
+    {% endif %}
+
+    {% if page_obj.has_other_pages %}
+    <div class="pg">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if filtres.type %}&type={{ filtres.type }}{% endif %}">‹</a>{% endif %}
+        <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if filtres.type %}&type={{ filtres.type }}{% endif %}">›</a>{% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal envoi notif -->
+<div id="envoyerNotifModal" class="modal-overlay" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal modal-small" style="max-width:480px;">
+        <div class="modal-header">
+            <div class="modal-title"><i class="fas fa-paper-plane"></i> Envoyer une notification</div>
+            <button class="modal-close" onclick="document.getElementById('envoyerNotifModal').style.display='none'">✕</button>
+        </div>
+        <form method="post" action="{% url 'notifs:envoyer' %}">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div style="margin-bottom:10px;">
+                    <label style="font-size:10px;font-weight:600;color:#374151;display:block;margin-bottom:3px;">Destinataires</label>
+                    <select name="cible" style="width:100%;padding:6px 8px;border:1px solid #e5e7eb;border-radius:5px;font-size:11px;outline:none;">
+                        <option value="tous">Tous les utilisateurs</option>
+                        <option value="clients">Tous les employés</option>
+                        <option value="caissiers">Tous les caissiers</option>
+                        <option value="gestionnaires">Tous les gestionnaires</option>
+                    </select>
+                </div>
+                <div style="margin-bottom:10px;">
+                    <label style="font-size:10px;font-weight:600;color:#374151;display:block;margin-bottom:3px;">Type</label>
+                    <select name="type_notification" style="width:100%;padding:6px 8px;border:1px solid #e5e7eb;border-radius:5px;font-size:11px;outline:none;">
+                        <option value="SYSTEME">Système</option>
+                        <option value="RAPPEL">Rappel</option>
+                        <option value="MENU">Menu</option>
+                    </select>
+                </div>
+                <div style="margin-bottom:10px;">
+                    <label style="font-size:10px;font-weight:600;color:#374151;display:block;margin-bottom:3px;">Titre</label>
+                    <input type="text" name="titre" required style="width:100%;padding:6px 8px;border:1px solid #e5e7eb;border-radius:5px;font-size:11px;outline:none;box-sizing:border-box;">
+                </div>
+                <div>
+                    <label style="font-size:10px;font-weight:600;color:#374151;display:block;margin-bottom:3px;">Message</label>
+                    <textarea name="message" rows="3" required style="width:100%;padding:6px 8px;border:1px solid #e5e7eb;border-radius:5px;font-size:11px;outline:none;box-sizing:border-box;resize:vertical;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('envoyerNotifModal').style.display='none'">Annuler</button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Envoyer</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

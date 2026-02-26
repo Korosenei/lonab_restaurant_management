@@ -1,293 +1,204 @@
 {% extends 'dashboards/base_dashboard.html' %}
 {% load static %}
 
-{% block title %}Tickets{% endblock %}
-
-{% block dashboard_css %}
-<link rel="stylesheet" href="{% static 'css/components.css' %}">
-{% endblock %}
-
-{% block sidebar_menu %}
-{% include 'dashboards/sidebars/caissier_sidebar.html' %}
-{% endblock %}
+{% block title %}Mes Tickets Vendus{% endblock %}
+{% block dashboard_css %}<link rel="stylesheet" href="{% static 'css/components.css' %}">{% endblock %}
+{% block sidebar_menu %}{% include 'dashboards/sidebars/caissier_sidebar.html' %}{% endblock %}
 
 {% block page_content %}
-<div id="ticket-urls"
+<div id="page-urls"
      data-vente-url="{% url 'transactions:caissier_confirmer_vente' %}"
-     data-debut-mois="{{ debut_mois|date:'Y-m-d' }}"
-     data-fin-mois="{{ fin_mois|date:'Y-m-d' }}"
-     data-prix="{{ prix_ticket }}"
-     data-subvention="{{ subvention }}"
-     data-min-tickets="{{ min_tickets|default:1 }}"
-     data-max-tickets="{{ max_tickets|default:22 }}"
      style="display:none;"></div>
 
-<div class="page-header-with-actions">
-    <div class="page-header">
-        <h1 class="page-title">Tickets</h1>
-        <p class="page-subtitle">{{ total_tickets }} ticket{{ total_tickets|pluralize }}</p>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+    <div>
+        <h1 style="font-size:22px;font-weight:700;color:var(--text-primary);margin:0;">
+            <i class="fas fa-ticket-alt" style="color:var(--primary-green);margin-right:10px;"></i>Mes Tickets Vendus
+        </h1>
+        <p style="color:var(--text-muted);font-size:13px;margin:4px 0 0;">
+            Vendus par <strong>{{ request.user.get_full_name }}</strong>{% if request.user.agence %} · Agence <strong>{{ request.user.agence.nom }}</strong>{% endif %}
+        </p>
     </div>
-    <div class="page-header-actions">
-        <button class="export-btn export-btn-pdf"
-                onclick="exportToPDF('ticketsTable','tickets.pdf')" title="PDF">
-            <i class="fas fa-file-pdf"></i>
-        </button>
-        <button class="export-btn export-btn-excel"
-                onclick="exportToExcel('ticketsTable','tickets.xlsx')" title="Excel">
-            <i class="fas fa-file-excel"></i>
-        </button>
-        <button class="export-btn export-btn-csv"
-                onclick="exportToCSV('ticketsTable','tickets.csv')" title="CSV">
-            <i class="fas fa-file-csv"></i>
-        </button>
-        <button class="btn btn-primary" onclick="openModal('venteModal')">
-            <i class="fas fa-plus"></i> Nouvelle vente
-        </button>
-    </div>
+    <button class="btn btn-primary" onclick="openModal('venteModal')">
+        <i class="fas fa-plus"></i> Nouvelle vente
+    </button>
 </div>
 
-<div class="toolbar">
-    <div class="toolbar-left">
-        <div class="toolbar-search">
-            <i class="fas fa-search"></i>
-            <input type="text" id="tableSearch" placeholder="Rechercher...">
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+    {% for label,val,color in stats_pills %}
+    <div style="display:inline-flex;align-items:center;gap:8px;background:white;border-radius:20px;
+                padding:8px 16px;box-shadow:0 1px 6px rgba(0,0,0,.07);font-size:13px;font-weight:600;">
+        <span style="width:8px;height:8px;border-radius:50%;background:{{ color }};display:inline-block;"></span>
+        <span>{{ val }} {{ label }}</span>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card" style="padding:14px 16px;margin-bottom:18px;">
+    <form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+        <div style="flex:1;min-width:180px;">
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">Recherche</label>
+            <div style="position:relative;">
+                <i class="fas fa-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:12px;"></i>
+                <input type="text" name="search" value="{{ request.GET.search|default:'' }}"
+                       placeholder="N° ticket, client, matricule..."
+                       style="padding:8px 8px 8px 32px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;width:100%;box-sizing:border-box;">
+            </div>
         </div>
-        <div class="toolbar-filter">
-            <select name="statut" onchange="applyTicketFilters()">
-                <option value="">Tous statuts</option>
-                <option value="DISPONIBLE" {% if request.GET.statut == 'DISPONIBLE' %}selected{% endif %}>Disponible</option>
-                <option value="CONSOMME"   {% if request.GET.statut == 'CONSOMME'   %}selected{% endif %}>Consommé</option>
-                <option value="EXPIRE"     {% if request.GET.statut == 'EXPIRE'     %}selected{% endif %}>Expiré</option>
-                <option value="ANNULE"     {% if request.GET.statut == 'ANNULE'     %}selected{% endif %}>Annulé</option>
+        <div>
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">Statut</label>
+            <select name="statut" style="padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;">
+                <option value="">Tous</option>
+                {% for v,l in statuts %}
+                <option value="{{ v }}" {% if request.GET.statut == v %}selected{% endif %}>{{ l }}</option>
+                {% endfor %}
             </select>
         </div>
-        <div class="toolbar-filter">
-            <input type="month" name="mois" value="{{ request.GET.mois }}"
-                   onchange="applyTicketFilters()" title="Mois de validité"
-                   style="padding:5px 8px;border:1px solid #dee2e6;border-radius:4px;font-size:12px;">
+        <div>
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">Mois validité</label>
+            <input type="month" name="mois" value="{{ request.GET.mois|default:'' }}"
+                   style="padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;">
         </div>
-        {% if request.GET.statut or request.GET.mois or request.GET.search %}
-        <a href="{% url 'tickets:caissier_tickets' %}" class="btn btn-outline" title="Réinitialiser les filtres"
-           style="height:28px;padding:0 10px;font-size:12px;display:inline-flex;align-items:center;gap:5px;">
-            <i class="fas fa-times"></i> Reset
-        </a>
-        {% endif %}
-    </div>
+        <div style="display:flex;gap:6px;align-items:flex-end;">
+            <button type="submit" class="btn btn-secondary"><i class="fas fa-filter"></i> Filtrer</button>
+            {% if request.GET.search or request.GET.statut or request.GET.mois %}
+            <a href="{% url 'tickets:caissier_tickets'%}" class="btn" style="background:var(--light-green);color:var(--primary-green);">
+                <i class="fas fa-times"></i> Reset
+            </a>
+            {% endif %}
+        </div>
+    </form>
 </div>
 
-<div class="data-table-wrapper">
-    <div class="data-table-body">
-        <div class="table-responsive">
-            <table class="table" id="ticketsTable">
-                <thead>
-                    <tr>
-                        <th data-sortable style="width:40px;">#</th>
-                        <th data-sortable>N° Ticket</th>
-                        <th data-sortable>Propriétaire</th>
-                        <th data-sortable>Agence</th>
-                        <th data-sortable>Validité</th>
-                        <th data-sortable>Statut</th>
-                        <th data-sortable>Consommé chez</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for t in tickets %}
-                <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>
-                        <span style="font-family:monospace;font-size:12px;font-weight:700;color:#28a745;">
-                            {{ t.numero_ticket }}
-                        </span>
-                    </td>
-                    <td>
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <div style="width:28px;height:28px;background:var(--light-green);border-radius:50%;
-                                        display:flex;align-items:center;justify-content:center;
-                                        font-weight:700;color:var(--primary-green);font-size:10px;flex-shrink:0;">
-                                {{ t.proprietaire.prenom.0 }}{{ t.proprietaire.nom.0 }}
-                            </div>
-                            <div>
-                                <div style="font-weight:600;font-size:12px;">{{ t.proprietaire.get_full_name }}</div>
-                                {% if t.proprietaire.matricule %}
-                                <div style="font-size:10px;color:var(--text-muted);">{{ t.proprietaire.matricule }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </td>
-                    <td style="font-size:11px;">{{ t.proprietaire.agence.nom|default:"—" }}</td>
-                    <td style="font-size:12px;color:var(--text-muted);">
-                        {{ t.valide_de|date:"d/m" }} → {{ t.valide_jusqua|date:"d/m/Y" }}
-                    </td>
-                    <td>
-                        {% if t.statut == 'DISPONIBLE' %}
-                            <span class="badge badge-success" style="font-size:10px;">Disponible</span>
-                        {% elif t.statut == 'CONSOMME' %}
-                            <span class="badge" style="background:#6c757d;color:white;font-size:10px;">Consommé</span>
-                        {% elif t.statut == 'EXPIRE' %}
-                            <span class="badge badge-warning" style="font-size:10px;">Expiré</span>
-                        {% else %}
-                            <span class="badge badge-danger" style="font-size:10px;">Annulé</span>
-                        {% endif %}
-                    </td>
-                    <td style="font-size:12px;color:var(--text-muted);">
-                        {% if t.restaurant_consommateur %}
-                            <i class="fas fa-utensils" style="color:var(--primary-green);margin-right:4px;"></i>
-                            {{ t.restaurant_consommateur.nom }}
-                            {% if t.date_consommation %}
-                            <div style="font-size:10px;color:var(--text-muted);">{{ t.date_consommation|date:"d/m/Y H:i" }}</div>
-                            {% endif %}
-                        {% else %}—{% endif %}
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="7">
-                        <div class="empty-state">
-                            <i class="fas fa-ticket-alt"></i>
-                            <p>Aucun ticket trouvé</p>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    {% if is_paginated %}
-    <div class="pagination-wrapper">
-        <div class="pagination-info">
-            Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
-        </div>
-        <div class="pagination">
-            {% if page_obj.has_previous %}
-            <button class="pagination-btn"
-                    onclick="window.location.href='?page={{ page_obj.previous_page_number }}'">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            {% endif %}
-            {% for num in page_obj.paginator.page_range %}
-            <button class="pagination-btn {% if page_obj.number == num %}active{% endif %}"
-                    onclick="window.location.href='?page={{ num }}'">{{ num }}</button>
+<div class="card" style="overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;">
+        <thead>
+            <tr style="background:var(--bg-light);border-bottom:2px solid var(--border-color);">
+                <th style="padding:11px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">N° Ticket</th>
+                <th style="padding:11px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Propriétaire</th>
+                <th style="padding:11px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Agence</th>
+                <th style="padding:11px 16px;text-align:center;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Validité</th>
+                <th style="padding:11px 16px;text-align:center;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Statut</th>
+                <th style="padding:11px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Consommé chez</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in tickets %}
+            <tr style="border-top:1px solid var(--border-color);"
+                onmouseover="this.style.background='var(--bg-light)'" onmouseout="this.style.background=''">
+                <td style="padding:11px 16px;font-family:monospace;font-size:12px;font-weight:700;color:var(--primary-green);">{{ t.numero_ticket }}</td>
+                <td style="padding:11px 16px;">
+                    <div style="font-weight:600;font-size:13px;">{{ t.proprietaire.get_full_name }}</div>
+                    <div style="font-size:11px;color:var(--text-muted);">{{ t.proprietaire.matricule|default:"—" }}</div>
+                </td>
+                <td style="padding:11px 16px;font-size:12px;color:var(--text-secondary);">{{ t.proprietaire.agence.nom|default:"—" }}</td>
+                <td style="padding:11px 16px;text-align:center;font-size:12px;color:var(--text-secondary);">
+                    {{ t.valide_de|date:"d/m" }} → {{ t.valide_jusqua|date:"d/m/Y" }}
+                </td>
+                <td style="padding:11px 16px;text-align:center;">
+                    {% if t.statut == 'DISPONIBLE' %}<span class="badge badge-success">Disponible</span>
+                    {% elif t.statut == 'CONSOMME' %}<span class="badge" style="background:#6c757d;color:white;">Consommé</span>
+                    {% elif t.statut == 'EXPIRE' %}<span class="badge badge-warning">Expiré</span>
+                    {% else %}<span class="badge badge-danger">Annulé</span>{% endif %}
+                </td>
+                <td style="padding:11px 16px;font-size:12px;color:var(--text-secondary);">
+                    {% if t.restaurant_consommateur %}
+                        <i class="fas fa-utensils" style="color:var(--primary-green);margin-right:4px;"></i>{{ t.restaurant_consommateur.nom }}
+                        {% if t.date_consommation %}<div style="font-size:11px;color:var(--text-muted);">{{ t.date_consommation|date:"d/m/Y H:i" }}</div>{% endif %}
+                    {% else %}—{% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align:center;padding:48px;color:var(--text-muted);">
+                    <i class="fas fa-ticket-alt" style="font-size:36px;opacity:.3;display:block;margin-bottom:12px;"></i>
+                    Aucun ticket trouvé
+                </td>
+            </tr>
             {% endfor %}
-            {% if page_obj.has_next %}
-            <button class="pagination-btn"
-                    onclick="window.location.href='?page={{ page_obj.next_page_number }}'">
-                <i class="fas fa-chevron-right"></i>
-            </button>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
+        </tbody>
+    </table>
+    {% include 'components/pagination.html' with page_obj=page_obj label="ticket(s)" %}
 </div>
 
-{% include 'tickets/modals/vente_form.html' %}
+{% include 'transactions/modals/vente_form.html' %}
+
+<div class="modal-overlay" id="successModal" style="display:none;">
+    <div class="modal" style="max-width:420px;text-align:center;padding:36px 30px;">
+        <div style="width:60px;height:60px;border-radius:50%;background:var(--light-green);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+            <i class="fas fa-check-circle" style="font-size:28px;color:var(--primary-green);"></i>
+        </div>
+        <h3 style="font-size:18px;font-weight:700;margin:0 0 8px;" id="sMsg"></h3>
+        <p style="color:var(--text-muted);font-size:13px;margin:0 0 4px;">Transaction : <strong id="sNum"></strong></p>
+        <p style="color:var(--text-muted);font-size:13px;margin:0 0 24px;">Tickets : <strong id="sTick"></strong></p>
+        <button class="btn btn-primary" onclick="closeModal('successModal');location.reload();"><i class="fas fa-check"></i> Fermer</button>
+    </div>
+</div>
 {% endblock %}
 
 {% block dashboard_js %}
 <script src="{% static 'js/components.js' %}"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    initDataTable('ticketsTable');
+var urls  = document.getElementById('page-urls').dataset;
+var PRIX  = {{ prix_ticket }};
+var MIN_T = {{ min_tickets }};
+var MAX_T = {{ max_tickets }};
 
-    var u    = document.getElementById('ticket-urls').dataset;
-    var PRIX = parseFloat(u.prix);
-    var MIN  = parseInt(u.minTickets);
-    var MAX  = parseInt(u.maxTickets);
-
-    /* ── Filtrer la liste clients dans le modal ─────────────── */
-    window.filtrerClients = function (val) {
-        val = val.toLowerCase();
-        document.querySelectorAll('.client-row').forEach(function (el) {
-            /* Ne jamais afficher les clients déjà éligibles (masqués) */
-            if (el.dataset.eligible === 'false') return;
-            el.style.display = (!val || (el.dataset.search || '').includes(val)) ? '' : 'none';
-        });
-    };
-
-    /* ── Sélectionner un client ─────────────────────────────── */
-    window.selectClient = function (el) {
-        document.querySelectorAll('.client-row').forEach(function (r) { r.style.background = ''; });
-        el.style.background = 'var(--light-green)';
-        document.getElementById('clientId').value = el.dataset.id;
-        document.getElementById('clientSelectedName').textContent =
-            el.dataset.nom + (el.dataset.matricule ? ' — ' + el.dataset.matricule : '');
-        document.getElementById('clientSelected').style.display = 'block';
-        updateBtn();
-    };
-
-    /* ── Presets nombre de tickets ──────────────────────────── */
-    window.setNb = function (n) {
-        document.getElementById('nbTickets').value = n;
-        majRecap();
-    };
-
-    /* ── Recalcul récapitulatif ─────────────────────────────── */
-    window.majRecap = function () {
-        var raw = parseInt(document.getElementById('nbTickets').value) || MIN;
-        var nb  = Math.min(MAX, Math.max(MIN, raw));
-        document.getElementById('nbTickets').value = nb;
-        document.getElementById('totalDisplay').textContent =
-            (nb * PRIX).toLocaleString('fr-FR') + ' FCFA';
-        updateBtn();
-    };
-
-    function updateBtn() {
-        var ok = !!document.getElementById('clientId').value &&
-                 parseInt(document.getElementById('nbTickets').value) >= MIN;
-        document.getElementById('btnValider').disabled = !ok;
-    }
-
-    /* ── Soumettre la vente ─────────────────────────────────── */
-    window.soumettreVente = function () {
-        var clientId = document.getElementById('clientId').value;
-        var nb       = parseInt(document.getElementById('nbTickets').value);
-        if (!clientId || nb < MIN) { showWarning('Vérifiez le formulaire'); return; }
-
-        var btn = document.getElementById('btnValider');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement...';
-
-        var fd = new FormData();
-        fd.append('client_id',      clientId);
-        fd.append('nombre_tickets', nb);
-        fd.append('notes',          document.getElementById('ventNotes').value || '');
-
-        fetch(u.venteUrl, {
-            method: 'POST',
-            headers: { 'X-CSRFToken': getCookie('csrftoken') },
-            body: fd,
-        })
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
+function filtrerClients(val) {
+    val = val.toLowerCase();
+    document.querySelectorAll('.client-row').forEach(function(el) {
+        el.style.display = (!val || (el.dataset.search || '').includes(val)) ? '' : 'none';
+    });
+}
+function selectClient(el) {
+    document.querySelectorAll('.client-row').forEach(function(r) { r.style.background = ''; });
+    el.style.background = 'var(--light-green)';
+    document.getElementById('clientId').value = el.dataset.id;
+    document.getElementById('clientSelectedName').textContent =
+        el.dataset.nom + (el.dataset.matricule ? ' — ' + el.dataset.matricule : '');
+    document.getElementById('clientSelected').style.display = 'block';
+    updateBtn();
+}
+function setNb(n) { document.getElementById('nbTickets').value = n; majRecap(); }
+function majRecap() {
+    var nb = Math.min(MAX_T, Math.max(MIN_T, parseInt(document.getElementById('nbTickets').value) || MIN_T));
+    document.getElementById('nbTickets').value = nb;
+    document.getElementById('totalDisplay').textContent = (nb * PRIX).toLocaleString('fr-FR') + ' FCFA';
+    updateBtn();
+}
+function updateBtn() {
+    var ok = !!document.getElementById('clientId').value &&
+             parseInt(document.getElementById('nbTickets').value) >= MIN_T;
+    document.getElementById('btnValider').disabled = !ok;
+}
+function soumettreVente() {
+    var clientId = document.getElementById('clientId').value;
+    var nb = parseInt(document.getElementById('nbTickets').value);
+    if (!clientId || nb < MIN_T) { showWarning('Sélectionnez un client et vérifiez la quantité'); return; }
+    var btn = document.getElementById('btnValider');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Traitement...';
+    var fd = new FormData();
+    fd.append('client_id', clientId);
+    fd.append('nombre_tickets', nb);
+    fd.append('notes', document.getElementById('ventNotes').value);
+    fetch(urls.venteUrl, { method:'POST', headers:{'X-CSRFToken':getCsrfToken()}, body:fd })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
             if (d.success) {
-                showSuccess(d.message || 'Vente enregistrée');
                 closeModal('venteModal');
-                setTimeout(function () { window.location.reload(); }, 800);
+                document.getElementById('sMsg').textContent = d.message;
+                document.getElementById('sNum').textContent = d.numero;
+                document.getElementById('sTick').textContent = d.premier_ticket + ' → ' + d.dernier_ticket;
+                openModal('successModal');
             } else {
                 showError(d.error || 'Erreur lors de la vente');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-check-circle"></i> Valider la vente';
             }
         })
-        .catch(function () {
-            showError('Erreur réseau');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-check-circle"></i> Valider la vente';
-        });
-    };
-
-    /* ── Filtres toolbar (URL params) ───────────────────────── */
-    window.applyTicketFilters = function () {
-        var params = new URLSearchParams();
-        document.querySelectorAll('.toolbar-filter select, .toolbar-filter input').forEach(function (el) {
-            if (el.name && el.value) params.append(el.name, el.value);
-        });
-        window.location.search = params.toString();
-    };
-
-    /* ── Init récap ─────────────────────────────────────────── */
-    majRecap();
-});
+        .catch(function() { showError('Erreur réseau'); btn.disabled=false; btn.innerHTML='<i class="fas fa-check-circle"></i> Valider la vente'; });
+}
+majRecap();
 </script>
 {% endblock %}

@@ -32,7 +32,7 @@ def _debut_fin_mois(date=None):
     return debut, fin
 
 def _est_admin_ou_caissier(user):
-    return user.est_super_admin or user.est_caissier
+    return user.est_admin or user.est_caissier
 
 def _restaurant_a_planning_actif(restaurant):
     """Le restaurant a-t-il un planning actif aujourd'hui ?"""
@@ -135,7 +135,7 @@ def restaurant_edit(request, pk):
 @login_required
 @require_http_methods(["POST"])
 def restaurant_delete(request, pk):
-    if not request.user.est_super_admin:
+    if not (request.user.est_admin or request.user.est_caissier):
         return JsonResponse({'error': 'Permission refusée'}, status=403)
     r = get_object_or_404(Restaurant, pk=pk)
     nom = r.nom; r.delete()
@@ -168,7 +168,7 @@ def restaurant_detail(request, pk):
 
 @login_required
 def menus_list(request):
-    if not (request.user.est_super_admin or request.user.est_gestionnaire_restaurant):
+    if not (request.user.est_admin or request.user.est_gestionnaire_restaurant):
         return redirect('accounts:dashboard')
     # Gestionnaire : vérifier accès
     if request.user.est_gestionnaire_restaurant:
@@ -207,7 +207,7 @@ def menus_list(request):
 @login_required
 @require_http_methods(["POST"])
 def menu_create(request):
-    if not (request.user.est_super_admin or request.user.est_gestionnaire_restaurant):
+    if not (request.user.est_admin or request.user.est_gestionnaire_restaurant):
         return JsonResponse({'error': 'Permission refusée'}, status=403)
     try:
         rid = (request.user.restaurant_gere_id
@@ -283,52 +283,77 @@ def menu_delete(request, pk):
 
 @login_required
 @require_http_methods(["POST"])
+@require_http_methods(["POST"])
 def menu_duplicate(request):
     """Duplique tous les plats d'une date source vers une date cible."""
-    if not (request.user.est_super_admin or request.user.est_gestionnaire_restaurant):
+    if not (request.user.est_admin or request.user.est_gestionnaire_restaurant):
         return JsonResponse({'error': 'Permission refusée'}, status=403)
     try:
         import datetime
-        date_source = request.POST.get('date_source')
-        date_cible = request.POST.get('date_cible')
+        date_source = request.POST.get('date_source', '').strip()
+        date_cible  = request.POST.get('date_cible', '').strip()
         rid = (request.user.restaurant_gere_id
                if request.user.est_gestionnaire_restaurant
                else request.POST.get('restaurant'))
+
         if not date_source or not date_cible:
             return JsonResponse({'error': 'Dates source et cible obligatoires'}, status=400)
         if date_source == date_cible:
             return JsonResponse({'error': 'Les dates source et cible doivent être différentes'}, status=400)
+        if not rid:
+            return JsonResponse({'error': 'Restaurant non spécifié'}, status=400)
 
         plats_source = Menu.objects.filter(restaurant_id=rid, date=date_source)
+        if not plats_source.exists():
+            # Essai par jour_semaine si pas de date exacte
+            plats_source = Menu.objects.filter(restaurant_id=rid, date__isnull=True,
+                                               jour_semaine=JOURS_MAP.get(
+                                                   datetime.date.fromisoformat(date_source).strftime('%A'), 'LUNDI'))
         if not plats_source.exists():
             return JsonResponse({'error': f'Aucun plat trouvé pour le {date_source}'}, status=400)
 
         # Déduire le jour de la date cible
-        d_cible = datetime.date.fromisoformat(date_cible)
-        jours_python = ['LUNDI','MARDI','MERCREDI','JEUDI','VENDREDI','LUNDI','LUNDI']
-        jour_cible = jours_python[d_cible.weekday()]
+        d_cible   = datetime.date.fromisoformat(date_cible)
+        jours_py  = ['LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI', 'DIMANCHE']
+        jour_cible = jours_py[d_cible.weekday()]
 
-        # Supprimer les plats déjà existants sur la date cible si demandé
+        # Supprimer les plats existants sur la date cible si demandé
         remplacer = request.POST.get('remplacer', '0') == '1'
         if remplacer:
             Menu.objects.filter(restaurant_id=rid, date=date_cible).delete()
 
         nb_crees = 0
         for plat in plats_source:
-            nouveau = Menu.objects.create(
+            fields = dict(
                 restaurant_id=rid,
                 nom=plat.nom,
-                description=plat.description,
-                plats='',
+                description=plat.description or '',
                 jour_semaine=jour_cible,
-                date=date_cible,
+                date=d_cible,
                 quantite_disponible=plat.quantite_disponible,
                 prix=plat.prix,
                 est_disponible=True,
-                image=plat.image,  # Réutilise la même image
             )
+            # Inclure plats seulement si le champ existe sur le modèle
+            try:
+                Menu._meta.get_field('plats')
+                fields['plats'] = getattr(plat, 'plats', '') or ''
+            except Exception:
+                pass
+
+            nouveau = Menu.objects.create(**fields)
+            # Réutiliser la même image (même fichier stocké)
+            if plat.image:
+                nouveau.image = plat.image
+                nouveau.save(update_fields=['image'])
             nb_crees += 1
-        return JsonResponse({'success': True, 'message': f'{nb_crees} plat(s) dupliqué(s) vers le {date_cible}', 'nb': nb_crees})
+
+        d_cible_fmt = d_cible.strftime('%d/%m/%Y')
+        return JsonResponse({
+            'success': True,
+            'message': f'{nb_crees} plat{"s" if nb_crees > 1 else ""} dupliqué{"s" if nb_crees > 1 else ""} vers le {d_cible_fmt}',
+            'nb': nb_crees,
+        })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
@@ -420,7 +445,7 @@ def planning_edit(request, pk):
             'est_actif': p.est_actif,
         })
     try:
-        if request.user.est_super_admin:
+        if request.user.est_admin:
             p.agence_id = request.POST.get('agence', p.agence_id)
             p.restaurant_id = request.POST.get('restaurant', p.restaurant_id)
         p.type_planning = request.POST.get('type_planning', p.type_planning)
@@ -546,6 +571,7 @@ def verifier_qr_code(request):
             'tickets_restants': tickets_qs.count(),
             'photo_url': qr.utilisateur.photo_profil.url if qr.utilisateur.photo_profil else '',
             'plats_du_jour': plats_du_jour,
+            'plat_requis': True,   # ← le gestionnaire DOIT choisir un plat
             'reservation': None,
         }
         if reservation:
@@ -612,15 +638,25 @@ def valider_qr_code(request):
             # Marquer la réservation comme terminée
             reservation_active.statut = 'TERMINE'
             reservation_active.save(update_fields=['statut'])
-        elif plat_consomme:
-            # Pas de réservation préalable → créer une réservation TERMINE comme trace
-            Reservation.objects.create(
-                client=qr.utilisateur,
-                restaurant=restaurant,
-                menu=plat_consomme,
-                date_reservation=aujourd_hui,
-                statut='TERMINE',
-            )
+        else:
+            # Pas de réservation : le plat est OBLIGATOIRE si des plats du jour existent
+            plats_disponibles = Menu.objects.filter(
+                restaurant=restaurant, date=aujourd_hui, est_disponible=True
+            ).exists()
+            if plats_disponibles and not plat_consomme:
+                return JsonResponse({
+                    'error': 'Veuillez choisir un plat avant de valider',
+                    'valide': False
+                }, status=400)
+            elif plat_consomme:
+                # Créer une trace de réservation
+                Reservation.objects.create(
+                    client=qr.utilisateur,
+                    restaurant=restaurant,
+                    menu=plat_consomme,
+                    date_reservation=aujourd_hui,
+                    statut='TERMINE',
+                )
 
         # Décrémenter quantité si applicable
         if plat_consomme and plat_consomme.quantite_disponible is not None:
@@ -907,3 +943,38 @@ def caissier_planifier_restaurant(request):
         'agence_caissier': agence_caissier,
         'planning_actif_actuel': planning_actif_actuel,
     })
+
+@login_required
+def caissier_restaurants(request):
+    """Liste des restaurants de la VILLE de l'agence du caissier."""
+    if not _est_admin_ou_caissier(request.user):
+        return redirect('accounts:dashboard')
+
+    agence = request.user.agence if request.user.est_caissier else None
+    aujourd_hui = timezone.now().date()
+
+    planning_actif = None
+    if agence:
+        planning_actif = PlanningRestaurant.objects.filter(
+            agence=agence, est_actif=True,
+            date_debut__lte=aujourd_hui, date_fin__gte=aujourd_hui,
+        ).select_related('restaurant').first()
+
+    # Filtrer uniquement les restaurants de la ville de l'agence
+    ville_agence = agence.ville if agence else None
+    base_qs = Restaurant.objects.filter(ville__iexact=ville_agence) if ville_agence else Restaurant.objects.all()
+    qs = base_qs
+
+    if search := request.GET.get('search'):
+        qs = qs.filter(Q(nom__icontains=search) | Q(code__icontains=search))
+    if statut := request.GET.get('statut'):
+        qs = qs.filter(statut=statut)
+
+    return render(request, 'restaurants/caissier_restaurants.html', {
+        'restaurants':        qs.order_by('nom'),
+        'total_restaurants':  base_qs.count(),
+        'restaurants_actifs': base_qs.filter(statut='ACTIF').count(),
+        'agence':             agence,
+        'planning_actif':     planning_actif,
+    })
+

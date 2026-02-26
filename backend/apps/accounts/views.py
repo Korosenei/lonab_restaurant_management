@@ -100,12 +100,12 @@ def login_view(request):
 
                 messages.success(request, f'Bienvenue {utilisateur.get_full_name()} !')
 
-                if utilisateur.est_super_admin:
+                if utilisateur.est_admin:
                     return redirect('accounts:admin_dashboard')
                 elif utilisateur.est_caissier:
-                    return redirect('accounts:cashier_dashboard')
+                    return redirect('accounts:caissier_dashboard')
                 elif utilisateur.est_gestionnaire_restaurant:
-                    return redirect('accounts:restaurant_dashboard')
+                    return redirect('accounts:gestionnaire_dashboard')
                 else:
                     return redirect('accounts:client_dashboard')
             else:
@@ -140,23 +140,6 @@ def password_reset_view(request):
 
     return render(request, 'auth/password_reset.html')
 
-
-# ============================================
-# Vues de tableau de bord
-# ============================================
-@login_required
-def dashboard_redirection(request):
-    """Rediriger vers le tableau de bord approprié selon le type d'utilisateur"""
-    utilisateur = request.user
-
-    if utilisateur.est_super_admin:
-        return redirect('accounts:admin_dashboard')
-    elif utilisateur.est_caissier:
-        return redirect('accounts:caissier_dashboard')
-    elif utilisateur.est_gestionnaire_restaurant:
-        return redirect('accounts:restaurant_dashboard')
-    else:  # CLIENT
-        return redirect('accounts:client_dashboard')
 
 @login_required
 def dashboard_client(request):
@@ -385,7 +368,7 @@ def dashboard_restaurant(request):
 @login_required
 def dashboard_admin(request):
     """Tableau de bord pour les super administrateurs"""
-    if not request.user.est_super_admin:
+    if not request.user.est_admin:
         messages.warning(request, 'Vous n\'avez pas accès à cette section.')
         return redirect('accounts:dashboard')
 
@@ -544,80 +527,81 @@ def _generer_username(matricule, email, prenom, nom):
 @login_required
 def users_list(request):
     """Liste des utilisateurs avec filtres et pagination"""
-    if not request.user.est_super_admin and not request.user.est_caissier:
-        messages.warning(request, 'Vous n\'avez pas accès à cette section.')
+    if not request.user.est_admin and not request.user.est_caissier:
+        from django.contrib import messages
+        from django.shortcuts import redirect
+        messages.warning(request, "Vous n'avez pas accès à cette section.")
         return redirect('accounts:dashboard')
 
-    # Récupérer tous les utilisateurs
-    users = Utilisateur.objects.all().select_related('direction', 'agence', 'restaurant_gere')
+    from django.db.models import Q
+    from .models import Utilisateur, Direction, Agence
+
+    qs = Utilisateur.objects.all().select_related('direction', 'agence', 'restaurant_gere')
 
     # Filtres
     type_filter = request.GET.get('type')
     if type_filter:
-        users = users.filter(type_utilisateur=type_filter)
+        qs = qs.filter(type_utilisateur=type_filter)
 
     direction_filter = request.GET.get('direction')
     if direction_filter:
-        users = users.filter(direction_id=direction_filter)
+        qs = qs.filter(direction_id=direction_filter)
 
     agence_filter = request.GET.get('agence')
     if agence_filter:
-        users = users.filter(agence_id=agence_filter)
+        qs = qs.filter(agence_id=agence_filter)
 
     statut_filter = request.GET.get('statut')
     if statut_filter == 'actif':
-        users = users.filter(est_actif=True)
+        qs = qs.filter(est_actif=True)
     elif statut_filter == 'inactif':
-        users = users.filter(est_actif=False)
+        qs = qs.filter(est_actif=False)
 
-    # Recherche
-    search = request.GET.get('search')
+    search = request.GET.get('search', '').strip()
     if search:
-        users = users.filter(
-            Q(prenom__icontains=search) |
-            Q(nom__icontains=search) |
-            Q(email__icontains=search) |
-            Q(matricule__icontains=search)
+        qs = qs.filter(
+            Q(prenom__icontains=search) | Q(nom__icontains=search) |
+            Q(email__icontains=search) | Q(matricule__icontains=search)
         )
 
-    # Tri
-    users = users.order_by('-date_inscription')
+    qs = qs.order_by('-date_inscription')
 
-    # Pagination
-    paginator = Paginator(users, 20)  # 20 utilisateurs par page
+    # Pagination — 10 par page
+    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+    paginator = Paginator(qs, 10)
     page = request.GET.get('page')
-
     try:
-        users = paginator.page(page)
+        users_page = paginator.page(page)
     except PageNotAnInteger:
-        users = paginator.page(1)
+        users_page = paginator.page(1)
     except EmptyPage:
-        users = paginator.page(paginator.num_pages)
+        users_page = paginator.page(paginator.num_pages)
 
-    # Contexte
+    from django.utils import timezone
     context = {
-        'users': users,
-        'directions': Direction.objects.filter(est_active=True),
-        'agences': Agence.objects.filter(est_active=True),
-        'is_paginated': True if paginator.num_pages > 1 else False,
-        'page_obj': users,
+        'users': users_page,  # ← paginated queryset (legacy)
+        'page_obj': users_page,  # ← pour le composant pagination.html
+        'is_paginated': paginator.num_pages > 1,
+        'directions': Direction.objects.filter(est_active=True).order_by('nom'),
+        'agences': Agence.objects.filter(est_active=True).order_by('nom'),
+        'types_utilisateur': Utilisateur.TYPES_UTILISATEUR,
         'annee_courante': timezone.now().year,
     }
 
-    # Ajouter les restaurants si disponibles
     try:
         from apps.restaurants.models import Restaurant
         context['restaurants'] = Restaurant.objects.filter(statut='ACTIF')
-    except ImportError:
+    except Exception:
         context['restaurants'] = []
 
-    return render(request, 'accounts/users_list.html', context)
+    from django.shortcuts import render
+    return render(request, 'accounts/admin_users.html', context)
 
 @login_required
 @require_http_methods(["POST"])
 def user_create(request):
     """Créer un nouvel utilisateur (AJAX)"""
-    if not request.user.est_super_admin:
+    if not request.user.est_admin:
         return JsonResponse({'error': 'Permission refusée'}, status=403)
 
     try:
@@ -702,7 +686,7 @@ def user_create(request):
 @login_required
 def user_edit(request, pk):
     """Éditer un utilisateur (GET: données JSON, POST: mise à jour)"""
-    if not request.user.est_super_admin:
+    if not request.user.est_admin:
         return JsonResponse({'error': 'Permission refusée'}, status=403)
 
     try:
@@ -781,7 +765,7 @@ def user_edit(request, pk):
 @require_http_methods(["POST", "DELETE"])
 def user_delete(request, pk):
     """Supprimer un utilisateur (AJAX)"""
-    if not request.user.est_super_admin:
+    if not request.user.est_admin:
         return JsonResponse({'error': 'Permission refusée'}, status=403)
 
     try:
@@ -810,7 +794,7 @@ def user_delete(request, pk):
 @login_required
 def user_detail(request, pk):
     """Afficher les détails d'un utilisateur"""
-    if not request.user.est_super_admin and request.user.id != pk:
+    if not request.user.est_admin and request.user.id != pk:
         messages.warning(request, 'Vous n\'avez pas accès à cette page.')
         return redirect('accounts:dashboard')
 
@@ -941,9 +925,14 @@ def change_password(request):
 @login_required
 def directions_list(request):
     """Liste des directions avec filtres"""
-    if not request.user.est_super_admin:
-        messages.warning(request, 'Vous n\'avez pas accès à cette section.')
+    if not request.user.est_admin:
+        from django.contrib import messages
+        from django.shortcuts import redirect
+        messages.warning(request, "Vous n'avez pas accès à cette section.")
         return redirect('accounts:dashboard')
+
+    from django.db.models import Count, Q
+    from .models import Direction, Utilisateur
 
     directions = Direction.objects.all().annotate(
         nombre_employes=Count('employes', filter=Q(
@@ -960,32 +949,43 @@ def directions_list(request):
     elif statut_filter == 'inactif':
         directions = directions.filter(est_active=False)
 
-    # Recherche
     search = request.GET.get('search')
     if search:
         directions = directions.filter(
-            Q(nom__icontains=search) |
-            Q(code__icontains=search)
+            Q(nom__icontains=search) | Q(code__icontains=search)
         )
 
     directions = directions.order_by('nom')
 
+    # Pagination — 10 par page
+    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+    paginator = Paginator(directions, 10)
+    page = request.GET.get('page')
+    try:
+        directions_page = paginator.page(page)
+    except PageNotAnInteger:
+        directions_page = paginator.page(1)
+    except EmptyPage:
+        directions_page = paginator.page(paginator.num_pages)
+
+    from django.utils import timezone
     context = {
-        'directions': directions,
+        'directions': directions_page,  # ← paginated queryset
+        'page_obj': directions_page,  # ← pour le composant pagination.html
+        'is_paginated': paginator.num_pages > 1,
         'annee_courante': timezone.now().year,
         'utilisateurs': Utilisateur.objects.filter(
-            type_utilisateur='SUPER_ADMIN',
-            est_actif=True
+            type_utilisateur='ADMIN', est_actif=True
         ),
     }
-
-    return render(request, 'accounts/directions_list.html', context)
+    from django.shortcuts import render
+    return render(request, 'accounts/admin_directions.html', context)
 
 @login_required
 @require_http_methods(["POST"])
 def direction_create(request):
     """Créer une nouvelle direction (AJAX)"""
-    if not request.user.est_super_admin:
+    if not request.user.est_admin:
         return JsonResponse({'error': 'Permission refusée'}, status=403)
 
     try:
@@ -1020,7 +1020,7 @@ def direction_create(request):
 @login_required
 def direction_edit(request, pk):
     """Éditer une direction (GET: données, POST: mise à jour)"""
-    if not request.user.est_super_admin:
+    if not request.user.est_admin:
         return JsonResponse({'error': 'Permission refusée'}, status=403)
 
     try:
@@ -1070,7 +1070,7 @@ def direction_edit(request, pk):
 @require_http_methods(["POST", "DELETE"])
 def direction_delete(request, pk):
     """Supprimer une direction (AJAX)"""
-    if not request.user.est_super_admin:
+    if not request.user.est_admin:
         return JsonResponse({'error': 'Permission refusée'}, status=403)
 
     try:
@@ -1104,7 +1104,7 @@ def direction_delete(request, pk):
 @login_required
 def direction_detail(request, pk):
     """Afficher les détails d'une direction"""
-    if not request.user.est_super_admin:
+    if not request.user.est_admin:
         messages.warning(request, 'Vous n\'avez pas accès à cette page.')
         return redirect('accounts:dashboard')
 
@@ -1125,14 +1125,17 @@ def direction_detail(request, pk):
 @login_required
 def agences_list(request):
     """Liste des agences avec filtres"""
-    if not request.user.est_super_admin:
-        messages.warning(request, 'Vous n\'avez pas accès à cette section.')
+    if not request.user.est_admin:
+        from django.contrib import messages
+        from django.shortcuts import redirect
+        messages.warning(request, "Vous n'avez pas accès à cette section.")
         return redirect('accounts:dashboard')
 
+    from django.db.models import Count, Q
+    from .models import Agence, Direction
+
     agences = Agence.objects.all().select_related(
-        'direction',
-        'responsable',
-        'agence_parente'
+        'direction', 'responsable', 'agence_parente'
     ).annotate(
         nombre_employes=Count('employes', filter=Q(
             employes__type_utilisateur='CLIENT',
@@ -1155,34 +1158,44 @@ def agences_list(request):
     elif statut_filter == 'inactif':
         agences = agences.filter(est_active=False)
 
-    # Recherche
     search = request.GET.get('search')
     if search:
         agences = agences.filter(
-            Q(nom__icontains=search) |
-            Q(code__icontains=search) |
-            Q(ville__icontains=search)
+            Q(nom__icontains=search) | Q(code__icontains=search) | Q(ville__icontains=search)
         )
 
     agences = agences.order_by('nom')
 
+    # Pagination — 10 par page
+    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+    paginator = Paginator(agences, 10)
+    page = request.GET.get('page')
+    try:
+        agences_page = paginator.page(page)
+    except PageNotAnInteger:
+        agences_page = paginator.page(1)
+    except EmptyPage:
+        agences_page = paginator.page(paginator.num_pages)
+
+    from django.utils import timezone
     context = {
-        'agences': agences,
+        'agences': agences_page,  # ← paginated queryset
+        'page_obj': agences_page,  # ← pour le composant pagination.html
+        'is_paginated': paginator.num_pages > 1,
         'directions': Direction.objects.filter(est_active=True),
         'annee_courante': timezone.now().year,
-        'responsables': Utilisateur.objects.filter(
-            type_utilisateur__in=['SUPER_ADMIN', 'CAISSIER'],
-            est_actif=True
+        'responsables': __import__('apps.accounts.models', fromlist=['Utilisateur']).Utilisateur.objects.filter(
+            type_utilisateur__in=['ADMIN', 'CAISSIER'], est_actif=True
         ),
     }
-
-    return render(request, 'accounts/agences_list.html', context)
+    from django.shortcuts import render
+    return render(request, 'accounts/admin_agences.html', context)
 
 @login_required
 @require_http_methods(["POST"])
 def agence_create(request):
     """Créer une nouvelle agence (AJAX)"""
-    if not request.user.est_super_admin:
+    if not request.user.est_admin:
         return JsonResponse({'error': 'Permission refusée'}, status=403)
 
     try:
@@ -1223,7 +1236,7 @@ def agence_create(request):
 @login_required
 def agence_edit(request, pk):
     """Éditer une agence (GET: données, POST: mise à jour)"""
-    if not request.user.est_super_admin:
+    if not request.user.est_admin:
         return JsonResponse({'error': 'Permission refusée'}, status=403)
 
     try:
@@ -1294,7 +1307,7 @@ def agence_edit(request, pk):
 @require_http_methods(["POST", "DELETE"])
 def agence_delete(request, pk):
     """Supprimer une agence (AJAX)"""
-    if not request.user.est_super_admin:
+    if not request.user.est_admin:
         return JsonResponse({'error': 'Permission refusée'}, status=403)
 
     try:
@@ -1329,7 +1342,7 @@ def agence_delete(request, pk):
 @login_required
 def agence_detail(request, pk):
     """Afficher les détails d'une agence"""
-    if not request.user.est_super_admin:
+    if not request.user.est_admin:
         messages.warning(request, 'Vous n\'avez pas accès à cette page.')
         return redirect('accounts:dashboard')
 
@@ -1350,7 +1363,7 @@ def agence_detail(request, pk):
 @login_required
 def export_users_pdf(request):
     """Exporter la liste des utilisateurs en PDF"""
-    if not request.user.est_super_admin:
+    if not request.user.est_admin:
         messages.warning(request, 'Vous n\'avez pas accès à cette fonction.')
         return redirect('accounts:users_list')
 
@@ -1429,7 +1442,7 @@ def export_users_pdf(request):
 @login_required
 def export_users_excel(request):
     """Exporter la liste des utilisateurs en Excel"""
-    if not request.user.est_super_admin:
+    if not request.user.est_admin:
         messages.warning(request, 'Vous n\'avez pas accès à cette fonction.')
         return redirect('accounts:users_list')
 
@@ -1498,7 +1511,7 @@ def export_users_excel(request):
 @login_required
 def export_directions_pdf(request):
     """Exporter la liste des directions en PDF"""
-    if not request.user.est_super_admin:
+    if not request.user.est_admin:
         messages.warning(request, 'Vous n\'avez pas accès à cette fonction.')
         return redirect('accounts:directions_list')
 
@@ -1566,7 +1579,7 @@ def export_directions_pdf(request):
 @login_required
 def export_agencies_excel(request):
     """Exporter la liste des agences en Excel"""
-    if not request.user.est_super_admin:
+    if not request.user.est_admin:
         messages.warning(request, 'Vous n\'avez pas accès à cette fonction.')
         return redirect('accounts:agencies_list')
 

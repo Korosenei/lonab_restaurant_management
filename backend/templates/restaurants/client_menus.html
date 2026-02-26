@@ -1,200 +1,201 @@
 {% extends 'dashboards/base_dashboard.html' %}
 {% load static %}
 
+{% block title %}Menus du jour{% endblock %}
 {% block dashboard_css %}
 <link rel="stylesheet" href="{% static 'css/components.css' %}">
 <style>
-.menu-card {
-    background: white;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 1px 8px rgba(0,0,0,.06);
-    transition: transform .2s, box-shadow .2s;
-}
-.menu-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(0,0,0,.1);
-}
-.menu-img {
-    width: 100%; height: 160px;
-    object-fit: cover; background: var(--light-green);
-    display: flex; align-items: center; justify-content: center;
-}
-.menu-body { padding: 16px; }
-.menu-plat {
-    font-size: 12px; color: var(--text-muted);
-    background: var(--bg-light); padding: 4px 8px;
-    border-radius: 20px; display: inline-block; margin: 2px 2px 2px 0;
-}
-.ticket-banner {
-    background: linear-gradient(135deg,#1a5c2e,#28a745);
-    border-radius: 12px; padding: 16px 20px;
-    color: white; display: flex; align-items: center; gap: 16px;
-    margin-bottom: 24px;
-}
-.res-item {
-    display: flex; align-items: center; gap: 14px;
-    padding: 12px; border-radius: 8px;
-    border: 1px solid var(--border-color);
-    margin-bottom: 8px;
-}
+    .plat-card{background:white;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.07);transition:.2s;border:1.5px solid transparent;}
+    .plat-card:hover{border-color:var(--primary-green);box-shadow:0 3px 12px rgba(40,167,69,.15);}
+    .plat-card.reserve{border-color:var(--primary-green);background:linear-gradient(to bottom,white,rgba(40,167,69,.04));}
+    .btn-reserver{width:100%;padding:8px;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;transition:.2s;}
+    .btn-reserver.primary{background:var(--primary-green);color:white;}
+    .btn-reserver.primary:hover{background:#218838;}
+    .btn-reserver.primary:disabled{opacity:.6;cursor:not-allowed;}
+    .btn-reserver.done{background:#e8f5e9;color:var(--primary-green);cursor:default;}
 </style>
 {% endblock %}
 
 {% block sidebar_menu %}{% include 'dashboards/sidebars/client_sidebar.html' %}{% endblock %}
 
 {% block page_content %}
-<div id="page-urls"
-     data-reserver-url="{% url 'restaurants:client_reserver' %}"
-     data-annuler-base="{% url 'restaurants:client_annuler' pk=0 %}"
-     style="display:none;"></div>
-
-<!-- En-tête + solde tickets -->
-<div style="margin-bottom:20px;">
-    <h1 style="font-size:22px;font-weight:700;color:var(--text-primary);margin:0 0 16px;">
-        <i class="fas fa-book-open" style="color:var(--primary-green);margin-right:10px;"></i>
-        Menus du {{ jour_fr|title }} — {{ aujourd_hui|date:"d F Y" }}
-    </h1>
-
-    <div class="ticket-banner">
-        <div style="width:52px;height:52px;background:rgba(255,255,255,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">
-            <i class="fas fa-ticket-alt"></i>
-        </div>
-        <div>
-            <div style="font-size:24px;font-weight:800;">{{ tickets_valides }} ticket(s)</div>
-            <div style="font-size:13px;opacity:.85;">disponibles ce mois</div>
-        </div>
-        <div style="margin-left:auto;">
-            <a href="# url 'tickets:client_tickets' " style="color:white;font-size:13px;opacity:.9;text-decoration:none;">
-                <i class="fas fa-arrow-right"></i> Voir mes tickets
-            </a>
-        </div>
+<!-- Header -->
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;">
+    <div>
+        <h1 style="font-size:20px;font-weight:700;margin:0;color:var(--text-primary);">
+            <i class="fas fa-book-open" style="color:var(--primary-green);margin-right:8px;"></i>Menus du jour
+        </h1>
+        <p style="color:var(--text-muted);font-size:12px;margin:3px 0 0;">{{ aujourd_hui|date:"l d F Y" }}</p>
+    </div>
+    <div style="display:flex;gap:7px;">
+        <a href="{% url 'restaurants:client_reservations' %}" class="btn btn-outline"
+           style="font-size:12px;padding:7px 12px;">
+            <i class="fas fa-calendar-check"></i> Mes réservations
+        </a>
+        <a href="{% url 'tickets:client_qrcode' %}" class="btn btn-primary" style="font-size:12px;padding:7px 12px;">
+            <i class="fas fa-qrcode"></i> QR Code
+        </a>
     </div>
 </div>
 
-<div style="display:grid;grid-template-columns:1fr 340px;gap:20px;">
-
-    <!-- Menus -->
+<!-- Alerte heure / tickets -->
+{% if not menus_disponibles %}
+<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:13px;">
+    <i class="fas fa-clock" style="color:#f59e0b;font-size:18px;flex-shrink:0;"></i>
     <div>
-        {% if tickets_valides == 0 %}
-        <div class="card" style="padding:32px;text-align:center;color:var(--text-muted);">
-            <i class="fas fa-ticket-alt" style="font-size:40px;opacity:.3;margin-bottom:12px;display:block;"></i>
-            <p style="font-weight:600;margin:0 0 8px;">Aucun ticket disponible</p>
-            <p style="font-size:13px;margin:0;">Contactez votre caissier pour acheter des tickets.</p>
-        </div>
-        {% elif not menus_du_jour %}
-        <div class="card" style="padding:32px;text-align:center;color:var(--text-muted);">
-            <i class="fas fa-book-open" style="font-size:40px;opacity:.3;margin-bottom:12px;display:block;"></i>
-            <p style="font-weight:600;margin:0 0 8px;">Aucun menu disponible aujourd'hui</p>
-            {% if not restaurants_actifs %}
-            <p style="font-size:13px;margin:0;">Aucun restaurant n'est planifié pour votre agence.</p>
+        <strong>Menus disponibles à partir de {{ heure_ouverture }}</strong><br>
+        <span style="font-size:11px;color:var(--text-muted);">Les plats du jour seront affichés à l'ouverture du service.</span>
+    </div>
+</div>
+{% endif %}
+
+{% if tickets_valides == 0 %}
+<div style="background:#fde8e8;border:1px solid #fca5a5;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:13px;">
+    <i class="fas fa-exclamation-circle" style="color:#dc3545;font-size:18px;flex-shrink:0;"></i>
+    <div>
+        <strong>Aucun ticket disponible</strong> — vous pouvez réserver mais ne pourrez pas consommer sans ticket.
+        <a href="{% url 'transactions:client_historique' %}" style="color:#dc3545;font-weight:700;"> Voir mon historique
+            →</a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Réservations du jour -->
+{% if mes_reservations %}
+<div style="background:var(--light-green);border-radius:10px;padding:12px 16px;margin-bottom:16px;border-left:3px solid var(--primary-green);">
+    <div style="font-size:12px;font-weight:700;color:var(--primary-green);margin-bottom:6px;">
+        <i class="fas fa-calendar-check" style="margin-right:5px;"></i>Mes réservations aujourd'hui
+    </div>
+    {% for r in mes_reservations %}
+    <div style="display:flex;align-items:center;gap:8px;font-size:12px;{% if not forloop.last %}margin-bottom:4px;{% endif %}">
+        <i class="fas fa-utensils" style="color:var(--primary-green);font-size:10px;width:12px;"></i>
+        <strong>{{ r.menu.nom }}</strong>
+        <span style="color:var(--text-muted);">·</span>
+        <span class="badge {% if r.statut == 'EN_ATTENTE' %}badge-warning{% elif r.statut == 'CONFIRME' %}badge-success{% else %}badge-secondary{% endif %}"
+              style="font-size:10px;">{{ r.get_statut_display }}</span>
+        &nbsp;
+        <button onclick="annulerReservation({{ r.id }}, this)"
+                style="background:none;border:none;color:#dc3545;font-size:11px;cursor:pointer;padding:0;">
+            <i class="fas fa-times"></i> Annuler
+        </button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Plats du jour -->
+{% if menus_disponibles %}
+{% if menus_du_jour %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;">
+    {% for plat in menus_du_jour %}
+    <div class="plat-card {% if plat.id|stringformat:'s' in menus_deja_reserves %}reserve{% endif %}">
+        <!-- Image ou placeholder -->
+        <div style="height:120px;background:linear-gradient(135deg,#1a5c2e,#2d6a4f);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
+            {% if plat.image %}
+            <img src="{{ plat.image.url }}" alt="{{ plat.nom }}" style="width:100%;height:100%;object-fit:cover;">
+            {% else %}
+            <i class="fas fa-utensils" style="font-size:32px;color:rgba(255,255,255,.35);"></i>
+            {% endif %}
+            {% if plat.restaurant %}
+            <div style="position:absolute;bottom:0;left:0;right:0;padding:6px 8px;background:rgba(0,0,0,.45);font-size:9px;color:rgba(255,255,255,.85);font-weight:600;">
+                <i class="fas fa-store" style="margin-right:3px;"></i>{{ plat.restaurant.nom }}
+            </div>
             {% endif %}
         </div>
-        {% else %}
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;">
-            {% for menu in menus_du_jour %}
-            <div class="menu-card">
-                {% if menu.image %}
-                <img src="{{ menu.image.url }}" alt="{{ menu.nom }}" class="menu-img">
-                {% else %}
-                <div class="menu-img">
-                    <i class="fas fa-utensils" style="font-size:40px;color:var(--primary-green);opacity:.4;"></i>
-                </div>
+        <div style="padding:12px;">
+            <h3 style="font-size:13px;font-weight:700;margin:0 0 4px;color:var(--text-primary);">{{ plat.nom }}</h3>
+            {% if plat.description %}
+            <p style="font-size:11px;color:var(--text-muted);margin:0 0 8px;line-height:1.5;">{{
+                plat.description|truncatechars:60 }}</p>
+            {% endif %}
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <span style="font-size:11px;font-weight:700;color:var(--primary-green);">{{ plat.prix|floatformat:0 }} FCFA</span>
+                {% if plat.quantite_disponible is not None %}
+                <span style="font-size:10px;color:{% if plat.quantite_disponible < 5 %}#dc3545{% else %}var(--text-muted){% endif %};">
+                    <i class="fas fa-layer-group" style="font-size:9px;"></i> {{ plat.quantite_disponible }} restants
+                </span>
                 {% endif %}
-                <div class="menu-body">
-                    <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">
-                        <i class="fas fa-store"></i> {{ menu.restaurant.nom }}
-                    </div>
-                    <h3 style="font-size:15px;font-weight:700;margin:0 0 8px;color:var(--text-primary);">{{ menu.nom }}</h3>
-                    <div style="margin-bottom:10px;">
-                        {% for plat in menu.plats|truncatechars:80 %}{% endfor %}
-                        <span class="menu-plat">{{ menu.plats|truncatechars:60 }}</span>
-                    </div>
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
-                        <span style="font-size:13px;color:var(--text-muted);">
-                            {% if menu.quantite_restante is not None %}
-                            <i class="fas fa-layer-group"></i>
-                            <span style="color:{% if menu.quantite_restante < 5 %}#dc3545{% else %}var(--primary-green){% endif %};">
-                                {{ menu.quantite_restante }}
-                            </span> restants
-                            {% endif %}
-                        </span>
-                        <button onclick="reserver({{ menu.id }}, '{{ menu.nom|escapejs }}')"
-                                class="btn btn-primary" style="padding:7px 14px;font-size:13px;">
-                            <i class="fas fa-bookmark"></i> Réserver
-                        </button>
-                    </div>
-                </div>
             </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Mes réservations du jour -->
-    <div>
-        <div class="card" style="padding:20px;">
-            <h3 style="font-size:15px;font-weight:700;margin:0 0 16px;color:var(--text-primary);">
-                <i class="fas fa-calendar-check" style="color:var(--primary-green);margin-right:8px;"></i>
-                Mes réservations
-            </h3>
-            {% for res in mes_reservations %}
-            <div class="res-item">
-                <div style="flex:1;">
-                    <div style="font-weight:600;font-size:13px;">{{ res.menu.nom }}</div>
-                    <div style="font-size:11px;color:var(--text-muted);">{{ res.restaurant.nom }}</div>
-                </div>
-                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-                    {% if res.statut == 'EN_ATTENTE' %}
-                    <span class="badge badge-warning">En attente</span>
-                    <button onclick="annuler({{ res.id }})" style="font-size:11px;color:#dc3545;background:none;border:none;cursor:pointer;">
-                        Annuler
-                    </button>
-                    {% elif res.statut == 'CONFIRME' %}
-                    <span class="badge badge-success">Confirmé</span>
-                    {% elif res.statut == 'TERMINE' %}
-                    <span class="badge badge-secondary">Terminé</span>
-                    {% else %}
-                    <span class="badge badge-danger">Annulé</span>
-                    {% endif %}
-                </div>
-            </div>
-            {% empty %}
-            <div style="text-align:center;color:var(--text-muted);padding:20px;">
-                <i class="fas fa-calendar" style="opacity:.3;font-size:28px;margin-bottom:8px;display:block;"></i>
-                Aucune réservation aujourd'hui
-            </div>
-            {% endfor %}
+            {% if plat.id|stringformat:'s' in menus_deja_reserves %}
+            <button class="btn-reserver done">
+                <i class="fas fa-check-circle"></i> Réservé
+            </button>
+            {% elif tickets_valides == 0 %}
+            <button class="btn-reserver primary" disabled title="Aucun ticket disponible">
+                <i class="fas fa-lock"></i> Pas de ticket
+            </button>
+            {% else %}
+            <button class="btn-reserver primary" onclick="reserver({{ plat.id }}, this)">
+                <i class="fas fa-calendar-plus"></i> Réserver
+            </button>
+            {% endif %}
         </div>
     </div>
+    {% endfor %}
 </div>
+{% else %}
+<div style="background:white;border-radius:12px;padding:40px;text-align:center;box-shadow:0 1px 6px rgba(0,0,0,.07);">
+    <i class="fas fa-utensils" style="font-size:40px;display:block;margin-bottom:14px;opacity:.2;"></i>
+    <p style="color:var(--text-muted);font-size:14px;margin:0;">Aucun plat disponible aujourd'hui pour votre agence.</p>
+</div>
+{% endif %}
+{% else %}
+<!-- Menus pas encore disponibles -->
+<div style="background:white;border-radius:12px;padding:40px;text-align:center;box-shadow:0 1px 6px rgba(0,0,0,.07);">
+    <i class="fas fa-clock" style="font-size:40px;display:block;margin-bottom:14px;color:#f59e0b;opacity:.5;"></i>
+    <p style="color:var(--text-muted);font-size:14px;margin:0;">Les plats du jour seront affichés à partir de <strong>{{
+        heure_ouverture }}</strong>.</p>
+</div>
+{% endif %}
 
+<div id="page-urls"
+     data-reserver-url="{% url 'restaurants:client_reserver' %}"
+     data-annuler-url-base="{% url 'restaurants:client_annuler' pk=0 %}"
+     style="display:none;"></div>
 {% endblock %}
 
 {% block dashboard_js %}
 <script src="{% static 'js/components.js' %}"></script>
 <script>
-var urls = document.getElementById('page-urls').dataset;
+    var urls = document.getElementById('page-urls').dataset;
 
-function reserver(menuId, menuNom) {
-    if (!confirm('Réserver le menu « ' + menuNom + ' » pour aujourd\'hui ?')) return;
-    var fd = new FormData();
-    fd.append('menu_id', menuId);
-    fetch(urls.reserverUrl, { method:'POST', headers:{'X-CSRFToken':getCsrfToken()}, body:fd })
-        .then(r => r.json()).then(d => {
-            if (d.success) { showToast(d.message, 'success'); setTimeout(() => location.reload(), 1000); }
-            else showToast(d.error, 'error');
+    function reserver(menuId, btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Réservation...';
+        var fd = new FormData();
+        fd.append('menu_id', menuId);
+        fetch(urls.reserverUrl, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() }, body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.success) {
+                showSuccess(d.message || 'Réservation confirmée');
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> Réservé';
+                btn.className = 'btn-reserver done';
+                btn.onclick = null;
+                btn.closest('.plat-card').classList.add('reserve');
+            } else {
+                showError(d.error || 'Erreur');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-calendar-plus"></i> Réserver';
+            }
+        })
+        .catch(function() {
+            showError('Erreur réseau');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-calendar-plus"></i> Réserver';
         });
-}
+    }
 
-function annuler(resId) {
-    if (!confirm('Annuler cette réservation ?')) return;
-    fetch(urls.annulerBase.replace('/0/', '/' + resId + '/'), {
-        method:'POST', headers:{'X-CSRFToken':getCsrfToken()}
-    }).then(r => r.json()).then(d => {
-        if (d.success) { showToast(d.message, 'success'); setTimeout(() => location.reload(), 1000); }
-        else showToast(d.error, 'error');
-    });
-}
+    function annulerReservation(reservationId, btn) {
+        if (!confirm('Annuler cette réservation ?')) return;
+        var url = urls.annulerUrlBase.replace('/0/', '/' + reservationId + '/');
+        fetch(url, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() } })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.success) { showSuccess(d.message); setTimeout(function(){ location.reload(); }, 700); }
+            else showError(d.error || 'Erreur');
+        })
+        .catch(function() { showError('Erreur réseau'); });
+    }
 </script>
 {% endblock %}

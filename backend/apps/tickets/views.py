@@ -7,9 +7,15 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.db.models import Q, Count, Sum
+from django.core.paginator import Paginator
+from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from django.conf import settings
 from .models import Ticket, CodeQR
+
+from apps.accounts.models import Utilisateur, Agence
+from apps.settings.models import ParametresSysteme
+from apps.transactions.models import TransactionTicket, LogConsommation
 
 
 def _debut_fin_mois(date=None):
@@ -19,53 +25,109 @@ def _debut_fin_mois(date=None):
     fin   = debut + relativedelta(months=1) - relativedelta(days=1)
     return debut, fin
 
+def _get_params():
+    """Charge les paramètres depuis la DB, fallback settings.py."""
+    try:
+        from apps.settings.models import ParametresSysteme
+        p = ParametresSysteme.charger()
+        return {
+            'prix_ticket': int(p.prix_ticket),
+            'subvention':  int(p.subvention_ticket),
+            'min_tickets': p.tickets_min_par_transaction,
+            'max_tickets': p.tickets_max_par_transaction,
+            'max_mensuel': p.transactions_max_par_mois,
+        }
+    except Exception:
+        return {
+            'prix_ticket': getattr(settings, 'TICKET_PRICE', 500),
+            'subvention':  getattr(settings, 'TICKET_SUBSIDY', 1500),
+            'min_tickets': getattr(settings, 'MIN_TICKETS_PER_TRANSACTION', 1),
+            'max_tickets': getattr(settings, 'MAX_TICKETS_PER_TRANSACTION', 20),
+            'max_mensuel': getattr(settings, 'MAX_TRANSACTIONS_PER_MONTH', 1),
+        }
+
 
 # ================================================================
 # ADMIN
 # ================================================================
-
 @login_required
-def admin_tickets_list(request):
-    if not request.user.est_super_admin:
+def admin_tickets(request):
+    if not request.user.est_admin:
         return redirect('accounts:dashboard')
 
-    qs = Ticket.objects.select_related('proprietaire', 'transaction', 'restaurant_consommateur')
+    qs = Ticket.objects.select_related(
+        'proprietaire', 'proprietaire__agence', 'transaction', 'transaction__caissier',
+        'restaurant_consommateur'
+    )
 
-    if q := request.GET.get('search'):
+    # ── Filtres ─────────────────────────────────────────────────
+    q       = request.GET.get('search', '').strip()
+    statut  = request.GET.get('statut', '').strip()
+    agence  = request.GET.get('agence', '').strip()
+    date_debut = request.GET.get('date_debut', '').strip()
+    date_fin   = request.GET.get('date_fin', '').strip()
+    mois    = request.GET.get('mois', '').strip()
+
+    if q:
         qs = qs.filter(
             Q(numero_ticket__icontains=q) |
             Q(proprietaire__prenom__icontains=q) |
             Q(proprietaire__nom__icontains=q) |
             Q(proprietaire__matricule__icontains=q)
         )
-    if statut := request.GET.get('statut'):
+    if statut:
         qs = qs.filter(statut=statut)
-    if mois := request.GET.get('mois'):
+    if agence:
+        qs = qs.filter(proprietaire__agence_id=agence)
+    if mois:
         try:
             y, m = mois.split('-')
             qs = qs.filter(valide_de__year=y, valide_de__month=m)
         except ValueError:
             pass
+    if date_debut:
+        qs = qs.filter(date_creation__date__gte=date_debut)
+    if date_fin:
+        qs = qs.filter(date_creation__date__lte=date_fin)
 
     debut_mois, _ = _debut_fin_mois()
     totaux = {
-        'total':           qs.count(),
-        'disponibles':     qs.filter(statut='DISPONIBLE').count(),
-        'consommes':       qs.filter(statut='CONSOMME').count(),
-        'expires':         qs.filter(statut='EXPIRE').count(),
-        'vendus_mois':     Ticket.objects.filter(date_creation__date__gte=debut_mois).count(),
-        'consommes_mois':  Ticket.objects.filter(statut='CONSOMME', date_consommation__date__gte=debut_mois).count(),
+        'total':          qs.count(),
+        'disponibles':    qs.filter(statut='DISPONIBLE').count(),
+        'consommes':      qs.filter(statut='CONSOMME').count(),
+        'expires':        qs.filter(statut__in=['EXPIRE', 'ANNULE']).count(),
+        'vendus_mois':    Ticket.objects.filter(date_creation__date__gte=debut_mois).count(),
+        'consommes_mois': Ticket.objects.filter(statut='CONSOMME', date_consommation__date__gte=debut_mois).count(),
     }
 
-    return render(request, 'tickets/admin_tickets.html', {
-        'tickets': qs.order_by('-date_creation')[:300],
-        'totaux':  totaux,
-    })
+    paginator = Paginator(qs.order_by('-date_creation'), 10)
+    page_obj  = paginator.get_page(request.GET.get('page', 1))
 
+    # Paramètres GET à conserver dans la pagination
+    params_get = '&'.join([
+        f"{k}={v}" for k, v in request.GET.items() if k != 'page' and v
+    ])
+
+    from apps.accounts.models import Agence
+    return render(request, 'tickets/admin_tickets.html', {
+        'tickets':    page_obj,
+        'page_obj':   page_obj,
+        'totaux':     totaux,
+        'agences':    Agence.objects.filter(est_active=True).order_by('nom'),
+        'filtres': {
+            'search':     q,
+            'statut':     statut,
+            'agence':     agence,
+            'date_debut': date_debut,
+            'date_fin':   date_fin,
+            'mois':       mois,
+        },
+        'extra_params': params_get,
+    })
 
 @login_required
 def admin_tickets_stats(request):
-    if not request.user.est_super_admin:
+    if not request.user.est_admin:
         return redirect('accounts:dashboard')
 
     aujourd_hui = timezone.now().date()
@@ -97,11 +159,10 @@ def admin_tickets_stats(request):
         'fin_mois':   fin_mois,
     })
 
-
 @login_required
 def ticket_detail(request, pk):
     t = get_object_or_404(Ticket, pk=pk)
-    if not (request.user.est_super_admin or t.proprietaire == request.user):
+    if not (request.user.est_admin or t.proprietaire == request.user):
         return redirect('accounts:dashboard')
     return render(request, 'tickets/ticket_detail.html', {'ticket': t})
 
@@ -109,63 +170,94 @@ def ticket_detail(request, pk):
 # ================================================================
 # CAISSIER
 # ================================================================
-
 @login_required
 def caissier_tickets(request):
-    """Liste de tous les tickets + stats + modal vente."""
-    if not (request.user.est_caissier or request.user.est_super_admin):
+    """Tickets vendus PAR CE CAISSIER uniquement."""
+    if not (request.user.est_caissier or request.user.est_admin):
         return redirect('accounts:dashboard')
 
-    qs = Ticket.objects.select_related('proprietaire', 'restaurant_consommateur')
+    from apps.tickets.models import Ticket
+    from apps.accounts.models import Utilisateur
 
-    if q := request.GET.get('search'):
+    # Seulement les tickets issus des transactions de ce caissier
+    qs = Ticket.objects.filter(
+        transaction__caissier=request.user
+    ).select_related('proprietaire', 'transaction', 'restaurant_consommateur')
+
+    if search := request.GET.get('search'):
         qs = qs.filter(
-            Q(numero_ticket__icontains=q) |
-            Q(proprietaire__prenom__icontains=q) |
-            Q(proprietaire__nom__icontains=q) |
-            Q(proprietaire__matricule__icontains=q)
+            Q(numero_ticket__icontains=search) |
+            Q(proprietaire__prenom__icontains=search) |
+            Q(proprietaire__nom__icontains=search) |
+            Q(proprietaire__matricule__icontains=search)
         )
     if statut := request.GET.get('statut'):
         qs = qs.filter(statut=statut)
     if mois := request.GET.get('mois'):
         try:
-            y, m = mois.split('-')
-            qs = qs.filter(valide_de__year=y, valide_de__month=m)
+            annee, m = mois.split('-')
+            qs = qs.filter(valide_de__year=annee, valide_de__month=m)
         except ValueError:
             pass
 
-    debut_mois, fin_mois = _debut_fin_mois()
-    today = timezone.now().date()
+    aujourd_hui = timezone.now().date()
+    debut_mois, fin_mois = _debut_fin_mois(aujourd_hui)
+    params = _get_params()
 
     stats = {
-        'disponibles':    Ticket.objects.filter(statut='DISPONIBLE').count(),
-        'consommes_mois': Ticket.objects.filter(statut='CONSOMME', date_consommation__date__gte=debut_mois).count(),
-        'vendus_mois':    Ticket.objects.filter(date_creation__date__gte=debut_mois).count(),
-        'expires':        Ticket.objects.filter(statut__in=['EXPIRE', 'ANNULE']).count(),
+        'total':       qs.count(),
+        'disponibles': qs.filter(statut='DISPONIBLE').count(),
+        'consommes':   qs.filter(statut='CONSOMME').count(),
+        'expires':     qs.filter(statut='EXPIRE').count(),
     }
 
-    # Clients pour le modal de vente
-    from apps.accounts.models import Utilisateur
+    # Clients éligibles (pas encore atteint leur limite ce mois)
+    clients_ayant_atteint = (
+        TransactionTicket.objects
+        .filter(type_transaction='ACHAT', statut='TERMINEE', date_transaction__date__gte=debut_mois)
+        .values('client_id')
+        .annotate(nb=Count('id'))
+        .filter(nb__gte=params['max_mensuel'])
+        .values_list('client_id', flat=True)
+    )
     clients = Utilisateur.objects.filter(
-        type_utilisateur='CLIENT', est_actif=True
+        type_utilisateur='CLIENT', est_actif=True,
+    ).exclude(
+        id__in=clients_ayant_atteint
     ).select_related('agence').order_by('nom', 'prenom')
 
+    paginator = Paginator(qs.order_by('-date_creation'), 10)
+    page_obj  = paginator.get_page(request.GET.get('page', 1))
+
     return render(request, 'tickets/caissier_tickets.html', {
-        'tickets':       qs.order_by('-date_creation')[:500],
-        'total_tickets': qs.count(),
-        'stats':         stats,
-        'clients':       clients,
-        'debut_mois':    debut_mois,
-        'fin_mois':      fin_mois,
-        'prix_ticket':   getattr(settings, 'TICKET_PRICE', 500),
-        'subvention':    getattr(settings, 'TICKET_SUBSIDY', 1500),
+        'tickets':     page_obj,
+        'page_obj':    page_obj,
+        'stats':       stats,
+        'stats_pills': [
+            ('disponibles', stats['disponibles'], '#28a745'),
+            ('consommés',   stats['consommes'],   '#6c757d'),
+            ('expirés/annulés', stats['expires'], '#dc3545'),
+        ],
+        'clients':     clients,
+        'debut_mois':  debut_mois,
+        'fin_mois':    fin_mois,
+        'prix_ticket': params['prix_ticket'],
+        'subvention':  params['subvention'],
+        'min_tickets': params['min_tickets'],
+        'max_tickets': params['max_tickets'],
+        'max_mensuel': params['max_mensuel'],
+        'statuts': [
+            ('DISPONIBLE', 'Disponible'),
+            ('CONSOMME',   'Consommé'),
+            ('EXPIRE',     'Expiré'),
+            ('ANNULE',     'Annulé'),
+        ],
     })
 
 
 # ================================================================
 # CLIENT
 # ================================================================
-
 @login_required
 def client_tickets(request):
     """Mes tickets — vue client."""
@@ -206,7 +298,6 @@ def client_tickets(request):
         'fin_mois':            fin_mois,
     })
 
-
 @login_required
 def client_qrcode(request):
     """Page QR Code du client."""
@@ -242,7 +333,6 @@ def client_qrcode(request):
         'aujourd_hui':     aujourd_hui,
     })
 
-
 @login_required
 @require_http_methods(["POST"])
 def generer_qrcode(request):
@@ -277,7 +367,6 @@ def generer_qrcode(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
-
 @login_required
 @require_http_methods(["POST"])
 def invalider_qrcode(request, pk):
@@ -288,3 +377,4 @@ def invalider_qrcode(request, pk):
     qr.est_valide = False
     qr.save()
     return JsonResponse({'success': True, 'message': 'QR Code invalidé'})
+

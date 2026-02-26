@@ -1,179 +1,168 @@
 {% extends 'dashboards/base_dashboard.html' %}
 {% load static %}
 
-{% block title %}Gestion des Tickets{% endblock %}
-
-{% block dashboard_css %}
-<link rel="stylesheet" href="{% static 'css/components.css' %}">
-{% endblock %}
-
-{% block sidebar_menu %}
-{% include 'dashboards/sidebars/admin_sidebar.html' %}
-{% endblock %}
+{% block title %}Tickets — Admin{% endblock %}
+{% block dashboard_css %}<link rel="stylesheet" href="{% static 'css/components.css' %}">{% endblock %}
+{% block sidebar_menu %}{% include 'dashboards/sidebars/admin_sidebar.html' %}{% endblock %}
 
 {% block page_content %}
-<div class="page-header-with-actions">
-    <div class="page-header">
-        <h1 class="page-title">Gestion des Tickets</h1>
-        <p class="page-subtitle">{{ totaux.total }} ticket{{ totaux.total|pluralize }} au total</p>
+
+<!-- En-tête -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+    <div>
+        <h1 style="font-size:22px;font-weight:700;color:var(--text-primary);margin:0;">
+            <i class="fas fa-ticket-alt" style="color:var(--primary-green);margin-right:10px;"></i>Tickets
+        </h1>
+        <p style="color:var(--text-muted);font-size:13px;margin:4px 0 0;">
+            {{ page_obj.paginator.count }} ticket(s) trouvé(s) selon les filtres
+        </p>
     </div>
-    <div class="page-header-actions">
-        <button class="export-btn export-btn-pdf" onclick="exportToPDF('ticketsTable','tickets.pdf')" title="PDF">
-            <i class="fas fa-file-pdf"></i>
-        </button>
-        <button class="export-btn export-btn-excel" onclick="exportToExcel('ticketsTable','tickets.xlsx')" title="Excel">
-            <i class="fas fa-file-excel"></i>
-        </button>
-        <button class="export-btn export-btn-csv" onclick="exportToCSV('ticketsTable','tickets.csv')" title="CSV">
-            <i class="fas fa-file-csv"></i>
-        </button>
-        <a href="{% url 'tickets:admin_stats' %}" class="btn btn-outline">
-            <i class="fas fa-chart-bar"></i> Statistiques
-        </a>
-    </div>
+    <a href="{% url 'tickets:admin_stats' %}" class="btn btn-outline">
+        <i class="fas fa-chart-bar"></i> Statistiques
+    </a>
 </div>
 
-<!-- Stats -->
-<div class="stats-grid">
-    <div class="stat-card stat-card-green">
-        <div class="stat-card-icon"><i class="fas fa-check-circle"></i></div>
-        <div class="stat-card-content">
-            <div class="stat-card-label">Disponibles</div>
-            <div class="stat-card-value">{{ totaux.disponibles }}</div>
-        </div>
+<!-- Stats pills -->
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+    <div style="background:white;border-radius:20px;padding:8px 16px;box-shadow:0 1px 6px rgba(0,0,0,.07);font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:8px;">
+        <span style="color:var(--text-muted);">Total (filtré)</span>
+        <span style="color:var(--text-primary);">{{ totaux.total }}</span>
     </div>
-    <div class="stat-card stat-card-blue">
-        <div class="stat-card-icon"><i class="fas fa-utensils"></i></div>
-        <div class="stat-card-content">
-            <div class="stat-card-label">Consommés (total)</div>
-            <div class="stat-card-value">{{ totaux.consommes }}</div>
-        </div>
+    <div style="background:white;border-radius:20px;padding:8px 16px;box-shadow:0 1px 6px rgba(0,0,0,.07);font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:8px;">
+        <span style="width:8px;height:8px;border-radius:50%;background:#28a745;display:inline-block;"></span>
+        <span>{{ totaux.disponibles }} disponibles</span>
     </div>
-    <div class="stat-card stat-card-yellow">
-        <div class="stat-card-icon"><i class="fas fa-ticket-alt"></i></div>
-        <div class="stat-card-content">
-            <div class="stat-card-label">Vendus ce mois</div>
-            <div class="stat-card-value">{{ totaux.vendus_mois }}</div>
-        </div>
+    <div style="background:white;border-radius:20px;padding:8px 16px;box-shadow:0 1px 6px rgba(0,0,0,.07);font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:8px;">
+        <span style="width:8px;height:8px;border-radius:50%;background:#1976d2;display:inline-block;"></span>
+        <span>{{ totaux.consommes }} consommés</span>
     </div>
-    <div class="stat-card stat-card-red">
-        <div class="stat-card-icon"><i class="fas fa-times-circle"></i></div>
-        <div class="stat-card-content">
-            <div class="stat-card-label">Expirés</div>
-            <div class="stat-card-value">{{ totaux.expires }}</div>
-        </div>
+    <div style="background:white;border-radius:20px;padding:8px 16px;box-shadow:0 1px 6px rgba(0,0,0,.07);font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:8px;">
+        <span style="width:8px;height:8px;border-radius:50%;background:#f57c00;display:inline-block;"></span>
+        <span>{{ totaux.expires }} expirés</span>
+    </div>
+    <div style="background:white;border-radius:20px;padding:8px 16px;box-shadow:0 1px 6px rgba(0,0,0,.07);font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:8px;">
+        <span style="color:var(--text-muted);">Vendus ce mois</span>
+        <span style="color:var(--primary-green);">{{ totaux.vendus_mois }}</span>
+    </div>
+    <div style="background:white;border-radius:20px;padding:8px 16px;box-shadow:0 1px 6px rgba(0,0,0,.07);font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:8px;">
+        <span style="color:var(--text-muted);">Consommés ce mois</span>
+        <span style="color:#1976d2;">{{ totaux.consommes_mois }}</span>
     </div>
 </div>
 
 <!-- Filtres -->
-<div class="toolbar">
-    <div class="toolbar-left">
-        <div class="toolbar-search">
-            <i class="fas fa-search"></i>
-            <input type="text" id="tableSearch" placeholder="Rechercher...">
+<div class="card" style="padding:14px 16px;margin-bottom:18px;">
+    <form method="get" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;align-items:flex-end;">
+        <!-- Recherche -->
+        <div>
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">Recherche</label>
+            <div style="position:relative;">
+                <i class="fas fa-search" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:12px;"></i>
+                <input type="text" name="search" value="{{ request.GET.search|default:'' }}"
+                       placeholder="N°, client, matricule..."
+                       style="padding:8px 8px 8px 30px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;width:100%;box-sizing:border-box;">
+            </div>
         </div>
-        <form method="get" style="display:contents;">
-            <div class="toolbar-filter">
-                <select name="statut" onchange="this.form.submit()">
-                    <option value="">Tous statuts</option>
-                    <option value="DISPONIBLE" {% if request.GET.statut == 'DISPONIBLE' %}selected{% endif %}>Disponible</option>
-                    <option value="CONSOMME"   {% if request.GET.statut == 'CONSOMME'   %}selected{% endif %}>Consommé</option>
-                    <option value="EXPIRE"     {% if request.GET.statut == 'EXPIRE'     %}selected{% endif %}>Expiré</option>
-                    <option value="ANNULE"     {% if request.GET.statut == 'ANNULE'     %}selected{% endif %}>Annulé</option>
-                </select>
-            </div>
-            <div class="toolbar-filter">
-                <input type="month" name="mois" value="{{ request.GET.mois }}"
-                       onchange="this.form.submit()" title="Mois de validité">
-            </div>
-            {% if request.GET.statut or request.GET.mois %}
-            <a href="{% url 'tickets:admin_tickets' %}" class="btn btn-outline" title="Réinitialiser">
+        <!-- Statut -->
+        <div>
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">Statut</label>
+            <select name="statut" style="padding:8px 10px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;width:100%;">
+                <option value="">Tous</option>
+                {% for v,l in statuts %}
+                <option value="{{ v }}" {% if request.GET.statut == v %}selected{% endif %}>{{ l }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <!-- Agence -->
+        <div>
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">Agence</label>
+            <select name="agence" style="padding:8px 10px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;width:100%;">
+                <option value="">Toutes</option>
+                {% for a in agences %}
+                <option value="{{ a.id }}" {% if request.GET.agence == a.id|stringformat:"s" %}selected{% endif %}>{{ a.nom }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <!-- Mois validité -->
+        <div>
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">Mois validité</label>
+            <input type="month" name="mois" value="{{ request.GET.mois|default:'' }}"
+                   style="padding:8px 10px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;width:100%;box-sizing:border-box;">
+        </div>
+        <!-- Période de création -->
+        <div>
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">Créé du</label>
+            <input type="date" name="date_debut" value="{{ request.GET.date_debut|default:'' }}"
+                   style="padding:8px 10px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;width:100%;box-sizing:border-box;">
+        </div>
+        <div>
+            <label style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">Au</label>
+            <input type="date" name="date_fin" value="{{ request.GET.date_fin|default:'' }}"
+                   style="padding:8px 10px;border:1px solid var(--border-color);border-radius:6px;font-size:13px;width:100%;box-sizing:border-box;">
+        </div>
+        <!-- Boutons -->
+        <div style="display:flex;gap:6px;align-items:flex-end;">
+            <button type="submit" class="btn btn-secondary" style="flex:1;">
+                <i class="fas fa-filter"></i> Filtrer
+            </button>
+            {% if request.GET.search or request.GET.statut or request.GET.agence or request.GET.mois or request.GET.date_debut or request.GET.date_fin %}
+            <a href="{% url 'tickets:admin_tickets' %}" class="btn" style="background:var(--light-green);color:var(--primary-green);">
                 <i class="fas fa-times"></i>
             </a>
             {% endif %}
-        </form>
-    </div>
+        </div>
+    </form>
 </div>
 
 <!-- Tableau -->
-<div class="data-table-wrapper">
-    <div class="data-table-body">
-        <div class="table-responsive">
-            <table class="table" id="ticketsTable">
-                <thead>
-                    <tr>
-                        <th data-sortable>N° Ticket</th>
-                        <th data-sortable>Propriétaire</th>
-                        <th data-sortable>Agence</th>
-                        <th data-sortable>Validité</th>
-                        <th data-sortable>Statut</th>
-                        <th data-sortable>Consommé chez</th>
-                        <th data-sortable>Prix payé</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for t in tickets %}
-                <tr>
-                    <td><code class="ticket-number">{{ t.numero_ticket }}</code></td>
-                    <td>
-                        <div class="user-cell">
-                            <div class="user-avatar-sm">{{ t.proprietaire.prenom.0 }}{{ t.proprietaire.nom.0 }}</div>
-                            <div>
-                                <div class="user-name">{{ t.proprietaire.get_full_name }}</div>
-                                <div class="user-meta">{{ t.proprietaire.matricule|default:"—" }}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="text-sm text-muted">{{ t.proprietaire.agence.nom|default:"—" }}</td>
-                    <td class="text-sm text-muted">{{ t.valide_de|date:"d/m" }} → {{ t.valide_jusqua|date:"d/m/Y" }}</td>
-                    <td>
-                        {% if t.statut == 'DISPONIBLE' %}
-                        <span class="badge badge-success">Disponible</span>
-                        {% elif t.statut == 'CONSOMME' %}
-                        <span class="badge badge-secondary">Consommé</span>
-                        {% elif t.statut == 'EXPIRE' %}
-                        <span class="badge badge-warning">Expiré</span>
-                        {% else %}
-                        <span class="badge badge-danger">Annulé</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-sm text-muted">
-                        {% if t.restaurant_consommateur %}
-                        <i class="fas fa-utensils text-green"></i>
-                        {{ t.restaurant_consommateur.nom }}
-                        {% if t.date_consommation %}
-                        <div class="user-meta">{{ t.date_consommation|date:"d/m/Y" }}</div>
-                        {% endif %}
-                        {% else %}—{% endif %}
-                    </td>
-                    <td class="text-sm">{{ t.prix_paye|floatformat:0 }} FCFA</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="7">
-                        <div class="empty-state">
-                            <i class="fas fa-ticket-alt"></i>
-                            <p>Aucun ticket trouvé</p>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+<div class="card" style="overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;">
+        <thead>
+            <tr style="background:var(--bg-light);border-bottom:2px solid var(--border-color);">
+                <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">N° Ticket</th>
+                <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Propriétaire</th>
+                <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Agence</th>
+                <th style="padding:11px 14px;text-align:center;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Validité</th>
+                <th style="padding:11px 14px;text-align:center;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Statut</th>
+                <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Consommé le</th>
+                <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Restaurant</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ticket in tickets %}
+            <tr style="border-top:1px solid var(--border-color);"
+                onmouseover="this.style.background='var(--bg-light)'" onmouseout="this.style.background=''">
+                <td style="padding:11px 14px;font-family:monospace;font-size:12px;font-weight:700;color:var(--primary-green);">{{ ticket.numero_ticket }}</td>
+                <td style="padding:11px 14px;">
+                    <div style="font-weight:600;font-size:13px;">{{ ticket.proprietaire.get_full_name }}</div>
+                    <div style="font-size:11px;color:var(--text-muted);">{{ ticket.proprietaire.matricule|default:"—" }}</div>
+                </td>
+                <td style="padding:11px 14px;font-size:12px;color:var(--text-secondary);">{{ ticket.proprietaire.agence.nom|default:"—" }}</td>
+                <td style="padding:11px 14px;text-align:center;font-size:12px;color:var(--text-secondary);">
+                    {{ ticket.valide_de|date:"d/m" }} → {{ ticket.valide_jusqua|date:"d/m/Y" }}
+                </td>
+                <td style="padding:11px 14px;text-align:center;">
+                    {% if ticket.statut == 'DISPONIBLE' %}<span style="background:#e8f5e9;color:#28a745;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;">Disponible</span>
+                    {% elif ticket.statut == 'CONSOMME' %}<span style="background:#e3f2fd;color:#1976d2;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;">Consommé</span>
+                    {% elif ticket.statut == 'EXPIRE' %}<span style="background:#fff3e0;color:#f57c00;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;">Expiré</span>
+                    {% else %}<span style="background:#ffebee;color:#c62828;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;">Annulé</span>{% endif %}
+                </td>
+                <td style="padding:11px 14px;font-size:12px;color:var(--text-secondary);">
+                    {% if ticket.date_consommation %}{{ ticket.date_consommation|date:"d/m/Y H:i" }}{% else %}—{% endif %}
+                </td>
+                <td style="padding:11px 14px;font-size:12px;color:var(--text-secondary);">{{ ticket.restaurant_consommateur.nom|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="padding:48px;text-align:center;color:var(--text-muted);">
+                    <i class="fas fa-ticket-alt" style="font-size:36px;opacity:.25;display:block;margin-bottom:12px;"></i>
+                    Aucun ticket trouvé pour ces critères
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% include 'components/pagination.html' with page_obj=page_obj label="ticket(s)" %}
 </div>
 
-<style>
-.ticket-number { font-family: monospace; font-size: 11px; font-weight: 700; color: #28a745; }
-</style>
-{% endblock %}
-
-{% block dashboard_js %}
-<script src="{% static 'js/components.js' %}"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    initDataTable('ticketsTable');
-});
-</script>
 {% endblock %}

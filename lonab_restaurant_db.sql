@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ArB9Vl9ZG3SHKcJBduyzwejDrIBtEjsEkJ6B4JdmIERLez7OVxTs5gEbdObYyzm
+\restrict pHjpK6mYusykCBtYO6dBpHE539vb0hncRrsEKCvGal8meSi7k0KYqgPAw5tH1Kq
 
 -- Dumped from database version 15.15
 -- Dumped by pg_dump version 15.15
@@ -956,6 +956,10 @@ ALTER TABLE public.transactions_transactionticket ALTER COLUMN id ADD GENERATED 
 
 COPY public.accounts_agence (id, nom, code, type_agence, adresse, ville, region, telephone, email, est_active, date_ouverture, date_fermeture, date_creation, date_modification, agence_parente_id, responsable_id, direction_id) FROM stdin;
 10	Agence Siège	AG_OUA_0001	SIEGE	Ouagadougou, situé au grand marché	Ouagadougou		71882020		t	\N	\N	2026-02-19 20:33:21.00708+01	2026-02-19 20:33:21.043951+01	\N	\N	1
+11	Agence du Faso	AG_OUA_0002	REGIONALE	Ouagadougou	Ouagadougou		71882020	faso.agence.lonab@gmail.com	f	\N	\N	2026-02-23 10:25:36.989181+01	2026-02-23 10:25:51.077407+01	\N	\N	3
+13	Agence du Marché	AG_KDG_0001	REGIONALE	Au grand marché du centre ville	Koudougou		71882020	kdg.lonab@gmail.com	t	\N	\N	2026-02-23 10:52:54.31462+01	2026-02-23 10:52:54.318294+01	\N	\N	4
+14	Agence Place de la nation	AG_KDG_0002	REGIONALE	A la place de la nation	Koudougou		71882020	kdg2.lonab@gmail.com	t	\N	\N	2026-02-23 10:55:32.975957+01	2026-02-23 10:55:32.979233+01	\N	\N	4
+12	Agence Somgandé	AG_OUA_0003	REGIONALE	A somgandé	Ouagadougou		71882020	sm.lonab@gmail.com	t	\N	\N	2026-02-23 10:49:41.30302+01	2026-02-23 21:23:23.769032+01	\N	\N	3
 \.
 
 
@@ -966,6 +970,8 @@ COPY public.accounts_agence (id, nom, code, type_agence, adresse, ville, region,
 COPY public.accounts_direction (id, nom, code, description, telephone, email, est_active, date_creation, date_modification, directeur_id) FROM stdin;
 1	Direction Générale	DG_012026		71882020	dg.lonab@gmail.com	t	2026-02-11 16:20:54.581303+01	2026-02-11 16:20:54.581368+01	\N
 3	Direction Regionale du Centre	DRC		71882020		t	2026-02-19 20:36:40.800573+01	2026-02-19 20:36:40.800606+01	\N
+4	Direction Regionale du Centre Ouest	DRCO	Direction Regionale du Centre Ouest	71882020	drco.lonab@gmail.com	t	2026-02-23 10:29:23.503518+01	2026-02-23 10:29:23.503546+01	\N
+5	Direction Regionale de l'EST	DRE	Direction Regionale de l'EST	71882020	dre.lonab@gmail.com	t	2026-02-23 10:31:04.81585+01	2026-02-23 10:31:04.815864+01	\N
 \.
 
 
@@ -974,10 +980,21 @@ COPY public.accounts_direction (id, nom, code, description, telephone, email, es
 --
 
 COPY public.accounts_profilutilisateur (id, notification_email, notification_sms, langue, contact_urgence_nom, contact_urgence_telephone, notes, date_creation, date_modification, utilisateur_id) FROM stdin;
-4	t	f	fr				2026-02-20 02:52:11.578416+01	2026-02-20 03:05:10.346119+01	4
-3	t	f	fr				2026-02-19 20:41:56.657827+01	2026-02-20 03:06:46.077707+01	3
-5	t	f	fr				2026-02-20 14:43:10.869942+01	2026-02-21 08:53:25.663161+01	5
-1	t	f	fr				2026-02-11 01:40:46.372973+01	2026-02-20 00:59:43.489362+01	1
+16	t	f	fr				2026-02-23 11:30:52.035538+01	2026-02-23 21:24:11.330834+01	16
+5	t	f	fr				2026-02-20 14:43:10.869942+01	2026-02-26 17:18:30.603037+01	5
+1	t	f	fr				2026-02-11 01:40:46.372973+01	2026-02-26 17:50:50.106577+01	1
+19	t	f	fr				2026-02-23 21:43:31.012246+01	2026-02-23 21:44:43.287331+01	19
+15	t	f	fr				2026-02-23 11:29:53.417563+01	2026-02-23 21:47:24.295973+01	15
+13	t	f	fr				2026-02-23 11:25:46.457377+01	2026-02-23 21:58:59.409445+01	13
+9	t	f	fr				2026-02-23 11:20:21.134296+01	2026-02-23 19:02:34.767402+01	9
+10	t	f	fr				2026-02-23 11:22:19.01522+01	2026-02-23 19:02:57.778057+01	10
+11	t	f	fr				2026-02-23 11:23:28.027317+01	2026-02-23 19:03:28.551903+01	11
+12	t	f	fr				2026-02-23 11:24:37.80387+01	2026-02-23 19:03:54.477079+01	12
+14	t	f	fr				2026-02-23 11:28:12.097792+01	2026-02-23 19:04:46.488489+01	14
+17	t	f	fr				2026-02-23 11:32:20.07859+01	2026-02-23 19:06:02.846402+01	17
+18	t	f	fr				2026-02-23 11:35:23.194653+01	2026-02-23 19:06:30.064073+01	18
+3	t	f	fr				2026-02-19 20:41:56.657827+01	2026-02-25 19:48:15.461628+01	3
+4	t	f	fr				2026-02-20 02:52:11.578416+01	2026-02-26 09:23:29.900829+01	4
 \.
 
 
@@ -986,10 +1003,21 @@ COPY public.accounts_profilutilisateur (id, notification_email, notification_sms
 --
 
 COPY public.accounts_utilisateur (id, password, last_login, email, nom_utilisateur, prenom, nom, telephone, genre, date_naissance, type_utilisateur, matricule, departement, poste, photo_profil, adresse, est_actif, est_personnel, est_verifie, est_super_utilisateur, date_inscription, derniere_connexion, date_modification, restaurant_gere_id, superieur_hierarchique_id, agence_id, direction_id) FROM stdin;
-5	pbkdf2_sha256$1200000$21lDfO7tzaNTB29hxJ5I9T$MA0Zx8tJqHH5PRwG3bDFXKsaR17Xgh3FM2/aRkXzEAA=	2026-02-21 08:53:25.620993+01	kontamaleandrebenilde@gmail.com	kontamaleandrebenilde	Resto	Manager	71882020	M	\N	GESTIONNAIRE_RESTAURANT	\N					t	f	f	f	2026-02-20 14:43:09.211812+01	2026-02-21 08:53:25.658933+01	2026-02-20 14:46:41.952873+01	15	\N	\N	\N
-1	pbkdf2_sha256$1200000$qNRk8aAnMrJbAeuPxTS1OJ$aQ4eISKzK8rTun96TEgRVtw4RcjhJcUcXzc+zhr1UA8=	2026-02-20 00:59:43.482201+01	admin@gmail.com	admin	Admin	Admin		M	\N	SUPER_ADMIN	\N			profils/QRCode_20250805AG-0010036_1.png		t	t	f	t	2026-02-11 01:40:46.36087+01	2026-02-20 00:59:43.488124+01	2026-02-20 00:16:08.217551+01	\N	\N	\N	\N
-4	pbkdf2_sha256$1200000$UdCCWnRRNCQukag7fWLdS8$c7OIDPDAmXrPIxsjpK4RHoCW114W0F1Qt+KCRWhi5E0=	2026-02-20 03:03:06.392163+01	leandrebenilde07@gmail.com	EMP_0001	Patricia	Nombré	71882020	F	2026-05-29	CLIENT	EMP_0001	Finance	Finance	profils/téléchargement.jpg	Ouagadougou _ Karpala	t	f	f	f	2026-02-20 02:52:08.934403+01	2026-02-20 03:03:06.40165+01	2026-02-20 03:05:10.330164+01	\N	\N	10	1
-3	pbkdf2_sha256$1200000$lJjkHTpwuJPDCLF3jUfp3e$COdXnr0QoA53ku2iLDhkzDo7FcwePeqtIQfUtQKAbmw=	2026-02-19 21:01:51.770183+01	testeur.test@gmail.com	testeur.test	Léandre	Paré	71882020	M	2002-01-07	CAISSIER	EMP_0002	RH	Assistant	profils/photoIdentite.jpg		t	f	f	f	2026-02-19 20:41:56.638001+01	2026-02-19 21:01:51.781089+01	2026-02-20 03:06:46.070361+01	\N	\N	10	1
+16	pbkdf2_sha256$1200000$hXcYVVp1NTzurBvlhhWeeE$FEoOIqEs6Gjc/5mrl2SuvDSdEoNsz4/8ugXEDr1Be5c=	2026-02-23 21:24:11.299185+01	caissier2@gmail.com	caissier2	Caissier 2	Caissier 2	71882020	F	\N	CAISSIER	\N					t	f	f	f	2026-02-23 11:30:51.171861+01	2026-02-23 21:24:11.329181+01	2026-02-23 19:05:37.559449+01	\N	\N	13	3
+14	pbkdf2_sha256$1200000$vfs3K3u9LiNaod7IPaUCQ1$kO7lB6ex8RR9inyuzztvxOXU52Q5yDrnRGokoR5w/1o=	\N	client6@gmail.com	EMP_008	Client 6	Client 6	71882020	F	\N	CLIENT	EMP_008					f	f	f	f	2026-02-23 11:28:11.123658+01	\N	2026-02-23 19:04:46.477018+01	\N	\N	13	3
+3	pbkdf2_sha256$1200000$CSY1igjEztloB7SVZ7A6nJ$wHgHZwoXRT7vN9GggEf6U/Xy6bVaN2IN67cL80Y5S4g=	2026-02-24 12:36:15.165608+01	caissier@gmail.com	testeur.test	Caissier	Caissier	71882020	M	2002-01-07	CAISSIER	EMP_0002	RH	Assistant	profils/photoIdentite.jpg		t	f	f	f	2026-02-19 20:41:56.638001+01	2026-02-24 12:36:15.180111+01	2026-02-25 19:48:15.45276+01	\N	\N	10	1
+17	pbkdf2_sha256$1200000$WyM17GPX7Pp50PncZIM2T0$DaHBCO40y5JUMz0mZHj2IQODylSU1BG+Dy/loNwTsHI=	\N	caissier3@gmail.com	caissier3	Caissier 3	Caissier 3	71882020	F	\N	CAISSIER	\N					t	f	f	f	2026-02-23 11:32:19.255496+01	\N	2026-02-23 19:06:02.836271+01	\N	\N	14	4
+18	pbkdf2_sha256$1200000$gabyAzRtyi6gOAp4TisKDW$gCUnJ6oTagU1nNETQ0g9UvuRUusEsy069nAhPwt6Jsk=	\N	client7@gmail.com	EMP_0009	Client 7	Client 7	71882020	M	\N	CLIENT	EMP_0009					t	f	f	f	2026-02-23 11:35:22.305825+01	\N	2026-02-23 19:06:30.053675+01	\N	\N	14	4
+15	pbkdf2_sha256$1200000$rZIzt2YxMuvA4iogs6kO1X$qzw5AMOtS7c/LwC5J8r1DTkpZOmz5iQxCEuyXdZQKvw=	2026-02-23 21:47:24.281257+01	caissier1@gmail.com	caissier1	Caissier 1	Caissier 1	71882020	M	\N	CAISSIER	\N					t	f	f	f	2026-02-23 11:29:52.556746+01	2026-02-23 21:47:24.293848+01	2026-02-23 21:46:13.879079+01	\N	\N	12	3
+13	pbkdf2_sha256$1200000$PunIIpwhw6yx5EcZPbMdY4$geP5+1FM9QPsxzrzD84mCjfGRMp6TvU0SckYbQ/50EM=	2026-02-23 21:58:59.398332+01	client5@gmail.com	EMP_0007	Client 5	Client 5		F	\N	CLIENT	EMP_0007					t	f	f	f	2026-02-23 11:25:45.583899+01	2026-02-23 21:58:59.407566+01	2026-02-23 19:04:22.953532+01	\N	\N	12	3
+9	pbkdf2_sha256$1200000$rIqkmB6ca7MfilkWYASKM5$Uk3ZeQ4e+IAPIAh+l44CyrsvsMJFxiJhEaTvtdfJpQw=	\N	client1@gmail.com	EMP_0003	Client 1	Client 1	71882020	M	\N	CLIENT	EMP_0003					t	f	f	f	2026-02-23 11:20:20.158066+01	\N	2026-02-23 19:02:34.754938+01	\N	\N	10	1
+10	pbkdf2_sha256$1200000$JnbybtV5z4HvcwyBz98zad$IpSUmWZn3bL+GOG4/uQ8+4t8k/N4S6YEWqIYUFx8dKQ=	\N	client2@gmail.com	EMP_0004	Client 2	Client 2	71882020	F	\N	CLIENT	EMP_0004					t	f	f	f	2026-02-23 11:22:18.126231+01	\N	2026-02-23 19:02:57.770892+01	\N	\N	13	3
+11	pbkdf2_sha256$1200000$yhBf40NtLR4VYYz9ETCDmC$+rY2Na7eMDWchW5v6gtK88XqnW4WOsPGw4MRL9IHJ8E=	\N	client3@gmail.com	EMP_0005	Client 3	Client 3	71882020	F	\N	CLIENT	EMP_0005					t	f	f	f	2026-02-23 11:23:27.106884+01	\N	2026-02-23 19:03:28.542382+01	\N	\N	13	3
+12	pbkdf2_sha256$1200000$dDr2DGYUDhyyAKUO28zqIB$l+KxZ/9OJl6eSyF6azAIirFDPZ7yWoGLyvNTGw0vYkE=	\N	client4@gmail.com	EMP_0006	Client 4	Client 4	71882020	M	\N	CLIENT	EMP_0006					t	f	f	f	2026-02-23 11:24:36.955605+01	\N	2026-02-23 19:03:54.467542+01	\N	\N	10	1
+5	pbkdf2_sha256$1200000$fQ5dJLYtuajILlmG2xnW8z$xlYtVZ4IQgIqGufb4SY5Gm+M+WnN+HXghFlNK+m0qHI=	2026-02-26 17:18:30.58768+01	manager@gmail.com	kontamaleandrebenilde	Manager	Manager	71882020	M	\N	GESTIONNAIRE_RESTAURANT	\N					t	f	f	f	2026-02-20 14:43:09.211812+01	2026-02-26 17:18:30.599489+01	2026-02-25 19:49:36.335242+01	15	\N	10	1
+19	pbkdf2_sha256$1200000$f4BJkIcfE8pybZxs6u4I5c$CeFjfvvYy4aJSSovkSmRIAwqPQK7ujjTf27HXI8kqLo=	2026-02-23 21:44:43.275851+01	manager1@gmail.com	manager1	Manager 1	Manager 1	71882020	M	\N	GESTIONNAIRE_RESTAURANT	\N					t	f	f	f	2026-02-23 21:43:27.346994+01	2026-02-23 21:44:43.285515+01	2026-02-23 21:44:13.848777+01	16	\N	12	3
+4	pbkdf2_sha256$1200000$Ob892ZUV442rPnrodr7H0Y$zrIue3ZXtWOqKv4Qx2Ip8a2n4MIKWMI1l84UH5IETHQ=	2026-02-26 09:23:29.892894+01	client@gmail.com	EMP_0001	Client	Client	71882020	F	2026-05-29	CLIENT	EMP_0001	Finance	Finance	profils/téléchargement.jpg	Ouagadougou _ Karpala	t	f	f	f	2026-02-20 02:52:08.934403+01	2026-02-26 09:23:29.899645+01	2026-02-25 19:45:06.247173+01	\N	\N	10	1
+1	pbkdf2_sha256$1200000$T7C5PUHhCQpt2zhfucVnKK$6aTA2XKHzxsNBllGGTnXNvEauljB9eLvr6KAyLtBSBo=	2026-02-26 17:50:50.082623+01	admin@gmail.com	admin	Admin	Admin		M	\N	ADMIN	\N			profils/QRCode_20250805AG-0010036_1.png		t	t	t	t	2026-02-11 01:40:46.36087+01	2026-02-26 17:50:50.100202+01	2026-02-25 16:07:21.941085+01	\N	\N	\N	\N
 \.
 
 
@@ -1138,6 +1166,38 @@ COPY public.django_admin_log (id, action_time, object_id, object_repr, action_fl
 6	2026-02-20 03:02:47.169142+01	4	Patricia Nombré (Client (Employé))	2	[{"changed": {"fields": ["password"]}}]	10	1
 7	2026-02-20 03:06:46.08399+01	3	Léandre Paré (Caissier)	2	[{"changed": {"fields": ["Matricule", "D\\u00e9partement", "Poste"]}}]	10	1
 8	2026-02-20 14:46:41.967348+01	5	Resto Manager (Gestionnaire de restaurant)	2	[{"changed": {"fields": ["password"]}}]	10	1
+9	2026-02-23 18:57:52.168526+01	3	Léandre Paré (Caissier)	2	[{"changed": {"fields": ["password"]}}]	10	1
+10	2026-02-23 18:58:59.210581+01	15	Caissier 1 Caissier 1 (Caissier)	2	[{"changed": {"fields": ["password"]}}]	10	1
+11	2026-02-23 18:59:27.965585+01	16	Caissier 2 Caissier 2 (Caissier)	2	[{"changed": {"fields": ["password"]}}]	10	1
+12	2026-02-23 18:59:57.165491+01	17	Caissier 3 Caissier 3 (Caissier)	2	[{"changed": {"fields": ["password"]}}]	10	1
+13	2026-02-23 19:00:24.366949+01	5	Resto Manager (Gestionnaire de restaurant)	2	[{"changed": {"fields": ["password"]}}]	10	1
+14	2026-02-23 19:01:04.508405+01	6	Resto Manager (Gestionnaire de restaurant)	2	[{"changed": {"fields": ["password"]}}]	10	1
+15	2026-02-23 19:01:44.721236+01	7	Manager 2 Manager 2 (Gestionnaire de restaurant)	2	[{"changed": {"fields": ["password"]}}]	10	1
+16	2026-02-23 19:02:09.976476+01	8	Manager 3 Manager 3 (Gestionnaire de restaurant)	2	[{"changed": {"fields": ["password"]}}]	10	1
+17	2026-02-23 19:02:34.769495+01	9	Client 1 Client 1 (Client (Employé))	2	[{"changed": {"fields": ["password"]}}]	10	1
+18	2026-02-23 19:02:57.779931+01	10	Client 2 Client 2 (Client (Employé))	2	[{"changed": {"fields": ["password"]}}]	10	1
+19	2026-02-23 19:03:28.554161+01	11	Client 3 Client 3 (Client (Employé))	2	[{"changed": {"fields": ["password"]}}]	10	1
+20	2026-02-23 19:03:54.479205+01	12	Client 4 Client 4 (Client (Employé))	2	[{"changed": {"fields": ["password"]}}]	10	1
+21	2026-02-23 19:04:22.965177+01	13	Client 5 Client 5 (Client (Employé))	2	[{"changed": {"fields": ["password"]}}]	10	1
+22	2026-02-23 19:04:46.490827+01	14	Client 6 Client 6 (Client (Employé))	2	[{"changed": {"fields": ["password"]}}]	10	1
+23	2026-02-23 19:05:16.823733+01	15	Caissier 1 Caissier 1 (Caissier)	2	[{"changed": {"fields": ["password"]}}]	10	1
+24	2026-02-23 19:05:37.570448+01	16	Caissier 2 Caissier 2 (Caissier)	2	[{"changed": {"fields": ["password"]}}]	10	1
+25	2026-02-23 19:06:02.848427+01	17	Caissier 3 Caissier 3 (Caissier)	2	[{"changed": {"fields": ["password"]}}]	10	1
+26	2026-02-23 19:06:30.066923+01	18	Client 7 Client 7 (Client (Employé))	2	[{"changed": {"fields": ["password"]}}]	10	1
+27	2026-02-23 21:23:23.774628+01	12	Agence Somgandé (AG_OUA_0003)	2	[]	7	1
+28	2026-02-23 21:42:00.583315+01	5	Resto Manager (Gestionnaire de restaurant)	2	[{"changed": {"fields": ["Actif"]}}]	10	1
+29	2026-02-23 21:44:13.721181+01	19	Manager 1 Manager 1 (Gestionnaire de restaurant)	2	[{"changed": {"fields": ["password"]}}]	10	1
+30	2026-02-23 21:44:13.865977+01	19	Manager 1 Manager 1 (Gestionnaire de restaurant)	2	[{"changed": {"fields": ["password"]}}]	10	1
+31	2026-02-23 21:46:13.895591+01	15	Caissier 1 Caissier 1 (Caissier)	2	[{"changed": {"fields": ["Actif"]}}]	10	1
+32	2026-02-25 16:07:21.953603+01	1	Admin Admin (Administrateur)	2	[{"changed": {"fields": ["Type d'utilisateur", "V\\u00e9rifi\\u00e9"]}}]	10	1
+33	2026-02-25 19:38:43.220268+01	3	Léandre Paré (Caissier)	2	[{"changed": {"fields": ["Adresse email"]}}]	10	1
+34	2026-02-25 19:40:54.301473+01	4	Patricia Nombré (Client (Employé))	2	[{"changed": {"fields": ["Adresse email"]}}]	10	1
+35	2026-02-25 19:41:49.168461+01	4	Patricia Nombré (Client (Employé))	2	[{"changed": {"fields": ["password"]}}]	10	1
+36	2026-02-25 19:42:13.488794+01	4	Caissier Caissier (Client (Employé))	2	[{"changed": {"fields": ["Pr\\u00e9nom", "Nom"]}}]	10	1
+37	2026-02-25 19:45:06.263847+01	4	Client Client (Client (Employé))	2	[{"changed": {"fields": ["Pr\\u00e9nom", "Nom"]}}]	10	1
+38	2026-02-25 19:48:15.472817+01	3	Caissier Caissier (Caissier)	2	[{"changed": {"fields": ["Pr\\u00e9nom", "Nom"]}}]	10	1
+39	2026-02-25 19:49:09.5224+01	5	Manager Manager (Gestionnaire de restaurant)	2	[{"changed": {"fields": ["Adresse email", "Pr\\u00e9nom"]}}]	10	1
+40	2026-02-25 19:49:36.348199+01	5	Manager Manager (Gestionnaire de restaurant)	2	[{"changed": {"fields": ["password"]}}]	10	1
 \.
 
 
@@ -1219,6 +1279,8 @@ COPY public.django_migrations (id, app, name, applied) FROM stdin;
 40	transactions	0002_alter_transactionticket_dernier_ticket_and_more	2026-02-21 12:57:36.949539+01
 41	transactions	0003_alter_transactionticket_montant_total_and_more	2026-02-21 13:08:06.26598+01
 42	transactions	0004_alter_transactionticket_mode_paiement_and_more	2026-02-21 13:12:00.93934+01
+43	restaurants	0003_alter_menu_unique_together	2026-02-23 00:03:57.257909+01
+44	accounts	0004_alter_utilisateur_type_utilisateur	2026-02-25 16:04:11.242062+01
 \.
 
 
@@ -1227,13 +1289,16 @@ COPY public.django_migrations (id, app, name, applied) FROM stdin;
 --
 
 COPY public.django_session (session_key, session_data, expire_date) FROM stdin;
+xkc7y7mgpgy23s3xx9cxiubkav45vdum	e30:1vuaLY:SJokqiRjQ2Ip0-CQxr2V_TGnMIazREaikOFSOcjna8I	2026-03-09 19:07:52.218005+01
+8fr9ju278dq9dkwvnlmytsj5alixvxta	e30:1vucJ3:oVclGuaOz8fzbPQStC2xx3UcahJhgi6anHq8VDXQ_vM	2026-03-09 21:13:25.724167+01
+9q9jqw11xlr9bt20lzoq739mn37rnryf	.eJxVjMsKgzAQAP8l5yJrjInxWPDcU89hjRsMrVGy2gel_16EHtrrzDAv4XBbR7cxZRcH0YpSHH5Zj_5CaRe4LFyg9_OWVi5uke5cdBPG6ymfmXLCiY7f-O8wIo-iFVIT1D5IUKUOPdoAVmppZFU2RBaUD1JRpXwTIHirFNSIRteDNSbQALBPmZjjnBw9lpifooX3B9_dP20:1vucmr:jDJO4bCr8o6zBvXPJFqOtT9X9DsWS-E8H3DqZlZh_Z4	2026-03-09 21:44:13.734055+01
+avpf7bv5pw230j6xmimnvr6jq2razlar	.eJxVjMsOgjAQAP-lZ0NaoLRwNPHsyXOzuy6hUQrpgo8Y_91oPOh1ZjIPFWBdhrAK5xCPqlOV2vwyBDpxeguYZymAaFrTIsUl8lWK3QjxvM8H4Zxg5O03_jsMIIPqVG8d-bYxZLivEDVbdhYtOfBAGuq-JDKIBjXUTcs1smaH1mtfGuPdZyosEqcU-DbHfFedfr4AL49AfA:1vuqi7:E6b8QhiE_hVqKtxqOe5XwCBuP-c2FWaDYus-K_C3xkc	2026-03-10 12:36:15.186041+01
+73hshzw6l4dpq8b8d5pp6t7al6g1wp7t	e30:1vuqkW:1MYAlaTTAPHHZt8OEoPQAdO3wlWtfWtw4QJRPTotyE4	2026-03-10 12:38:44.920461+01
 k9zgkipdqr9qf2snxfhgeycnib02lktb	e30:1vtA8Y:AeVUo9v4S-eh5kV_rzek80_6TJVcj8NNXMQqKOoFjQw	2026-03-05 20:56:34.975146+01
 cfqx2knnt4vos0n9wqsx26tlfm3r4z1u	e30:1vtAAu:6KW-JjPvVjG0QlmP-Fs-9umhWe9KTBgth0PaSaLPK-I	2026-03-05 20:59:00.382581+01
-mnxen4jfhjhwl4ay2iz3mel5ag1b58hc	.eJxVjEEOwiAQAP-yZ0PQFlh69O4byAJbixpoSptojH83JD3odWYyb3C0rZPbKi8uRRigg8Mv8xTunJuIN8rXIkLJ65K8aInYbRWXEvlx3tu_wUR1ggFUb_sgtUI8GY5Gk9FWKqP4yD702pL2FtkQRxy9jUoiSsaxhZ2NSG1audZUsuPnnJYXDPLzBW7BPu0:1vtADf:P50gwdU957r_U64oiM01XKCneY1qKsOaR1koKZK4vB0	2026-03-05 21:01:51.784838+01
-tgvacne5gz386dq2bj1l8h6ee6gsu34t	.eJxVjMsOgjAQAP-lZ0PaAtLlaOLZk-dm2S6hUQrpgo8Y_92QeNDrzGReyuO6DH4Vzj4G1apK7X5Zh3ThtAmcZymQaFrTIsUt8l2K44jxespn4Zxw5MM3_jsMKINqlWMEIgQqg6bGmq6yjmprydienWHHqKGkYAFDCQiNcTUxUB807w3121RYJE7J82OO-ala_f4ALZZAwA:1vtFrG:QgPaCvco8sHO5s3trN-IgWAEKnKpuiY1N1zvyDjTdL8	2026-03-06 03:03:06.411372+01
-ic3td6c0e3u4pxfnlim5dd3b19uoiyku	.eJxVjEEOwiAQAP-yZ0NKYYH26N03ENhuLWqgKW2iMf7dNOlBrzOTeYMP2zr5rfLi0wA9SDj9shjoznkXwy3kaxFU8rqkKPZEHLaKSxn4cT7av8EU6gQ9KIPaErLr4kjIbTSoGmVcIyOi1VqNypHqWHbaRMR2DBapVSytoeCc26eVa00le37OaXlB33y-Tm4-CQ:1vtQq9:Pf29PBnoz95QjEKntzWG_jTh5Ccxzl1SOAAibW7eccw	2026-03-06 14:46:41.986949+01
 upiv6k4vp4mjjri35ixj9r9dsj0a38pu	.eJxVjMsKwjAQAP8lZyl5bRt6FDx78hw2yYYGbS3Z1gfiv0vBg15nhnkJj-sy-JWp-pJEL0DsflnAeKZpEzjP3GCM13VauLkVunNzGLFcjvXEVCccaf-N_w4D8iB60YHNMZsAZCy45JRUEEibmDEZkFY7CUim1ZBJtUZZzDpR5xSmEHXU25SJuVwnT4-51Kfo5fsD-kQ_5g:1vtQqV:PDeY5stWffuKzaZDEGRJgOAhQeBWq0xBrZEGkzOUnvI	2026-03-06 14:47:03.970799+01
-c4mmb0prfu4t42leftwgqiwwumoqvezx	.eJxVjMsKwjAQAP8lZyl5bRt6FDx78hw2yYYGbS3Z1gfiv0vBg15nhnkJj-sy-JWp-pJEL0DsflnAeKZpEzjP3GCM13VauLkVunNzGLFcjvXEVCccaf-N_w4D8iB60YHNMZsAZCy45JRUEEibmDEZkFY7CUim1ZBJtUZZzDpR5xSmEHXU25SJuVwnT4-51Kfo5fsD-kQ_5g:1vthnp:HEulLWHbufgBdUgd0sSJEAMqdT7RSe9Itd_6Pq5D0ug	2026-03-07 08:53:25.667961+01
+4d1hzi6kvyxljpxq068a3ukcy7sl4jfr	.eJxVjMsKwjAQRf8laylpXg1dCq5duQ6TyZQGbSyZ1gfiv0vBhW7PPfe8RIB1GcPKVENOohdG7H5ZBDxT2QaYZ24A8bqWhZtbpjs3hwny5VhPTLXARPuv_FcYgcft7logLaEF41yMKkYFdvAGyWKrovXGe00oVUKVUHo_eOt116mUBp2c3KJMzPlaAj3mXJ-il-8PFc5AHA:1vvWef:TmWuDryRz8sKN63-duUBMFNoojMIpbJMFVYQzanD3YY	2026-03-12 09:23:29.903727+01
+1ktdj6xmqt2k5d79s1y481pppxru9gt6	.eJxVjMsKwjAQAP8lZykbo0nTo-DZk-ew2W5o0D7Itj4Q_10KHvQ6M8xLBVzmLizCJeRWNUqrzS-LSBceVoHTJBUSjcswS3XLfJfq2GO-nspZuAzY8-Eb_x06lE41Cgig3ZLT3pOlWu-iQQ9ACSyB8QQ6sosmIqbap5Rszdo4iA7sHhjTOhUWyeMQ-DHl8lQNvD__CkAT:1vveZe:Jk-zZXWogRajyu955pMcmfbmLBDRyRwaZiqny2q5Tbw	2026-03-12 17:50:50.110523+01
 \.
 
 
@@ -1258,6 +1323,24 @@ COPY public.notifs_modeleemail (id, nom, type_modele, sujet, corps_texte, corps_
 --
 
 COPY public.notifs_notification (id, type_notification, priorite, titre, message, lien, texte_lien, est_lu, lu_le, envoyer_email, email_envoye, email_envoye_le, envoyer_sms, sms_envoye, sms_envoye_le, modele_lie, id_lie, cree_le, destinataire_id) FROM stdin;
+4	SYSTEME	MOYENNE	Welcome	Bonjour et bon debut de semaine			t	2026-02-23 10:20:27.101605+01	f	f	\N	f	f	\N		\N	2026-02-23 10:18:06.09805+01	1
+1	SYSTEME	MOYENNE	Welcome	Bonjour et bon debut de semaine			t	2026-02-24 09:56:24.728565+01	f	f	\N	f	f	\N		\N	2026-02-23 10:18:06.097754+01	5
+2	SYSTEME	MOYENNE	Welcome	Bonjour et bon debut de semaine			t	2026-02-24 09:56:24.728565+01	f	f	\N	f	f	\N		\N	2026-02-23 10:18:06.097872+01	4
+3	SYSTEME	MOYENNE	Welcome	Bonjour et bon debut de semaine			t	2026-02-24 09:56:24.728565+01	f	f	\N	f	f	\N		\N	2026-02-23 10:18:06.097963+01	3
+5	RAPPEL	MOYENNE	Info matinale	Les menus du jour sont disponibles			t	2026-02-24 16:22:36.638466+01	f	f	\N	f	f	\N		\N	2026-02-24 09:58:18.278557+01	19
+15	RAPPEL	MOYENNE	Info matinale	Les menus du jour sont disponibles			t	2026-02-26 10:10:31.064911+01	f	f	\N	f	f	\N		\N	2026-02-24 09:58:18.278748+01	5
+6	RAPPEL	MOYENNE	Info matinale	Les menus du jour sont disponibles			t	2026-02-26 10:20:50.158504+01	f	f	\N	f	f	\N		\N	2026-02-24 09:58:18.278592+01	18
+7	RAPPEL	MOYENNE	Info matinale	Les menus du jour sont disponibles			t	2026-02-26 10:20:50.158504+01	f	f	\N	f	f	\N		\N	2026-02-24 09:58:18.278611+01	17
+8	RAPPEL	MOYENNE	Info matinale	Les menus du jour sont disponibles			t	2026-02-26 10:20:50.158504+01	f	f	\N	f	f	\N		\N	2026-02-24 09:58:18.278628+01	16
+9	RAPPEL	MOYENNE	Info matinale	Les menus du jour sont disponibles			t	2026-02-26 10:20:50.158504+01	f	f	\N	f	f	\N		\N	2026-02-24 09:58:18.278646+01	15
+10	RAPPEL	MOYENNE	Info matinale	Les menus du jour sont disponibles			t	2026-02-26 10:20:50.158504+01	f	f	\N	f	f	\N		\N	2026-02-24 09:58:18.278663+01	13
+11	RAPPEL	MOYENNE	Info matinale	Les menus du jour sont disponibles			t	2026-02-26 10:20:50.158504+01	f	f	\N	f	f	\N		\N	2026-02-24 09:58:18.278679+01	12
+12	RAPPEL	MOYENNE	Info matinale	Les menus du jour sont disponibles			t	2026-02-26 10:20:50.158504+01	f	f	\N	f	f	\N		\N	2026-02-24 09:58:18.278696+01	11
+13	RAPPEL	MOYENNE	Info matinale	Les menus du jour sont disponibles			t	2026-02-26 10:20:50.158504+01	f	f	\N	f	f	\N		\N	2026-02-24 09:58:18.278713+01	10
+14	RAPPEL	MOYENNE	Info matinale	Les menus du jour sont disponibles			t	2026-02-26 10:20:50.158504+01	f	f	\N	f	f	\N		\N	2026-02-24 09:58:18.27873+01	9
+16	RAPPEL	MOYENNE	Info matinale	Les menus du jour sont disponibles			t	2026-02-26 10:20:50.158504+01	f	f	\N	f	f	\N		\N	2026-02-24 09:58:18.278765+01	4
+17	RAPPEL	MOYENNE	Info matinale	Les menus du jour sont disponibles			t	2026-02-26 10:20:50.158504+01	f	f	\N	f	f	\N		\N	2026-02-24 09:58:18.278782+01	3
+18	RAPPEL	MOYENNE	Info matinale	Les menus du jour sont disponibles			t	2026-02-26 10:20:50.158504+01	f	f	\N	f	f	\N		\N	2026-02-24 09:58:18.278798+01	1
 \.
 
 
@@ -1266,12 +1349,23 @@ COPY public.notifs_notification (id, type_notification, priorite, titre, message
 --
 
 COPY public.restaurants_menu (id, jour_semaine, date, nom, description, plats, est_disponible, quantite_disponible, quantite_consomme, prix, image, date_creation, date_modification, restaurant_id) FROM stdin;
-1	LUNDI	2026-02-23	Riz - Sauce graine		Riz - Sauce graine	t	20	0	2000.00	menus/riz_sauce_graine.jpg	2026-02-22 11:09:30.346192+01	2026-02-22 11:09:30.363438+01	15
-5	LUNDI	\N	Foutou banane		Foutou banane	t	15	0	2000.00	menus/Foutou_banane.jpg	2026-02-22 11:11:56.751549+01	2026-02-22 11:11:56.785421+01	15
-6	LUNDI	\N	spaghetti bolognais		spaghetti bolognais	t	20	0	2000.00	menus/spaghetti_bolognais.jpg	2026-02-22 11:13:22.860115+01	2026-02-22 11:13:22.877236+01	15
-7	LUNDI	\N	Salade composée		Salade composée	t	15	0	2000.00	menus/Salade_composée.jpg	2026-02-22 11:16:29.484592+01	2026-02-22 11:16:29.852675+01	15
-8	MARDI	2026-02-24	Riz - Sauce feuilles		 Riz - Sauce feuilles	t	25	0	2000.00	menus/Riz_-_Sauce_feuilles.jpg	2026-02-22 11:19:32.67253+01	2026-02-22 11:19:32.683406+01	15
-9	MARDI	\N	Attieké		Attieké	t	15	0	2000.00	menus/Attieké.jpg	2026-02-22 11:21:19.427955+01	2026-02-22 11:21:19.800481+01	15
+34	VENDREDI	2026-02-27	Salade composée			t	15	0	2000.00	menus/Salade_composée_JZaVV1w.jpg	2026-02-26 10:12:47.402686+01	2026-02-26 10:12:47.402712+01	15
+27	JEUDI	2026-02-26	Attieké			t	19	0	2000.00	menus/Attieké_gxOs7zl.jpg	2026-02-23 00:08:52.441142+01	2026-02-23 00:08:52.44116+01	15
+10	LUNDI	2026-02-23	Riz - Sauce graine			t	30	0	2000.00	menus/riz_sauce_graine_9T4pvmk.jpg	2026-02-22 23:54:05.309555+01	2026-02-22 23:54:05.325235+01	15
+19	LUNDI	2026-02-23	Foutou banane			t	15	0	2000.00	menus/Foutou_banane_Gq7kLBw.jpg	2026-02-23 00:04:37.945436+01	2026-02-23 00:04:37.959065+01	15
+20	LUNDI	2026-02-23	Salade composée			t	15	0	2000.00	menus/Salade_composée_JZaVV1w.jpg	2026-02-23 00:05:42.942956+01	2026-02-23 00:05:43.301733+01	15
+22	MARDI	2026-02-24	Riz - Sauce feuilles			t	15	0	2000.00	menus/Riz_-_Sauce_feuilles_rF0ecQX.jpg	2026-02-23 00:07:06.425606+01	2026-02-23 00:07:06.435877+01	15
+23	MARDI	2026-02-24	Spaghetti bolognais			t	15	0	2000.00	menus/spaghetti_bolognais_Ht24aOk.jpg	2026-02-23 00:07:30.421399+01	2026-02-23 00:07:30.435278+01	15
+24	MERCREDI	2026-02-25	Riz - Sauce graine			t	30	0	2000.00	menus/riz_sauce_graine_9T4pvmk.jpg	2026-02-23 00:08:30.843115+01	2026-02-23 00:08:30.843127+01	15
+25	MERCREDI	2026-02-25	Foutou banane			t	15	0	2000.00	menus/Foutou_banane_Gq7kLBw.jpg	2026-02-23 00:08:30.847556+01	2026-02-23 00:08:30.847573+01	15
+26	MERCREDI	2026-02-25	Salade composée			t	15	0	2000.00	menus/Salade_composée_JZaVV1w.jpg	2026-02-23 00:08:30.849372+01	2026-02-23 00:08:30.849387+01	15
+28	JEUDI	2026-02-26	Riz - Sauce feuilles			t	15	0	2000.00	menus/Riz_-_Sauce_feuilles_rF0ecQX.jpg	2026-02-23 00:08:52.447754+01	2026-02-23 00:08:52.447863+01	15
+29	JEUDI	2026-02-26	Spaghetti bolognais			t	15	0	2000.00	menus/spaghetti_bolognais_Ht24aOk.jpg	2026-02-23 00:08:52.45232+01	2026-02-23 00:08:52.452347+01	15
+30	LUNDI	2026-02-23	Plats test	Plats test		t	2	0	2000.00	menus/riz_sauce_graine_paRIj0R.jpg	2026-02-23 21:50:44.243719+01	2026-02-24 00:34:01.717446+01	16
+31	MARDI	2026-02-24	Plats test	Plats test		t	10	0	2000.00	menus/riz_sauce_graine_paRIj0R.jpg	2026-02-24 00:30:53.838733+01	2026-02-24 12:34:05.229322+01	16
+21	MARDI	2026-02-24	Attieké			t	19	0	2000.00	menus/Attieké_gxOs7zl.jpg	2026-02-23 00:06:20.111377+01	2026-02-23 00:06:20.120117+01	15
+32	VENDREDI	2026-02-27	Riz - Sauce graine			t	30	0	2000.00	menus/riz_sauce_graine_9T4pvmk.jpg	2026-02-26 10:12:47.385371+01	2026-02-26 10:12:47.385486+01	15
+33	VENDREDI	2026-02-27	Foutou banane			t	15	0	2000.00	menus/Foutou_banane_Gq7kLBw.jpg	2026-02-26 10:12:47.394811+01	2026-02-26 10:12:47.394836+01	15
 \.
 
 
@@ -1281,6 +1375,7 @@ COPY public.restaurants_menu (id, jour_semaine, date, nom, description, plats, e
 
 COPY public.restaurants_planningrestaurant (id, type_planning, date_debut, date_fin, est_actif, date_creation, date_modification, agence_id, cree_par_id, restaurant_id) FROM stdin;
 2	MENSUEL	2026-02-16	2026-03-22	t	2026-02-22 11:38:30.528148+01	2026-02-22 11:38:30.528172+01	10	3	15
+3	MENSUEL	2026-02-23	2026-03-22	t	2026-02-23 21:47:58.832434+01	2026-02-23 21:47:58.832445+01	12	15	16
 \.
 
 
@@ -1289,6 +1384,12 @@ COPY public.restaurants_planningrestaurant (id, type_planning, date_debut, date_
 --
 
 COPY public.restaurants_reservation (id, date_reservation, quantite, statut, notes, date_creation, date_modification, client_id, menu_id, restaurant_id) FROM stdin;
+1	2026-02-23	1	TERMINE		2026-02-23 21:59:20.414014+01	2026-02-23 22:00:04.895349+01	13	30	16
+2	2026-02-23	1	EN_ATTENTE		2026-02-23 22:02:57.483653+01	2026-02-23 22:02:57.483683+01	4	19	15
+3	2026-02-23	1	TERMINE		2026-02-23 22:04:56.330665+01	2026-02-23 22:04:56.33072+01	4	30	16
+4	2026-02-24	1	TERMINE		2026-02-24 12:33:14.050681+01	2026-02-24 12:33:14.050695+01	4	31	16
+5	2026-02-24	1	TERMINE		2026-02-24 12:37:35.187023+01	2026-02-24 12:42:22.609921+01	4	21	15
+6	2026-02-26	1	TERMINE		2026-02-26 09:42:59.89653+01	2026-02-26 09:43:21.819606+01	4	27	15
 \.
 
 
@@ -1298,6 +1399,8 @@ COPY public.restaurants_reservation (id, date_reservation, quantite, statut, not
 
 COPY public.restaurants_restaurant (id, nom, code, description, adresse, ville, telephone, email, statut, en_service_actuel, logo, image_couverture, date_creation, date_modification) FROM stdin;
 15	Chez Simon	REST_001	Chez Simon is a cheaper 	Avenue Thomas Sankara, Ouagadougou Burkina Faso	Ouagadougou	25332146	chezsimon@gmail.com	ACTIF	f	restaurants/logos/téléchargement_1.jpg		2026-02-20 14:36:04.608979+01	2026-02-20 14:36:04.661326+01
+16	La Palette Ouaga	REST_002		Avenue Du Burkina, Ouagadougou, Burkina Faso	Ouagadougou	54141905		ACTIF	f	restaurants/logos/téléchargement_1_boMyimx.jpg		2026-02-23 14:34:00.250936+01	2026-02-23 14:34:00.271866+01
+17	Les Délices	REST_003		N 14 Route 6jw6+prq, Koudougou Burkina Faso	Koudougou	71882020		ACTIF	f	restaurants/logos/téléchargement_2.jpg		2026-02-23 14:56:14.271433+01	2026-02-23 14:56:14.276972+01
 \.
 
 
@@ -1314,6 +1417,8 @@ COPY public.settings_jourferie (id, nom, date, recurrent, description, actif, cr
 --
 
 COPY public.settings_journalaudit (id, action, modele, objet_id, description, adresse_ip, user_agent, donnees_anciennes, donnees_nouvelles, cree_le, utilisateur_id) FROM stdin;
+1	MODIFICATION	ParametresSysteme	1	Paramètres système modifiés par Admin Admin	127.0.0.1		\N	\N	2026-02-23 11:08:51.154045+01	1
+2	MODIFICATION	ParametresSysteme	1	Paramètres système modifiés par Admin Admin	127.0.0.1		\N	\N	2026-02-24 11:29:44.918935+01	1
 \.
 
 
@@ -1322,6 +1427,7 @@ COPY public.settings_journalaudit (id, action, modele, objet_id, description, ad
 --
 
 COPY public.settings_parametressysteme (id, tickets_min_par_transaction, tickets_max_par_transaction, transactions_max_par_mois, prix_ticket, prix_repas_complet, subvention_ticket, duree_validite_qr_code_minutes, autoriser_programmation_hebdomadaire, autoriser_programmation_mensuelle, jours_avance_min_programmation, envoyer_notifications_achat, envoyer_notifications_consommation, envoyer_notifications_programmation, envoyer_notifications_menu, email_notifications_expediteur, nom_entreprise, nom_mutuelle, email_support, telephone_support, mode_maintenance, message_maintenance, cree_le, modifie_le, modifie_par_id) FROM stdin;
+1	1	20	1	500.00	2000.00	1500.00	2	t	t	1	t	t	t	t	noreply@lonab.com	LONAB	MUTRALO	support@lonab.com		f		2026-02-23 10:04:53.331024+01	2026-02-24 11:29:44.912438+01	1
 \.
 
 
@@ -1330,9 +1436,58 @@ COPY public.settings_parametressysteme (id, tickets_min_par_transaction, tickets
 --
 
 COPY public.tickets_codeqr (id, code, image_qr, donnees_tickets, est_valide, expire_le, est_utilise, utilise_le, date_creation, utilisateur_id, utilise_par_restaurant_id) FROM stdin;
+25	860d7827961ec94469525e3322b3edee9693ae91c64b8e9b9cf837d5956aa1a9	qrcodes/qr_4_20260224085134.png	{}	f	2026-02-24 09:54:34.234025+01	f	\N	2026-02-24 09:51:34.234947+01	4	\N
 1	d428a10a5d591de3c69f22c5bda89df93aa3f026e8b3445bbdac0a21755fe309	qrcodes/qr_4_20260221220954.png	{}	f	2026-02-21 23:12:54.432359+01	t	2026-02-21 23:11:43.462722+01	2026-02-21 23:09:54.432915+01	4	15
+16	9feca3d5a6db29357bb7a4d0aa394cf03df26763137a9eaab346e78554c29de7	qrcodes/qr_4_20260223210315.png	{}	f	2026-02-23 22:06:14.92957+01	t	2026-02-23 22:04:56.346627+01	2026-02-23 22:03:14.930276+01	4	16
 2	58992e3d9401c46406baed6d12904209d4cfe64ee79aca591c2486a1586537a1	qrcodes/qr_4_20260222115237.png	{}	f	2026-02-22 12:55:36.485037+01	t	2026-02-22 12:54:13.586265+01	2026-02-22 12:52:36.485687+01	4	15
-3	40b45ca82ff5d11089fd697d59cd7f00e67ff72942366a5d49d8db66c18f909b	qrcodes/qr_4_20260222115443.png	{}	t	2026-02-22 12:57:42.989997+01	f	\N	2026-02-22 12:54:42.990289+01	4	\N
+3	40b45ca82ff5d11089fd697d59cd7f00e67ff72942366a5d49d8db66c18f909b	qrcodes/qr_4_20260222115443.png	{}	f	2026-02-22 12:57:42.989997+01	f	\N	2026-02-22 12:54:42.990289+01	4	\N
+5	d821bb59a1f5e37dd2df9f5d9e0dc43bb7f6046c3ee32a45235b78eb4cd8da06	qrcodes/qr_4_20260222153109.png	{}	f	2026-02-22 16:34:09.610034+01	f	\N	2026-02-22 16:31:09.610409+01	4	\N
+17	9c516a03a79790436eefb16756aaf2f383a03fa28ebb24954ab311a8b80b649e	qrcodes/qr_13_20260223210637.png	{}	f	2026-02-23 22:09:37.517938+01	t	2026-02-23 22:07:32.604005+01	2026-02-23 22:06:37.518523+01	13	16
+6	5ea71fa2cf1b76f8187e1b3615a621bd0386477246c21b574b3820511b0001d3	qrcodes/qr_4_20260222153954.png	{}	f	2026-02-22 16:42:54.595597+01	f	\N	2026-02-22 16:39:54.595948+01	4	\N
+7	549d5ff6e3e7c3459704a5cb1e76971af81ee9052a95c4353ec88b04979d4982	qrcodes/qr_4_20260222154415.png	{}	f	2026-02-22 16:47:15.219543+01	f	\N	2026-02-22 16:44:15.219978+01	4	\N
+18	434707e07850c14c01e1c8057af0717fbac791dbd6a8e2c04f7444601cfb6d3f	qrcodes/qr_13_20260223210852.png	{}	t	2026-02-23 22:11:52.546958+01	f	\N	2026-02-23 22:08:52.547601+01	13	\N
+8	de6cc5cda04ede1f67362ba34fbada9d8a322a4ad8f9f8b3db26422d8b625a01	qrcodes/qr_4_20260222155711.png	{}	f	2026-02-22 17:00:11.547672+01	f	\N	2026-02-22 16:57:11.548159+01	4	\N
+9	a3ce6f9fdee387448ee21363a66476dd5a048fe1f77bea823b246b904a7128ea	qrcodes/qr_4_20260222172322.png	{}	f	2026-02-22 18:26:22.063504+01	f	\N	2026-02-22 18:23:22.064813+01	4	\N
+27	6eaebc3ee99ec09bccbc5997c5a9d3cf7dab61d2f774c254e1510dbac6524775	qrcodes/qr_4_20260224090416.png	{}	f	2026-02-24 10:07:16.66613+01	f	\N	2026-02-24 10:04:16.666596+01	4	\N
+10	3f7742f8acb3a548e56ff39a1765729c9391234aea6e00db4ed8d23acc38122a	qrcodes/qr_4_20260222172354.png	{}	f	2026-02-22 18:26:54.232345+01	f	\N	2026-02-22 18:23:54.233196+01	4	\N
+11	d5ea13685beddba7a0de40e9ea46f8e7bdcfaa0989bdd41f433bf48dfd119e4a	qrcodes/qr_4_20260222173655.png	{}	f	2026-02-22 18:39:55.608481+01	f	\N	2026-02-22 18:36:55.608821+01	4	\N
+26	732352729a5d3b0483b8a0c4c2a33a319390cb617ee1e5f3871c8f86237b7c63	qrcodes/qr_4_20260224085244.png	{}	f	2026-02-24 09:55:44.606809+01	f	\N	2026-02-24 09:52:44.607478+01	4	\N
+12	6283d300c5311a238565825cf5597ddea29424c3f62cd652d837f2c26930ea48	qrcodes/qr_4_20260222174539.png	{}	f	2026-02-22 18:48:39.237129+01	t	2026-02-22 18:47:13.841921+01	2026-02-22 18:45:39.23779+01	4	15
+19	80307a280e6a7e783c5b05c72abf04b0a4a7751b7338e919f42ce7ee3086c6dd	qrcodes/qr_4_20260223232720.png	{}	f	2026-02-24 00:30:20.142287+01	f	\N	2026-02-24 00:27:20.143549+01	4	\N
+14	7ff1866a181451e9b38984fbfaae2fac0d291e911c52fbf254e6dff46d6d3035	qrcodes/qr_13_20260223205911.png	{}	f	2026-02-23 22:02:10.940264+01	f	\N	2026-02-23 21:59:10.941047+01	13	\N
+15	37aff26d1c1c760dd8ab0ef4a6af7658d01255b1a9cc5792691d6e460a819649	qrcodes/qr_13_20260223210034.png	{}	f	2026-02-23 22:03:34.396994+01	t	2026-02-23 22:02:43.283916+01	2026-02-23 22:00:34.397512+01	13	16
+13	71e81b355f5e311c37232223ffaed06dede91a759b2bad559fbad7d4c639ab12	qrcodes/qr_4_20260222174904.png	{}	f	2026-02-22 18:52:04.613903+01	f	\N	2026-02-22 18:49:04.61477+01	4	\N
+21	aa70041fdf9e7c7bdf740e018bf3455f1a83d5e6a2456350df25100f9085e882	qrcodes/qr_4_20260224000154.png	{}	f	2026-02-24 01:04:54.275116+01	f	\N	2026-02-24 01:01:54.275959+01	4	\N
+34	b538562ddd47ea494eda082709a7b5458314d928211a9cc45f2c8518316436d3	qrcodes/qr_15_20260224111709.png	{}	f	2026-02-24 12:20:09.361467+01	f	\N	2026-02-24 12:17:09.362091+01	15	\N
+20	569c08be51c68a412a82afc8005e6bd03a26210080ff51adcb7b5be74d157002	qrcodes/qr_15_20260223233653.png	{}	f	2026-02-24 00:39:53.690967+01	f	\N	2026-02-24 00:36:53.691621+01	15	\N
+31	4024f3d1de054e7ee9ce9a972e4231b5ccbe61f2c2d8faf3db5f746c3e741881	qrcodes/qr_15_20260224094851.png	{}	f	2026-02-24 10:51:51.071545+01	f	\N	2026-02-24 10:48:51.071864+01	15	\N
+22	50e46aafd03f77159b6271c3139e2353f01b2f02ce389cab7948f60575959e5c	qrcodes/qr_4_20260224000513.png	{}	f	2026-02-24 01:08:13.832485+01	f	\N	2026-02-24 01:05:13.833112+01	4	\N
+23	1748832781e63032cf8ff332f176b12331bd6857ed0a380f85b2bf36666c682e	qrcodes/qr_15_20260224000951.png	{}	f	2026-02-24 01:12:51.722872+01	f	\N	2026-02-24 01:09:51.723196+01	15	\N
+24	9d47d75211ce1ce3a7d0fbb7a0bd2e899217a1db093eb8b5e5a88bc15c000d10	qrcodes/qr_4_20260224055643.png	{}	f	2026-02-24 06:59:43.828505+01	f	\N	2026-02-24 06:56:43.829971+01	4	\N
+28	31a206a8dcc8460bf3c89b75e550344da3d9143bddd336772977756c8b0a900f	qrcodes/qr_15_20260224090440.png	{}	f	2026-02-24 10:07:40.623484+01	f	\N	2026-02-24 10:04:40.624023+01	15	\N
+32	a22b2fd5712098342b429e1ebfc441ae31f26195989c735bdcd65d36d76f1a19	qrcodes/qr_15_20260224100125.png	{}	f	2026-02-24 11:04:25.257653+01	f	\N	2026-02-24 11:01:25.258184+01	15	\N
+29	01fea8c703eb45e22849dcd8fff1d7a63b01c9c484b3a7ac4a661c7db6a5f558	qrcodes/qr_15_20260224092135.png	{}	f	2026-02-24 10:24:35.003698+01	f	\N	2026-02-24 10:21:35.004757+01	15	\N
+30	ef44807b7aec808e2b7795a0ae8c35f86b82826dcada1cde8b8a8a5aba75cff2	qrcodes/qr_15_20260224093635.png	{}	f	2026-02-24 10:39:35.701864+01	f	\N	2026-02-24 10:36:35.703293+01	15	\N
+33	dd40857c7805023d726ef3fa7aebc2acf9623e272e542abaa5dde312a14bb9b9	qrcodes/qr_15_20260224100937.png	{}	f	2026-02-24 11:12:37.292631+01	f	\N	2026-02-24 11:09:37.29329+01	15	\N
+35	13760634fae269387db1284411f9b943b63b32092a15983deafd5607b63f62e4	qrcodes/qr_4_20260224112825.png	{}	f	2026-02-24 12:31:25.813215+01	f	\N	2026-02-24 12:28:25.813812+01	4	\N
+37	e34ea720b2f87a2df4b3c7423b65c87f80a515659585958e84230df447e74d70	qrcodes/qr_15_20260224113534.png	{}	t	2026-02-24 12:38:34.882334+01	f	\N	2026-02-24 12:35:34.882946+01	15	\N
+36	c839753faca775e2f370a5152635ba85aa450e7db553da2e8bd6b2e8538f14f3	qrcodes/qr_4_20260224113204.png	{}	f	2026-02-24 12:35:04.730704+01	t	2026-02-24 12:33:14.061988+01	2026-02-24 12:32:04.731557+01	4	16
+4	11b828013760c2b72cdad7107c07210d465cddb6bd909adefa44e0cd92227128	qrcodes/qr_3_20260222151926.png	{}	f	2026-02-22 16:22:25.971007+01	f	\N	2026-02-22 16:19:25.971313+01	3	\N
+38	aa3cf21bdba6f06ae0016146d0dcf6d7f190001ebff56c238aed1bb7da5ba846	qrcodes/qr_3_20260224113615.png	{}	f	2026-02-24 12:39:15.481341+01	f	\N	2026-02-24 12:36:15.481852+01	3	\N
+39	052bed419e555d9250de9c48560b42c22151735daf630ecf578c8b6b70d7826c	qrcodes/qr_4_20260224114423.png	{}	f	2026-02-24 12:47:23.772519+01	f	\N	2026-02-24 12:44:23.773428+01	4	\N
+40	e38d06d6d0853d4988796f39a3a776c70a325188441bf6bf7466fca51cf38b82	qrcodes/qr_4_20260224114428.png	{}	f	2026-02-24 12:47:28.856275+01	f	\N	2026-02-24 12:44:28.856642+01	4	\N
+41	e24c860a42f9173bead93d1d9b2a362be7fd53760d83bc6ffc4a5564a5ad7495	qrcodes/qr_4_20260224114432.png	{}	f	2026-02-24 12:47:32.13949+01	t	2026-02-24 12:45:31.843239+01	2026-02-24 12:44:32.140747+01	4	15
+42	9e6370514ddfa1f139ec6d4d1e640ae443124d4009ce99daf34073f3c1cb3012	qrcodes/qr_3_20260225084401.png	{}	f	2026-02-25 09:47:01.14988+01	f	\N	2026-02-25 09:44:01.150649+01	3	\N
+43	d3c3f3357c134cb9d6e6cba7f83d72351fa15e240b57361767864477084d87aa	qrcodes/qr_3_20260225132446.png	{}	f	2026-02-25 14:27:45.632011+01	f	\N	2026-02-25 14:24:45.632603+01	3	\N
+44	0733cc57978c10366b467f6eff2866394c7bb0e8f5099a6e61d1fb80515beb78	qrcodes/qr_3_20260225132951.png	{}	f	2026-02-25 14:32:51.844171+01	f	\N	2026-02-25 14:29:51.844641+01	3	\N
+45	80c061627c6800a7089be580382c7db0b3ee78715fb853b6d0831d0a729f9168	qrcodes/qr_3_20260225141945.png	{}	f	2026-02-25 15:22:45.874704+01	f	\N	2026-02-25 15:19:45.875604+01	3	\N
+46	d06eeb00a52240f2e8c70574809c67e265234ffade2ce52c9cb80bfab31f6a14	qrcodes/qr_3_20260226080604.png	{}	f	2026-02-26 09:09:04.03814+01	f	\N	2026-02-26 09:06:04.039214+01	3	\N
+47	98ded17aaf8831afe81b643755bb1a79a950459f3bfe4943caab275bbe6ddae6	qrcodes/qr_3_20260226080905.png	{}	f	2026-02-26 09:12:05.645348+01	f	\N	2026-02-26 09:09:05.646035+01	3	\N
+49	16854ea142e7755681111acfe4ff8023af5e402f9096e8acc051dae1dc50dec2	qrcodes/qr_3_20260226083133.png	{}	f	2026-02-26 09:34:33.172327+01	f	\N	2026-02-26 09:31:33.172613+01	3	\N
+50	2f11130d629bfb442063592591c0fbdb8e88136cb6375c757284c4bc14ceb66e	qrcodes/qr_3_20260226092102.png	{}	t	2026-02-26 10:24:02.555767+01	f	\N	2026-02-26 10:21:02.556101+01	3	\N
+48	c7c3f595a594ec41263b3883d8670841505cff29b58d922d65b487517329088d	qrcodes/qr_4_20260226082331.png	{}	f	2026-02-26 09:26:31.033857+01	f	\N	2026-02-26 09:23:31.035+01	4	\N
+51	04978972e7d43ed3e9ee30e172fc0aa828c8db08cd2213610ede8eb8909b585a	qrcodes/qr_4_20260226092137.png	{}	f	2026-02-26 10:24:37.163474+01	f	\N	2026-02-26 10:21:37.163998+01	4	\N
+52	f6a9a89e706acb994b716797d410ceaecc4a0b42e61e42268b134963af21e9f6	qrcodes/qr_4_20260226092502.png	{}	f	2026-02-26 10:28:02.399418+01	t	2026-02-26 10:26:48.201283+01	2026-02-26 10:25:02.399954+01	4	15
 \.
 
 
@@ -1354,13 +1509,53 @@ COPY public.tickets_ticket (id, numero_ticket, statut, date_consommation, valide
 11	202602-00011	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-21 23:09:01.468945+01	2026-02-21 23:09:01.469724+01	4	\N	2	\N
 12	202602-00012	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-21 23:09:01.468958+01	2026-02-21 23:09:01.469736+01	4	\N	2	\N
 13	202602-00013	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-21 23:09:01.468971+01	2026-02-21 23:09:01.469749+01	4	\N	2	\N
-14	202602-00014	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-21 23:09:01.469104+01	2026-02-21 23:09:01.46976+01	4	\N	2	\N
-15	202602-00015	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-21 23:09:01.469119+01	2026-02-21 23:09:01.469839+01	4	\N	2	\N
-16	202602-00016	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-21 23:09:01.46913+01	2026-02-21 23:09:01.469896+01	4	\N	2	\N
-17	202602-00017	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-21 23:09:01.469175+01	2026-02-21 23:09:01.469912+01	4	\N	2	\N
-18	202602-00018	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-21 23:09:01.469194+01	2026-02-21 23:09:01.469925+01	4	\N	2	\N
 20	202602-00020	CONSOMME	2026-02-21 23:11:43.453177+01	2026-02-01	2026-02-28	500.00	1500.00	2026-02-21 23:09:01.469216+01	2026-02-21 23:11:43.453496+01	4	15	2	5
 19	202602-00019	CONSOMME	2026-02-22 12:54:13.581061+01	2026-02-01	2026-02-28	500.00	1500.00	2026-02-21 23:09:01.469206+01	2026-02-22 12:54:13.58154+01	4	15	2	5
+18	202602-00018	CONSOMME	2026-02-22 18:47:13.833997+01	2026-02-01	2026-02-28	500.00	1500.00	2026-02-21 23:09:01.469194+01	2026-02-22 18:47:13.834425+01	4	15	2	5
+21	202602-00021	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-23 21:56:25.360681+01	2026-02-23 21:56:25.361034+01	13	\N	3	\N
+22	202602-00022	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-23 21:56:25.360712+01	2026-02-23 21:56:25.361069+01	13	\N	3	\N
+23	202602-00023	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-23 21:56:25.360726+01	2026-02-23 21:56:25.361091+01	13	\N	3	\N
+24	202602-00024	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-23 21:56:25.360741+01	2026-02-23 21:56:25.36111+01	13	\N	3	\N
+25	202602-00025	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-23 21:56:25.360754+01	2026-02-23 21:56:25.361129+01	13	\N	3	\N
+26	202602-00026	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-23 21:56:25.360767+01	2026-02-23 21:56:25.361147+01	13	\N	3	\N
+27	202602-00027	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-23 21:56:25.36078+01	2026-02-23 21:56:25.361167+01	13	\N	3	\N
+28	202602-00028	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-23 21:56:25.360793+01	2026-02-23 21:56:25.361187+01	13	\N	3	\N
+29	202602-00029	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-23 21:56:25.360806+01	2026-02-23 21:56:25.36121+01	13	\N	3	\N
+30	202602-00030	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-23 21:56:25.360818+01	2026-02-23 21:56:25.361233+01	13	\N	3	\N
+31	202602-00031	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-23 21:56:25.360832+01	2026-02-23 21:56:25.361254+01	13	\N	3	\N
+32	202602-00032	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-23 21:56:25.360845+01	2026-02-23 21:56:25.361272+01	13	\N	3	\N
+33	202602-00033	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-23 21:56:25.360862+01	2026-02-23 21:56:25.361292+01	13	\N	3	\N
+34	202602-00034	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-23 21:56:25.360892+01	2026-02-23 21:56:25.361317+01	13	\N	3	\N
+35	202602-00035	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-23 21:56:25.360908+01	2026-02-23 21:56:25.361337+01	13	\N	3	\N
+36	202602-00036	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-23 21:56:25.360924+01	2026-02-23 21:56:25.361364+01	13	\N	3	\N
+37	202602-00037	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-23 21:56:25.360938+01	2026-02-23 21:56:25.361389+01	13	\N	3	\N
+38	202602-00038	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-23 21:56:25.360955+01	2026-02-23 21:56:25.361413+01	13	\N	3	\N
+40	202602-00040	CONSOMME	2026-02-23 22:02:43.279595+01	2026-02-01	2026-02-28	500.00	1500.00	2026-02-23 21:56:25.360995+01	2026-02-23 22:02:43.279981+01	13	16	3	19
+17	202602-00017	CONSOMME	2026-02-23 22:04:56.340489+01	2026-02-01	2026-02-28	500.00	1500.00	2026-02-21 23:09:01.469175+01	2026-02-23 22:04:56.341111+01	4	16	2	19
+39	202602-00039	CONSOMME	2026-02-23 22:07:32.598197+01	2026-02-01	2026-02-28	500.00	1500.00	2026-02-23 21:56:25.360977+01	2026-02-23 22:07:32.598521+01	13	16	3	19
+41	202602-00041	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-24 11:30:53.437479+01	2026-02-24 11:30:53.437566+01	9	\N	4	\N
+42	202602-00042	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-24 11:30:53.437491+01	2026-02-24 11:30:53.43757+01	9	\N	4	\N
+43	202602-00043	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-24 11:30:53.437495+01	2026-02-24 11:30:53.437574+01	9	\N	4	\N
+44	202602-00044	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-24 11:30:53.437499+01	2026-02-24 11:30:53.437577+01	9	\N	4	\N
+45	202602-00045	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-24 11:30:53.437503+01	2026-02-24 11:30:53.43758+01	9	\N	4	\N
+46	202602-00046	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-24 11:30:53.437507+01	2026-02-24 11:30:53.437584+01	9	\N	4	\N
+47	202602-00047	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-24 11:30:53.437511+01	2026-02-24 11:30:53.437588+01	9	\N	4	\N
+48	202602-00048	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-24 11:30:53.437514+01	2026-02-24 11:30:53.437592+01	9	\N	4	\N
+49	202602-00049	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-24 11:30:53.437518+01	2026-02-24 11:30:53.437596+01	9	\N	4	\N
+50	202602-00050	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-24 11:30:53.437522+01	2026-02-24 11:30:53.437599+01	9	\N	4	\N
+51	202602-00051	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-24 11:30:53.437527+01	2026-02-24 11:30:53.437603+01	9	\N	4	\N
+52	202602-00052	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-24 11:30:53.437531+01	2026-02-24 11:30:53.437606+01	9	\N	4	\N
+53	202602-00053	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-24 11:30:53.437534+01	2026-02-24 11:30:53.43761+01	9	\N	4	\N
+54	202602-00054	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-24 11:30:53.437538+01	2026-02-24 11:30:53.437614+01	9	\N	4	\N
+55	202602-00055	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-24 11:30:53.437542+01	2026-02-24 11:30:53.437617+01	9	\N	4	\N
+56	202602-00056	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-24 11:30:53.437545+01	2026-02-24 11:30:53.43762+01	9	\N	4	\N
+57	202602-00057	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-24 11:30:53.437549+01	2026-02-24 11:30:53.437624+01	9	\N	4	\N
+58	202602-00058	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-24 11:30:53.437554+01	2026-02-24 11:30:53.437627+01	9	\N	4	\N
+59	202602-00059	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-24 11:30:53.437557+01	2026-02-24 11:30:53.43763+01	9	\N	4	\N
+16	202602-00016	CONSOMME	2026-02-24 12:33:14.058138+01	2026-02-01	2026-02-28	500.00	1500.00	2026-02-21 23:09:01.46913+01	2026-02-24 12:33:14.058648+01	4	16	2	19
+15	202602-00015	CONSOMME	2026-02-24 12:45:31.840549+01	2026-02-01	2026-02-28	500.00	1500.00	2026-02-21 23:09:01.469119+01	2026-02-24 12:45:31.840758+01	4	15	2	5
+14	202602-00014	CONSOMME	2026-02-26 10:26:48.198163+01	2026-02-01	2026-02-28	500.00	1500.00	2026-02-21 23:09:01.469104+01	2026-02-26 10:26:48.198558+01	4	15	2	5
+60	202602-00060	DISPONIBLE	\N	2026-02-01	2026-02-28	500.00	1500.00	2026-02-24 11:30:53.437561+01	2026-02-24 11:30:53.437634+01	9	\N	4	\N
 \.
 
 
@@ -1378,6 +1573,8 @@ COPY public.transactions_logconsommation (id, date_consommation, notes, date_cre
 
 COPY public.transactions_transactionticket (id, numero_transaction, type_transaction, nombre_tickets, premier_ticket, dernier_ticket, valide_de, valide_jusqu_a, prix_unitaire, subvention_par_ticket, montant_total, subvention_totale, mode_paiement, reference_paiement, statut, notes, date_transaction, date_creation, date_modification, agence_id, caissier_id, client_id) FROM stdin;
 2	20260221-220901-4	ACHAT	20	202602-00001	202602-00020	2026-02-01	2026-02-28	500.00	1500.00	10000.00	30000.00	ESPECES		TERMINEE		2026-02-21 23:09:01.426236+01	2026-02-21 23:09:01.427642+01	2026-02-21 23:09:01.427665+01	10	3	4
+3	20260223-205625-13	ACHAT	20	202602-00021	202602-00040	2026-02-01	2026-02-28	500.00	1500.00	10000.00	30000.00	ESPECES		TERMINEE		2026-02-23 21:56:25.323748+01	2026-02-23 21:56:25.32582+01	2026-02-23 21:56:25.325844+01	12	15	13
+4	20260224-103053-9	ACHAT	20	202602-00041	202602-00060	2026-02-01	2026-02-28	500.00	1500.00	10000.00	30000.00	ESPECES		TERMINEE		2026-02-24 11:30:53.413996+01	2026-02-24 11:30:53.415809+01	2026-02-24 11:30:53.415835+01	12	15	9
 \.
 
 
@@ -1385,21 +1582,21 @@ COPY public.transactions_transactionticket (id, numero_transaction, type_transac
 -- Name: accounts_agence_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.accounts_agence_id_seq', 10, true);
+SELECT pg_catalog.setval('public.accounts_agence_id_seq', 14, true);
 
 
 --
 -- Name: accounts_direction_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.accounts_direction_id_seq', 3, true);
+SELECT pg_catalog.setval('public.accounts_direction_id_seq', 5, true);
 
 
 --
 -- Name: accounts_profilutilisateur_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.accounts_profilutilisateur_id_seq', 5, true);
+SELECT pg_catalog.setval('public.accounts_profilutilisateur_id_seq', 19, true);
 
 
 --
@@ -1413,7 +1610,7 @@ SELECT pg_catalog.setval('public.accounts_utilisateur_groups_id_seq', 1, false);
 -- Name: accounts_utilisateur_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.accounts_utilisateur_id_seq', 5, true);
+SELECT pg_catalog.setval('public.accounts_utilisateur_id_seq', 19, true);
 
 
 --
@@ -1448,7 +1645,7 @@ SELECT pg_catalog.setval('public.auth_permission_id_seq', 92, true);
 -- Name: django_admin_log_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.django_admin_log_id_seq', 8, true);
+SELECT pg_catalog.setval('public.django_admin_log_id_seq', 40, true);
 
 
 --
@@ -1462,7 +1659,7 @@ SELECT pg_catalog.setval('public.django_content_type_id_seq', 23, true);
 -- Name: django_migrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.django_migrations_id_seq', 42, true);
+SELECT pg_catalog.setval('public.django_migrations_id_seq', 44, true);
 
 
 --
@@ -1483,35 +1680,35 @@ SELECT pg_catalog.setval('public.notifs_modeleemail_id_seq', 1, false);
 -- Name: notifs_notification_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.notifs_notification_id_seq', 1, false);
+SELECT pg_catalog.setval('public.notifs_notification_id_seq', 18, true);
 
 
 --
 -- Name: restaurants_menu_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.restaurants_menu_id_seq', 9, true);
+SELECT pg_catalog.setval('public.restaurants_menu_id_seq', 34, true);
 
 
 --
 -- Name: restaurants_planningrestaurant_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.restaurants_planningrestaurant_id_seq', 2, true);
+SELECT pg_catalog.setval('public.restaurants_planningrestaurant_id_seq', 4, true);
 
 
 --
 -- Name: restaurants_reservation_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.restaurants_reservation_id_seq', 1, false);
+SELECT pg_catalog.setval('public.restaurants_reservation_id_seq', 6, true);
 
 
 --
 -- Name: restaurants_restaurant_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.restaurants_restaurant_id_seq', 15, true);
+SELECT pg_catalog.setval('public.restaurants_restaurant_id_seq', 17, true);
 
 
 --
@@ -1525,7 +1722,7 @@ SELECT pg_catalog.setval('public.settings_jourferie_id_seq', 1, false);
 -- Name: settings_journalaudit_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.settings_journalaudit_id_seq', 1, false);
+SELECT pg_catalog.setval('public.settings_journalaudit_id_seq', 2, true);
 
 
 --
@@ -1539,14 +1736,14 @@ SELECT pg_catalog.setval('public.settings_parametressysteme_id_seq', 1, false);
 -- Name: tickets_codeqr_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.tickets_codeqr_id_seq', 3, true);
+SELECT pg_catalog.setval('public.tickets_codeqr_id_seq', 52, true);
 
 
 --
 -- Name: tickets_ticket_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.tickets_ticket_id_seq', 20, true);
+SELECT pg_catalog.setval('public.tickets_ticket_id_seq', 60, true);
 
 
 --
@@ -1560,7 +1757,7 @@ SELECT pg_catalog.setval('public.transactions_logconsommation_id_seq', 1, false)
 -- Name: transactions_transactionticket_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.transactions_transactionticket_id_seq', 2, true);
+SELECT pg_catalog.setval('public.transactions_transactionticket_id_seq', 4, true);
 
 
 --
@@ -1817,14 +2014,6 @@ ALTER TABLE ONLY public.notifs_notification
 
 ALTER TABLE ONLY public.restaurants_menu
     ADD CONSTRAINT restaurants_menu_pkey PRIMARY KEY (id);
-
-
---
--- Name: restaurants_menu restaurants_menu_restaurant_id_jour_semaine_date_855f4837_uniq; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.restaurants_menu
-    ADD CONSTRAINT restaurants_menu_restaurant_id_jour_semaine_date_855f4837_uniq UNIQUE (restaurant_id, jour_semaine, date);
 
 
 --
@@ -2986,5 +3175,5 @@ ALTER TABLE ONLY public.transactions_transactionticket
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ArB9Vl9ZG3SHKcJBduyzwejDrIBtEjsEkJ6B4JdmIERLez7OVxTs5gEbdObYyzm
+\unrestrict pHjpK6mYusykCBtYO6dBpHE539vb0hncRrsEKCvGal8meSi7k0KYqgPAw5tH1Kq
 

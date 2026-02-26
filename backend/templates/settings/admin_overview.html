@@ -1,0 +1,194 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Vue d'ensemble — Administration{% endblock %}
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
+<style>
+    .dc{background:#fff;border-radius:7px;box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden;margin-bottom:8px;}
+    .dc-head{padding:8px 12px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#374151;}
+    .dc-head i{color:#28a745;font-size:10px;}
+    .dc-head a{margin-left:auto;font-size:10px;color:#28a745;text-decoration:none;}
+    .dc-body{padding:10px 12px;}
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;}
+    .kpi{background:#f9fafb;border-radius:6px;padding:8px 10px;text-align:center;border:1px solid #f3f4f6;}
+    .kpi .kv{font-size:20px;font-weight:800;line-height:1.1;}
+    .kpi .kl{font-size:9px;color:#6b7280;margin-top:2px;text-transform:uppercase;letter-spacing:.4px;}
+    .kpi .ks{font-size:9px;color:#9ca3af;margin-top:1px;}
+    .pr-row{display:flex;align-items:center;gap:7px;margin-bottom:6px;}
+    .pr-label{font-size:10px;color:#374151;width:100px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;}
+    .pr-bar{flex:1;height:5px;background:#f3f4f6;border-radius:3px;overflow:hidden;}
+    .pr-fill{height:100%;border-radius:3px;transition:width .5s;}
+    .pr-val{font-size:9px;color:#6b7280;width:24px;text-align:right;flex-shrink:0;}
+    .tl-item{display:flex;gap:8px;padding:7px 0;border-bottom:1px solid #fafafa;}
+    .tl-item:last-child{border-bottom:none;}
+    .tl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+    .tl-t{font-size:10px;font-weight:600;color:#111827;}
+    .tl-s{font-size:9px;color:#9ca3af;margin-top:1px;}
+    .mt{width:100%;border-collapse:collapse;}
+    .mt th{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#9ca3af;padding:6px 8px;border-bottom:1px solid #f3f4f6;text-align:left;}
+    .mt td{font-size:10px;padding:6px 8px;border-bottom:1px solid #fafafa;color:#374151;vertical-align:middle;}
+    .mt tr:last-child td{border-bottom:none;}
+    .mt tr:hover td{background:#fafafa;}
+    .bs{font-size:9px;padding:2px 6px;border-radius:8px;font-weight:600;}
+    .bs-ok{background:#d1fae5;color:#065f46;} .bs-wait{background:#fef3c7;color:#92400e;} .bs-err{background:#fee2e2;color:#991b1b;}
+</style>{% endblock %}
+
+{% block sidebar_menu %}{% include 'dashboards/sidebars/admin_sidebar.html' %}{% endblock %}
+
+{% block page_content %}
+<div class="page-header" style="margin-bottom:12px;">
+    <h1 class="page-title" style="font-size:17px;">Vue d'ensemble</h1>
+    <p class="page-subtitle" style="font-size:11px;">Indicateurs consolidés du système</p>
+</div>
+
+<!-- KPI -->
+<div class="dc">
+    <div class="dc-head"><i class="fas fa-tachometer-alt"></i> Indicateurs clés</div>
+    <div class="dc-body">
+        <div class="kpi-grid">
+            <div class="kpi">
+                <div class="kv" style="color:#28a745;">{{ total_employes|default:0 }}</div>
+                <div class="kl">Employés</div>
+                <div class="ks">actifs</div>
+            </div>
+            <div class="kpi">
+                <div class="kv" style="color:#6f42c1;">{{ total_directions|default:0 }}</div>
+                <div class="kl">Directions</div>
+                <div class="ks">{{ directions_actives|default:0 }} actives</div>
+            </div>
+            <div class="kpi">
+                <div class="kv" style="color:#17a2b8;">{{ total_agences|default:0 }}</div>
+                <div class="kl">Agences</div>
+                <div class="ks">{{ agences_actives|default:0 }} actives</div>
+            </div>
+            <div class="kpi">
+                <div class="kv" style="color:#e0a800;">{{ total_restaurants|default:0 }}</div>
+                <div class="kl">Restaurants</div>
+                <div class="ks">{{ restaurants_actifs|default:0 }} actifs</div>
+            </div>
+            <div class="kpi">
+                <div class="kv" style="color:#dc3545;">{{ tickets_vendus_mois|default:0 }}</div>
+                <div class="kl">Tickets vendus</div>
+                <div class="ks">ce mois</div>
+            </div>
+            <div class="kpi">
+                <div class="kv" style="color:#28a745;font-size:14px;">{{ revenu_mois|floatformat:0|default:0 }}</div>
+                <div class="kl">Revenus</div>
+                <div class="ks">FCFA</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <!-- Répartition directions -->
+    <div class="dc" style="margin-bottom:0;">
+        <div class="dc-head"><i class="fas fa-sitemap"></i> Employés par direction</div>
+        <div class="dc-body">
+            {% for d in directions_principales %}
+            <div class="pr-row">
+                <span class="pr-label" title="{{ d.nom }}">{{ d.nom }}</span>
+                <div class="pr-bar">
+                    <div class="pr-fill"
+                         style="width:{{ d.pourcentage|floatformat:0 }}%;background:{% cycle '#28a745' '#17a2b8' '#6f42c1' '#e0a800' '#dc3545' %};"></div>
+                </div>
+                <span class="pr-val">{{ d.nombre_employes }}</span>
+            </div>
+            {% empty %}
+            <div style="text-align:center;padding:14px;color:#9ca3af;font-size:10px;">Aucune direction configurée</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Santé système -->
+    <div class="dc" style="margin-bottom:0;">
+        <div class="dc-head"><i class="fas fa-heartbeat"></i> Santé du système</div>
+        <div class="dc-body">
+            <div class="tl-item">
+                <div class="tl-dot" style="background:#28a745;"></div>
+                <div>
+                    <div class="tl-t">Base de données</div>
+                    <div class="tl-s">Opérationnelle · réponse normale</div>
+                </div>
+            </div>
+            <div class="tl-item">
+                <div class="tl-dot"
+                     style="background:{% if restaurants_actifs == 0 %}#e0a800{% else %}#28a745{% endif %};"></div>
+                <div>
+                    <div class="tl-t">Restaurants actifs</div>
+                    <div class="tl-s">{{ restaurants_actifs }} restaurant(s) en service</div>
+                </div>
+            </div>
+            <div class="tl-item">
+                <div class="tl-dot"
+                     style="background:{% if tickets_vendus_mois == 0 %}#e0a800{% else %}#28a745{% endif %};"></div>
+                <div>
+                    <div class="tl-t">Activité tickets</div>
+                    <div class="tl-s">{{ tickets_vendus_mois }} vendu(s) · {{ tickets_consommes_mois }} consommé(s)
+                    </div>
+                </div>
+            </div>
+            <div class="tl-item">
+                <div class="tl-dot"
+                     style="background:{% if mode_maintenance %}#dc3545{% else %}#28a745{% endif %};"></div>
+                <div>
+                    <div class="tl-t" style="color:{% if mode_maintenance %}#dc3545{% endif %};">Serveur {% if
+                        mode_maintenance %}— MAINTENANCE{% endif %}
+                    </div>
+                    <div class="tl-s">{% if mode_maintenance %}Mode maintenance actif{% else %}En ligne · aucune
+                        erreur{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tableau transactions -->
+<div class="dc" style="margin-top:8px;">
+    <div class="dc-head">
+        <i class="fas fa-list"></i> Transactions du mois
+        <a href="{% url 'transactions:admin_transactions' %}">Voir tout →</a>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="mt">
+            <thead>
+            <tr>
+                <th>N° Transaction</th>
+                <th>Client</th>
+                <th>Agence</th>
+                <th>Tickets</th>
+                <th>Montant</th>
+                <th>Date</th>
+                <th>Statut</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for t in transactions_recentes %}
+            <tr>
+                <td style="font-family:monospace;color:#28a745;font-weight:700;">{{
+                    t.numero_transaction|truncatechars:14 }}
+                </td>
+                <td>{{ t.client.get_full_name|truncatechars:18 }}</td>
+                <td style="color:#6b7280;">{{ t.client.agence.nom|default:"—"|truncatechars:14 }}</td>
+                <td style="text-align:center;">{{ t.nombre_tickets }}</td>
+                <td style="font-weight:600;white-space:nowrap;">{{ t.montant_total|floatformat:0 }} <span
+                        style="color:#9ca3af;font-size:8px;">F</span></td>
+                <td style="color:#9ca3af;white-space:nowrap;">{{ t.date_transaction|date:"d/m/Y" }}</td>
+                <td><span
+                        class="bs {% if t.statut == 'TERMINE' %}bs-ok{% elif t.statut == 'EN_ATTENTE' %}bs-wait{% else %}bs-err{% endif %}">{{ t.get_statut_display }}</span>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="padding:18px;text-align:center;color:#9ca3af;font-size:10px;">Aucune
+                    transaction
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}&

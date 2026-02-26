@@ -2,15 +2,16 @@
 {% load static %}
 
 {% block title %}Mes tickets{% endblock %}
-{% block dashboard_css %}<link rel="stylesheet" href="{% static 'css/components.css' %}">
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
 <style>
-.tab-btn{padding:8px 18px;border:none;background:none;border-bottom:2px solid transparent;font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;transition:.15s;}
-.tab-btn.active{color:var(--primary-green);border-bottom-color:var(--primary-green);}
-.tab-pane{display:none;}.tab-pane.active{display:block;}
-.ticket-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border-color);}
-.ticket-row:last-child{border-bottom:none;}
-.ticket-row:hover{background:var(--bg-light);}
-.ticket-num{font-family:monospace;font-size:12px;font-weight:700;color:var(--primary-green);}
+    .tab-btn{padding:8px 18px;border:none;background:none;border-bottom:2px solid transparent;font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;transition:.15s;}
+    .tab-btn.active{color:var(--primary-green);border-bottom-color:var(--primary-green);}
+    .tab-pane{display:none;}.tab-pane.active{display:block;}
+    .ticket-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border-color);}
+    .ticket-row:last-child{border-bottom:none;}
+    .ticket-row:hover{background:var(--bg-light);}
+    .ticket-num{font-family:monospace;font-size:12px;font-weight:700;color:var(--primary-green);}
 </style>
 {% endblock %}
 
@@ -78,7 +79,9 @@
             </div>
             <div style="text-align:right;flex-shrink:0;">
                 <span class="badge badge-success" style="font-size:10px;">Disponible</span>
-                <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">{{ t.prix_paye|floatformat:0 }} FCFA</div>
+                <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">{{ t.prix_paye|floatformat:0 }}
+                    FCFA
+                </div>
             </div>
         </div>
         {% endfor %}
@@ -141,7 +144,8 @@
         {% endfor %}
         {% else %}
         <div style="text-align:center;padding:36px;color:var(--text-muted);">
-            <i class="fas fa-check-circle" style="font-size:36px;display:block;margin-bottom:12px;opacity:.2;color:var(--primary-green);"></i>
+            <i class="fas fa-check-circle"
+               style="font-size:36px;display:block;margin-bottom:12px;opacity:.2;color:var(--primary-green);"></i>
             Aucun ticket expiré
         </div>
         {% endif %}
@@ -152,11 +156,11 @@
 {% block dashboard_js %}
 <script src="{% static 'js/components.js' %}"></script>
 <script>
-function showTab(name, btn) {
-    document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
-    document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
-    document.getElementById('tab-'+name).classList.add('active');
-    btn.classList.add('active');
-}
+    function showTab(name, btn) {
+        document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
+        document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
+        document.getElementById('tab-'+name).classList.add('active');
+        btn.classList.add('active');
+    }
 </script>
 {% endblock %}

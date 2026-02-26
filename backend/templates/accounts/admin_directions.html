@@ -1,0 +1,310 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Gestion des Directions{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
+{% endblock %}
+
+{% block sidebar_menu %}
+{% include 'dashboards/sidebars/admin_sidebar.html' %}
+{% endblock %}
+
+{% block page_content %}
+
+{# ── URL helpers ── #}
+<div id="dir-urls"
+     data-create="{% url 'accounts:direction_create' %}"
+     data-edit-base="{% url 'accounts:direction_edit' pk=0 %}"
+     data-delete-base="{% url 'accounts:direction_delete' pk=0 %}"
+     data-detail-base="{% url 'accounts:direction_detail' pk=0 %}"
+     style="display:none;"></div>
+
+{# ── En-tête ── #}
+<div class="page-header-with-actions">
+    <div class="page-header">
+        <h1 class="page-title">Gestion des Directions</h1>
+    </div>
+    <div class="page-header-actions">
+        <a href="{% url 'accounts:export_directions_pdf' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+           class="export-btn export-btn-pdf" title="Exporter PDF">
+            <i class="fas fa-file-pdf"></i> PDF
+        </a>
+        <a href="{% url 'accounts:export_directions_excel' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+           class="export-btn export-btn-excel" title="Exporter Excel">
+            <i class="fas fa-file-excel"></i> Excel
+        </a>
+        <button class="btn btn-primary" onclick="ouvrirNouvelleDirection()">
+            <i class="fas fa-plus"></i> Nouvelle
+        </button>
+    </div>
+</div>
+
+{# ── Stats ── #}
+<div class="stats-grid" style="margin-bottom:14px;">
+    <div class="stat-card stat-card-purple">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Total</div>
+            <div class="stat-card-value">
+                {% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ directions|length }}{% endif %}
+            </div>
+            <div class="stat-card-detail">directions</div>
+        </div>
+        <div class="stat-card-icon"><i class="fas fa-building"></i></div>
+    </div>
+    <div class="stat-card stat-card-green">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Actives</div>
+            <div class="stat-card-value" id="statDirActives">—</div>
+            <div class="stat-card-detail">directions actives</div>
+        </div>
+        <div class="stat-card-icon"><i class="fas fa-check-circle"></i></div>
+    </div>
+    <div class="stat-card stat-card-blue">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Employés</div>
+            <div class="stat-card-value" id="statDirEmployes">—</div>
+            <div class="stat-card-detail">total actifs</div>
+        </div>
+        <div class="stat-card-icon"><i class="fas fa-users"></i></div>
+    </div>
+    <div class="stat-card stat-card-yellow">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Agences</div>
+            <div class="stat-card-value" id="statDirAgences">—</div>
+            <div class="stat-card-detail">agences liées</div>
+        </div>
+        <div class="stat-card-icon"><i class="fas fa-map-marker-alt"></i></div>
+    </div>
+</div>
+
+{# ── Filtres ── #}
+<form method="get" class="filters-search-bar">
+    <div class="filter-item">
+        <i class="fas fa-search" style="color:#6c757d;"></i>
+        <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Nom, code…">
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-item">
+        <label>Statut</label>
+        <select name="statut">
+            <option value="">Tous</option>
+            <option value="actif" {% if request.GET.statut == "actif" %}selected{% endif %}>Actives</option>
+            <option value="inactif" {% if request.GET.statut == "inactif" %}selected{% endif %}>Inactives</option>
+        </select>
+    </div>
+    <div class="filter-item" style="gap:6px;">
+        <button type="submit" class="btn btn-primary" style="padding:4px 12px;font-size:12px;">
+            <i class="fas fa-search"></i> Filtrer
+        </button>
+        <a href="{% url 'accounts:directions_list' %}" class="btn btn-outline" style="padding:4px 10px;font-size:12px;">
+            <i class="fas fa-times"></i>
+        </a>
+    </div>
+</form>
+
+{# ── Tableau ── #}
+<div class="data-table-wrapper">
+    <div class="data-table-body">
+        <div class="table-responsive">
+            <table class="table" id="directionsTable">
+                <thead>
+                    <tr>
+                        <th style="width:38px;">#</th>
+                        <th data-sortable>Nom</th>
+                        <th data-sortable>Code</th>
+                        <th>Description</th>
+                        <th data-sortable>Directeur</th>
+                        <th data-sortable style="text-align:center;">Employés</th>
+                        <th data-sortable style="text-align:center;">Agences</th>
+                        <th data-sortable>Statut</th>
+                        <th style="width:110px;" class="actions-column">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for d in directions %}
+                <tr>
+                    <td style="color:var(--text-muted);font-size:11px;">
+                        {% if page_obj %}{{ page_obj.start_index|add:forloop.counter0 }}{% else %}{{ forloop.counter }}{% endif %}
+                    </td>
+                    <td>
+                        <div style="font-weight:600;font-size:13px;">{{ d.nom }}</div>
+                    </td>
+                    <td>
+                        <span style="font-family:monospace;font-size:12px;
+                                     background:var(--light-green);color:var(--primary-green);
+                                     padding:2px 7px;border-radius:4px;">{{ d.code }}</span>
+                    </td>
+                    <td style="font-size:11px;color:var(--text-muted);max-width:200px;">
+                        {{ d.description|default:"—"|truncatechars:60 }}
+                    </td>
+                    <td style="font-size:12px;">
+                        {% if d.directeur %}
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <div style="width:22px;height:22px;background:var(--light-green);border-radius:50%;
+                                        display:flex;align-items:center;justify-content:center;
+                                        font-size:9px;font-weight:700;color:var(--primary-green);flex-shrink:0;">
+                                {{ d.directeur.prenom.0 }}{{ d.directeur.nom.0 }}
+                            </div>
+                            {{ d.directeur.get_full_name }}
+                        </div>
+                        {% else %}
+                        <span style="color:var(--text-muted);">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:center;">
+                        <span style="font-weight:600;color:var(--primary-green);">{{ d.nombre_employes|default:0 }}</span>
+                    </td>
+                    <td style="text-align:center;">
+                        <span style="font-weight:600;color:#17a2b8;">{{ d.nombre_agences|default:0 }}</span>
+                    </td>
+                    <td>
+                        <span class="badge {% if d.est_active %}badge-success{% else %}badge-danger{% endif %}" style="font-size:10px;">
+                            {% if d.est_active %}<i class="fas fa-check"></i> Active{% else %}<i class="fas fa-times"></i> Inactive{% endif %}
+                        </span>
+                    </td>
+                    <td class="actions-cell">
+                        <button class="action-btn action-btn-view" onclick="viewDirection({{ d.pk }})" title="Voir">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn action-btn-edit" onclick="editDirection({{ d.pk }})" title="Modifier">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn action-btn-delete" onclick="deleteDirection({{ d.pk }},'{{ d.nom|escapejs }}')" title="Supprimer">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">
+                        <div class="empty-state">
+                            <i class="fas fa-building"></i>
+                            <p>Aucune direction trouvée{% if request.GET.search %} pour « {{ request.GET.search }} »{% endif %}</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# ── Pagination ── #}
+        {% if page_obj %}
+        {% include 'components/pagination.html' with page_obj=page_obj label="direction(s)" %}
+        {% endif %}
+    </div>
+</div>
+
+{# ── Modal formulaire ── #}
+{% include 'accounts/modals/direction_form.html' %}
+
+{% endblock %}
+
+
+{% block dashboard_js %}
+<script src="{% static 'js/components.js' %}"></script>
+<script>
+var DIR_URLS = document.getElementById('dir-urls').dataset;
+
+/* ── Stats dynamiques ── */
+(function() {
+    var rows = document.querySelectorAll('#directionsTable tbody tr');
+    var actives = 0, totalEmployes = 0, totalAgences = 0;
+    rows.forEach(function(tr) {
+        // Statut (colonne 8)
+        var badge = tr.querySelector('td:nth-child(8) .badge');
+        if (badge && badge.textContent.trim().toLowerCase().indexOf('active') !== -1) actives++;
+        // Employés (colonne 6)
+        var emp = tr.querySelector('td:nth-child(6) span');
+        if (emp) totalEmployes += parseInt(emp.textContent) || 0;
+        // Agences (colonne 7)
+        var ag = tr.querySelector('td:nth-child(7) span');
+        if (ag) totalAgences += parseInt(ag.textContent) || 0;
+    });
+    var el;
+    el = document.getElementById('statDirActives');   if(el) el.textContent = actives;
+    el = document.getElementById('statDirEmployes');  if(el) el.textContent = totalEmployes;
+    el = document.getElementById('statDirAgences');   if(el) el.textContent = totalAgences;
+})();
+
+/* ── Voir détail ── */
+function viewDirection(id) {
+    window.location.href = DIR_URLS.detailBase.replace('/0/', '/' + id + '/');
+}
+
+/* ── Ouvrir formulaire nouvelle direction ── */
+function ouvrirNouvelleDirection() {
+    var modal = document.getElementById('directionFormModal');
+    if (!modal) return;
+    var form = modal.querySelector('form');
+    if (form) { form.reset(); form.action = DIR_URLS.create; }
+    var hiddenId = document.getElementById('direction_id');
+    if (hiddenId) hiddenId.value = '';
+    // Code : déverrouiller pour création
+    var codeEl = document.getElementById('d_code');
+    if (codeEl) codeEl.readOnly = false;
+    var title = document.getElementById('directionModalTitle');
+    if (title) title.textContent = 'Nouvelle direction';
+    openModal('directionFormModal');
+}
+
+/* ── Éditer ── */
+function editDirection(id) {
+    fetch(DIR_URLS.editBase.replace('/0/', '/' + id + '/'))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var modal = document.getElementById('directionFormModal');
+            if (!modal) return;
+            var map = {
+                'd_nom': data.nom, 'd_code': data.code,
+                'd_description': data.description, 'd_telephone': data.telephone,
+                'd_email': data.email, 'd_directeur': data.directeur_id,
+            };
+            Object.keys(map).forEach(function(elId) {
+                var el = document.getElementById(elId);
+                if (el) el.value = map[elId] || '';
+            });
+            var actif = document.getElementById('d_est_active');
+            if (actif) actif.checked = !!data.est_active;
+            var hiddenId = document.getElementById('direction_id');
+            if (hiddenId) hiddenId.value = id;
+            // Verrouiller le code en édition
+            var codeEl = document.getElementById('d_code');
+            if (codeEl) codeEl.readOnly = true;
+            var form = modal.querySelector('form');
+            if (form) form.action = DIR_URLS.editBase.replace('/0/', '/' + id + '/');
+            var title = document.getElementById('directionModalTitle');
+            if (title) title.textContent = 'Modifier la direction';
+            openModal('directionFormModal');
+        })
+        .catch(function() { showToast('Erreur lors du chargement', 'error'); });
+}
+
+/* ── Supprimer ── */
+function deleteDirection(id, nom) {
+    showConfirm(
+        'Supprimer la direction ?',
+        'La direction <strong>' + nom + '</strong> sera supprimée. Impossible si elle a des employés ou agences liés.',
+        function() {
+            fetch(DIR_URLS.deleteBase.replace('/0/', '/' + id + '/'), {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCsrfToken() }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    showToast('Direction supprimée', 'success');
+                    setTimeout(function() { location.reload(); }, 900);
+                } else {
+                    showToast(data.error || 'Erreur', 'error');
+                }
+            })
+            .catch(function() { showToast('Erreur réseau', 'error'); });
+        },
+        'Supprimer'
+    );
+}
+</script>
+{% endblock %}

@@ -8,7 +8,7 @@ app_name = 'tickets'
 
 urlpatterns = [
     # ── Admin ──────────────────────────────────────────────────
-    path('', views.admin_tickets_list, name='admin_tickets'),
+    path('', views.admin_tickets, name='admin_tickets'),
     path('stats/', views.admin_tickets_stats, name='admin_stats'),
     path('<int:pk>/', views.ticket_detail, name='ticket_detail'),
 

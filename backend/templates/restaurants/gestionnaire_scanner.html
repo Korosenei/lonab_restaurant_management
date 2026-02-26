@@ -6,166 +6,166 @@
 {% block dashboard_css %}
 <link rel="stylesheet" href="{% static 'css/components.css' %}">
 <style>
-/* ═══ Layout scanner ═══════════════════════════════════════════ */
-.scanner-hero {
-    background: linear-gradient(135deg, #1a472a 0%, #2d6a4f 100%);
-    border-radius: 16px;
-    padding: 24px;
-    color: white;
-}
-.tab-bar {
-    display: flex;
-    gap: 4px;
-    background: rgba(0,0,0,.25);
-    border-radius: 10px;
-    padding: 4px;
-    margin-bottom: 20px;
-}
-.tab-btn {
-    flex: 1;
-    padding: 9px 6px;
-    border: none;
-    border-radius: 7px;
-    color: rgba(255,255,255,.7);
-    background: transparent;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all .2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-}
-.tab-btn.active {
-    background: white;
-    color: #1a472a;
-}
+    /* ═══ Layout scanner ═══════════════════════════════════════════ */
+    .scanner-hero {
+        background: linear-gradient(135deg, #1a472a 0%, #2d6a4f 100%);
+        border-radius: 16px;
+        padding: 24px;
+        color: white;
+    }
+    .tab-bar {
+        display: flex;
+        gap: 4px;
+        background: rgba(0,0,0,.25);
+        border-radius: 10px;
+        padding: 4px;
+        margin-bottom: 20px;
+    }
+    .tab-btn {
+        flex: 1;
+        padding: 9px 6px;
+        border: none;
+        border-radius: 7px;
+        color: rgba(255,255,255,.7);
+        background: transparent;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all .2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+    .tab-btn.active {
+        background: white;
+        color: #1a472a;
+    }
 
-/* ── Caméra ── */
-#cameraZone {
-    position: relative;
-    background: #000;
-    border-radius: 12px;
-    overflow: hidden;
-    aspect-ratio: 4/3;
-    max-height: 280px;
-}
-#videoEl {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-#cameraOverlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-}
-.scan-frame {
-    width: 180px;
-    height: 180px;
-    border: 3px solid rgba(255,255,255,.8);
-    border-radius: 12px;
-    box-shadow: 0 0 0 9999px rgba(0,0,0,.45);
-    position: relative;
-}
-.scan-frame::before, .scan-frame::after {
-    content: '';
-    position: absolute;
-    width: 24px;
-    height: 24px;
-    border-color: #4ade80;
-    border-style: solid;
-}
-.scan-frame::before { top: -3px; left: -3px; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
-.scan-frame::after  { bottom: -3px; right: -3px; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+    /* ── Caméra ── */
+    #cameraZone {
+        position: relative;
+        background: #000;
+        border-radius: 12px;
+        overflow: hidden;
+        aspect-ratio: 4/3;
+        max-height: 280px;
+    }
+    #videoEl {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    #cameraOverlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+    }
+    .scan-frame {
+        width: 180px;
+        height: 180px;
+        border: 3px solid rgba(255,255,255,.8);
+        border-radius: 12px;
+        box-shadow: 0 0 0 9999px rgba(0,0,0,.45);
+        position: relative;
+    }
+    .scan-frame::before, .scan-frame::after {
+        content: '';
+        position: absolute;
+        width: 24px;
+        height: 24px;
+        border-color: #4ade80;
+        border-style: solid;
+    }
+    .scan-frame::before { top: -3px; left: -3px; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+    .scan-frame::after  { bottom: -3px; right: -3px; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
 
-.scan-line {
-    position: absolute;
-    left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, #4ade80, transparent);
-    animation: scanLine 2s linear infinite;
-}
-@keyframes scanLine {
-    0%   { top: 10px; opacity: 1; }
-    90%  { top: calc(100% - 10px); opacity: 1; }
-    100% { top: 10px; opacity: 0; }
-}
-#cameraStatus {
-    position: absolute;
-    bottom: 0;
-    left: 0; right: 0;
-    background: rgba(0,0,0,.6);
-    color: white;
-    font-size: 12px;
-    text-align: center;
-    padding: 6px;
-}
+    .scan-line {
+        position: absolute;
+        left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #4ade80, transparent);
+        animation: scanLine 2s linear infinite;
+    }
+    @keyframes scanLine {
+        0%   { top: 10px; opacity: 1; }
+        90%  { top: calc(100% - 10px); opacity: 1; }
+        100% { top: 10px; opacity: 0; }
+    }
+    #cameraStatus {
+        position: absolute;
+        bottom: 0;
+        left: 0; right: 0;
+        background: rgba(0,0,0,.6);
+        color: white;
+        font-size: 12px;
+        text-align: center;
+        padding: 6px;
+    }
 
-/* ── Saisie manuelle ── */
-.manual-input {
-    background: rgba(255,255,255,.12);
-    border: 2px solid rgba(255,255,255,.3);
-    border-radius: 10px;
-    padding: 14px 16px;
-    color: white;
-    font-size: 15px;
-    width: 100%;
-    outline: none;
-    transition: border-color .2s;
-    box-sizing: border-box;
-}
-.manual-input:focus { border-color: rgba(255,255,255,.8); }
-.manual-input::placeholder { color: rgba(255,255,255,.5); }
+    /* ── Saisie manuelle ── */
+    .manual-input {
+        background: rgba(255,255,255,.12);
+        border: 2px solid rgba(255,255,255,.3);
+        border-radius: 10px;
+        padding: 14px 16px;
+        color: white;
+        font-size: 15px;
+        width: 100%;
+        outline: none;
+        transition: border-color .2s;
+        box-sizing: border-box;
+    }
+    .manual-input:focus { border-color: rgba(255,255,255,.8); }
+    .manual-input::placeholder { color: rgba(255,255,255,.5); }
 
-/* ── Résultat ── */
-.result-card {
-    display: none;
-    border-radius: 12px;
-    padding: 18px 20px;
-    margin-top: 16px;
-    animation: fadeSlide .25s ease;
-}
-@keyframes fadeSlide { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
-.result-ok  { background: rgba(74,222,128,.15); border: 2px solid rgba(74,222,128,.6); }
-.result-err { background: rgba(248,113,113,.15); border: 2px solid rgba(248,113,113,.6); }
+    /* ── Résultat ── */
+    .result-card {
+        display: none;
+        border-radius: 12px;
+        padding: 18px 20px;
+        margin-top: 16px;
+        animation: fadeSlide .25s ease;
+    }
+    @keyframes fadeSlide { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+    .result-ok  { background: rgba(74,222,128,.15); border: 2px solid rgba(74,222,128,.6); }
+    .result-err { background: rgba(248,113,113,.15); border: 2px solid rgba(248,113,113,.6); }
 
-.client-avatar {
-    width: 52px; height: 52px; border-radius: 50%;
-    background: rgba(255,255,255,.2);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px; font-weight: 800; flex-shrink: 0; overflow: hidden;
-}
-.confirm-btn {
-    width: 100%; margin-top: 14px;
-    padding: 13px;
-    background: #16a34a; color: white;
-    border: none; border-radius: 10px;
-    font-size: 14px; font-weight: 700; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    transition: background .2s;
-}
-.confirm-btn:hover { background: #15803d; }
-.confirm-btn:disabled { background: #6b7280; cursor: not-allowed; }
+    .client-avatar {
+        width: 52px; height: 52px; border-radius: 50%;
+        background: rgba(255,255,255,.2);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 18px; font-weight: 800; flex-shrink: 0; overflow: hidden;
+    }
+    .confirm-btn {
+        width: 100%; margin-top: 14px;
+        padding: 13px;
+        background: #16a34a; color: white;
+        border: none; border-radius: 10px;
+        font-size: 14px; font-weight: 700; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        transition: background .2s;
+    }
+    .confirm-btn:hover { background: #15803d; }
+    .confirm-btn:disabled { background: #6b7280; cursor: not-allowed; }
 
-/* ── Historique ── */
-.scan-row {
-    display: flex; align-items: center; gap: 12px;
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border-color);
-    transition: background .15s;
-}
-.scan-row:hover { background: var(--bg-light); }
-.scan-row:last-child { border-bottom: none; }
+    /* ── Historique ── */
+    .scan-row {
+        display: flex; align-items: center; gap: 12px;
+        padding: 10px 16px;
+        border-bottom: 1px solid var(--border-color);
+        transition: background .15s;
+    }
+    .scan-row:hover { background: var(--bg-light); }
+    .scan-row:last-child { border-bottom: none; }
 </style>
 {% endblock %}
 
-{% block sidebar_menu %}{% include 'dashboards/sidebars/restaurant_sidebar.html' %}{% endblock %}
+{% block sidebar_menu %}{% include 'dashboards/sidebars/gestionnaire_sidebar.html' %}{% endblock %}
 
 {% block page_content %}
 <div id="page-urls"
@@ -184,7 +184,9 @@
         </p>
     </div>
     <div style="text-align:right;">
-        <div style="font-size:28px;font-weight:800;color:var(--primary-green);" id="counterDisplay">{{ nb_scans_aujourd_hui }}</div>
+        <div style="font-size:28px;font-weight:800;color:var(--primary-green);" id="counterDisplay">{{
+            nb_scans_aujourd_hui }}
+        </div>
         <div style="font-size:12px;color:var(--text-muted);">tickets validés aujourd'hui</div>
     </div>
 </div>
@@ -243,14 +245,17 @@
                      id="dropZone"
                      onclick="document.getElementById('qrImageInput').click()"
                      ondrop="handleDrop(event)" ondragover="event.preventDefault()">
-                    <i class="fas fa-cloud-upload-alt" style="font-size:36px;opacity:.8;display:block;margin-bottom:10px;"></i>
+                    <i class="fas fa-cloud-upload-alt"
+                       style="font-size:36px;opacity:.8;display:block;margin-bottom:10px;"></i>
                     <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Importer une photo de QR code</div>
                     <div style="font-size:12px;opacity:.7;">Glissez-déposez ou cliquez pour choisir</div>
-                    <input type="file" id="qrImageInput" accept="image/*" style="display:none;" onchange="handleImageFile(event)">
+                    <input type="file" id="qrImageInput" accept="image/*" style="display:none;"
+                           onchange="handleImageFile(event)">
                 </div>
                 <canvas id="imageCanvas" style="display:none;"></canvas>
                 <div id="imagePreviewWrap" style="display:none;margin-top:10px;text-align:center;">
-                    <img id="imagePreview" src="" style="max-width:100%;max-height:160px;border-radius:10px;object-fit:contain;">
+                    <img id="imagePreview" src=""
+                         style="max-width:100%;max-height:160px;border-radius:10px;object-fit:contain;">
                     <div id="imageDecodeStatus" style="font-size:12px;margin-top:8px;opacity:.85;"></div>
                 </div>
             </div>
@@ -314,18 +319,22 @@
                         <input type="hidden" id="menuIdReserve" value="">
                     </div>
 
-                    <!-- Cas B : pas de réservation → choisir le plat -->
+                    <!-- Cas B : pas de réservation → choisir le plat (OBLIGATOIRE) -->
                     <div id="platPicker" style="display:none;">
-                        <div style="font-size:11px;font-weight:600;opacity:.8;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">
-                            <i class="fas fa-utensils" style="margin-right:4px;"></i> Choisir un plat du jour
+                        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;
+                                    color:#fbbf24;display:flex;align-items:center;gap:6px;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Sélection du plat obligatoire
                         </div>
                         <select id="platSelect"
-                                style="width:100%;padding:9px 12px;border-radius:8px;border:none;font-size:13px;
-                                       background:rgba(255,255,255,.9);color:#1a5c2e;font-weight:600;outline:none;">
-                            <option value="">— Aucun plat sélectionné (optionnel) —</option>
+                                onchange="verifierPlatSelectionne()"
+                                style="width:100%;padding:9px 12px;border-radius:8px;border:2px solid #fbbf24;font-size:13px;
+                                       background:rgba(255,255,255,.95);color:#1a5c2e;font-weight:600;outline:none;">
+                            <option value="">⚠ Choisissez un plat pour continuer...</option>
                         </select>
-                        <div style="font-size:10px;opacity:.7;margin-top:5px;">
-                            Sélectionnez le plat si le client en consomme un en ce moment
+                        <div style="font-size:10px;color:#fbbf24;margin-top:5px;font-weight:600;">
+                            <i class="fas fa-info-circle"></i> La validation est bloquée tant qu'aucun plat n'est
+                            sélectionné
                         </div>
                     </div>
 
@@ -359,7 +368,8 @@
         <div style="margin-top:14px;padding:14px 16px;background:var(--bg-secondary);
                     border-radius:10px;border-left:4px solid var(--primary-green);font-size:12px;">
             <strong style="color:var(--text-primary);">
-                <i class="fas fa-info-circle" style="color:var(--primary-green);margin-right:5px;"></i>Comment valider un ticket ?
+                <i class="fas fa-info-circle" style="color:var(--primary-green);margin-right:5px;"></i>Comment valider
+                un ticket ?
             </strong>
             <div style="color:var(--text-muted);margin-top:5px;line-height:1.7;">
                 <b>Caméra</b> — Pointez vers le QR code affiché sur le téléphone de l'employé<br>
@@ -424,312 +434,327 @@
 <!-- jsQR : décodage QR en pur JS côté navigateur -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
 <script>
-(function () {
-'use strict';
+    (function () {
+    'use strict';
 
-/* ─────────────────────────────────────────────────────────────
-   ÉTAT GLOBAL
-   ───────────────────────────────────────────────────────────── */
-var urls          = document.getElementById('page-urls').dataset;
-var codeEnCours   = '';          // code vérifié en attente de confirmation
-var cameraStream  = null;        // MediaStream actif
-var rafId         = null;        // requestAnimationFrame id pour le scan continu
-var lastScanned   = '';          // évite les doubles déclenchements caméra
-var scanPaused    = false;       // pause pendant l'affichage du résultat
+    /* ─────────────────────────────────────────────────────────────
+       ÉTAT GLOBAL
+       ───────────────────────────────────────────────────────────── */
+    var urls          = document.getElementById('page-urls').dataset;
+    var codeEnCours   = '';          // code vérifié en attente de confirmation
+    var cameraStream  = null;        // MediaStream actif
+    var rafId         = null;        // requestAnimationFrame id pour le scan continu
+    var lastScanned   = '';          // évite les doubles déclenchements caméra
+    var scanPaused    = false;       // pause pendant l'affichage du résultat
 
-/* ─────────────────────────────────────────────────────────────
-   ONGLETS
-   ───────────────────────────────────────────────────────────── */
-window.switchTab = function (tab) {
-    ['camera','image','manual'].forEach(function (t) {
-        document.getElementById('panel-' + t).style.display = (t === tab) ? 'block' : 'none';
-        document.getElementById('tab-' + t).classList.toggle('active', t === tab);
-    });
-    if (tab !== 'camera') stopCamera();
-    resetResult();
-};
-
-/* ─────────────────────────────────────────────────────────────
-   CAMÉRA
-   ───────────────────────────────────────────────────────────── */
-window.startCamera = function () {
-    var status = document.getElementById('cameraStatus');
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        status.textContent = '⚠ Caméra non supportée par ce navigateur';
-        return;
-    }
-    status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Accès à la caméra...';
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-        .then(function (stream) {
-            cameraStream = stream;
-            var video = document.getElementById('videoEl');
-            video.srcObject = stream;
-            video.play();
-            document.getElementById('btnStartCamera').style.display = 'none';
-            document.getElementById('btnStopCamera').style.display  = '';
-            status.textContent = '● Scan en cours — pointez vers le QR code';
-            status.style.color = '#4ade80';
-            tickScan();
-        })
-        .catch(function (err) {
-            status.textContent = '⚠ Caméra refusée : ' + err.message;
+    /* ─────────────────────────────────────────────────────────────
+       ONGLETS
+       ───────────────────────────────────────────────────────────── */
+    window.switchTab = function (tab) {
+        ['camera','image','manual'].forEach(function (t) {
+            document.getElementById('panel-' + t).style.display = (t === tab) ? 'block' : 'none';
+            document.getElementById('tab-' + t).classList.toggle('active', t === tab);
         });
-};
-
-window.stopCamera = function () {
-    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-    if (cameraStream) {
-        cameraStream.getTracks().forEach(function (t) { t.stop(); });
-        cameraStream = null;
-    }
-    var video = document.getElementById('videoEl');
-    video.srcObject = null;
-    document.getElementById('btnStartCamera').style.display = '';
-    document.getElementById('btnStopCamera').style.display  = 'none';
-    document.getElementById('cameraStatus').textContent = 'Caméra arrêtée';
-    document.getElementById('cameraStatus').style.color = '';
-};
-
-function tickScan () {
-    if (!cameraStream || scanPaused) { rafId = requestAnimationFrame(tickScan); return; }
-    var video  = document.getElementById('videoEl');
-    if (video.readyState < video.HAVE_ENOUGH_DATA) { rafId = requestAnimationFrame(tickScan); return; }
-
-    var canvas = document.getElementById('cameraCanvas');
-    canvas.width  = video.videoWidth;
-    canvas.height = video.videoHeight;
-    var ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    var code = window.jsQR && jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
-    if (code && code.data && code.data !== lastScanned) {
-        lastScanned = code.data;
-        scanPaused = true;
-        document.getElementById('cameraStatus').innerHTML = '<i class="fas fa-check" style="color:#4ade80;"></i> Code détecté — vérification...';
-        verifierCode(code.data);
-    }
-    rafId = requestAnimationFrame(tickScan);
-}
-
-/* ─────────────────────────────────────────────────────────────
-   IMAGE / PHOTO
-   ───────────────────────────────────────────────────────────── */
-window.handleDrop = function (e) {
-    e.preventDefault();
-    var file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) decodeImageFile(file);
-};
-
-window.handleImageFile = function (e) {
-    var file = e.target.files[0];
-    if (file) decodeImageFile(file);
-};
-
-function decodeImageFile(file) {
-    var status = document.getElementById('imageDecodeStatus');
-    var preview = document.getElementById('imagePreview');
-    var wrap    = document.getElementById('imagePreviewWrap');
-
-    status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyse du QR code...';
-    wrap.style.display = 'block';
-
-    var reader = new FileReader();
-    reader.onload = function (e) {
-        preview.src = e.target.result;
-        var img = new Image();
-        img.onload = function () {
-            var canvas = document.getElementById('imageCanvas');
-            canvas.width  = img.width;
-            canvas.height = img.height;
-            var ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            var code = window.jsQR && jsQR(data.data, data.width, data.height, { inversionAttempts: 'attemptBoth' });
-            if (code && code.data) {
-                status.innerHTML = '<i class="fas fa-check" style="color:#4ade80;"></i> QR détecté — vérification...';
-                verifierCode(code.data);
-            } else {
-                status.innerHTML = '<i class="fas fa-times" style="color:#f87171;"></i> Aucun QR code trouvé dans cette image';
-            }
-        };
-        img.src = e.target.result;
+        if (tab !== 'camera') stopCamera();
+        resetResult();
     };
-    reader.readAsDataURL(file);
-}
 
-/* ─────────────────────────────────────────────────────────────
-   VÉRIFICATION (sans consommer)
-   ───────────────────────────────────────────────────────────── */
-window.verifierCode = function (code) {
-    code = (code || '').trim();
-    if (!code) { if (scanPaused) { scanPaused = false; } showWarning('Saisissez un code QR'); return; }
+    /* ─────────────────────────────────────────────────────────────
+       CAMÉRA
+       ───────────────────────────────────────────────────────────── */
+    window.startCamera = function () {
+        var status = document.getElementById('cameraStatus');
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            status.textContent = '⚠ Caméra non supportée par ce navigateur';
+            return;
+        }
+        status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Accès à la caméra...';
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+            .then(function (stream) {
+                cameraStream = stream;
+                var video = document.getElementById('videoEl');
+                video.srcObject = stream;
+                video.play();
+                document.getElementById('btnStartCamera').style.display = 'none';
+                document.getElementById('btnStopCamera').style.display  = '';
+                status.textContent = '● Scan en cours — pointez vers le QR code';
+                status.style.color = '#4ade80';
+                tickScan();
+            })
+            .catch(function (err) {
+                status.textContent = '⚠ Caméra refusée : ' + err.message;
+            });
+    };
 
-    resetResult();
+    window.stopCamera = function () {
+        if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(function (t) { t.stop(); });
+            cameraStream = null;
+        }
+        var video = document.getElementById('videoEl');
+        video.srcObject = null;
+        document.getElementById('btnStartCamera').style.display = '';
+        document.getElementById('btnStopCamera').style.display  = 'none';
+        document.getElementById('cameraStatus').textContent = 'Caméra arrêtée';
+        document.getElementById('cameraStatus').style.color = '';
+    };
 
-    fetch(urls.verifyUrl + '?code=' + encodeURIComponent(code))
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-            if (d.valide) {
-                codeEnCours = d.code;
-                /* Infos client */
-                document.getElementById('clientNom').textContent       = d.client;
-                document.getElementById('clientMatricule').textContent = d.matricule;
-                document.getElementById('clientAgence').textContent    = d.agence;
-                document.getElementById('ticketNumero').textContent    = d.ticket_numero;
-                document.getElementById('ticketsRestants').textContent = d.tickets_restants;
-                /* Avatar */
-                var av = document.getElementById('clientAvatar');
-                if (d.photo_url) {
-                    av.innerHTML = '<img src="' + d.photo_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
-                } else {
-                    av.textContent = d.client.split(' ').map(function (w) { return w[0]; }).slice(0, 2).join('');
-                }
+    function tickScan () {
+        if (!cameraStream || scanPaused) { rafId = requestAnimationFrame(tickScan); return; }
+        var video  = document.getElementById('videoEl');
+        if (video.readyState < video.HAVE_ENOUGH_DATA) { rafId = requestAnimationFrame(tickScan); return; }
 
-                /* ── Plat consommé ── */
-                var platReserv = document.getElementById('platReservation');
-                var platPicker = document.getElementById('platPicker');
-                var platAucun  = document.getElementById('platAucun');
-                platReserv.style.display = 'none';
-                platPicker.style.display = 'none';
-                platAucun.style.display  = 'none';
-
-                if (d.reservation && d.reservation.menu_id) {
-                    /* Cas A : reservation connue -> afficher le plat reserve */
-                    document.getElementById('platReserveNom').textContent = d.reservation.menu_nom;
-                    document.getElementById('menuIdReserve').value = d.reservation.menu_id;
-                    platReserv.style.display = 'block';
-                } else if (d.plats_du_jour && d.plats_du_jour.length > 0) {
-                    /* Cas B : pas de reservation -> proposer le choix */
-                    var sel = document.getElementById('platSelect');
-                    sel.innerHTML = '<option value="">— Aucun plat sélectionné (optionnel) —</option>';
-                    d.plats_du_jour.forEach(function(p) {
-                        var opt = document.createElement('option');
-                        opt.value = p.id;
-                        var qty = p.quantite_restante !== null ? ' (' + p.quantite_restante + ' restants)' : '';
-                        opt.textContent = p.nom + qty;
-                        sel.appendChild(opt);
-                    });
-                    platPicker.style.display = 'block';
-                } else {
-                    /* Cas C : aucun plat du jour */
-                    platAucun.style.display = 'block';
-                }
-
-                document.getElementById('resultSuccess').style.display = 'block';
-                document.getElementById('btnValider').disabled = false;
-                if (cameraStream) {
-                    document.getElementById('cameraStatus').innerHTML =
-                        '<i class="fas fa-pause"></i> Scan suspendu — confirmez ou fermez pour continuer';
-                }
-            } else {
-                document.getElementById('errorMessage').textContent = d.error || 'Code invalide';
-                document.getElementById('resultError').style.display = 'block';
-                codeEnCours = '';
-                setTimeout(function () { resetResult(); scanPaused = false; lastScanned = ''; }, 3000);
-            }
-        })
-        .catch(function () {
-            showError('Erreur réseau');
-            scanPaused = false;
-        });
-};
-
-/* ─────────────────────────────────────────────────────────────
-   VALIDATION (consomme le ticket)
-   ───────────────────────────────────────────────────────────── */
-window.validerCode = function () {
-    if (!codeEnCours) return;
-    var btn = document.getElementById('btnValider');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validation en cours...';
-
-    var fd = new FormData();
-    fd.append('code', codeEnCours);
-
-    /* Récupérer le menu_id selon le cas */
-    var menuIdReserve = document.getElementById('menuIdReserve');
-    var platSelect    = document.getElementById('platSelect');
-    var menuId = '';
-    if (menuIdReserve && menuIdReserve.value) {
-        menuId = menuIdReserve.value;  /* Cas A : réservation */
-    } else if (platSelect && platSelect.value) {
-        menuId = platSelect.value;     /* Cas B : choix manuel */
+        var canvas = document.getElementById('cameraCanvas');
+        canvas.width  = video.videoWidth;
+        canvas.height = video.videoHeight;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        var code = window.jsQR && jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+        if (code && code.data && code.data !== lastScanned) {
+            lastScanned = code.data;
+            scanPaused = true;
+            document.getElementById('cameraStatus').innerHTML = '<i class="fas fa-check" style="color:#4ade80;"></i> Code détecté — vérification...';
+            verifierCode(code.data);
+        }
+        rafId = requestAnimationFrame(tickScan);
     }
-    if (menuId) fd.append('menu_id', menuId);
 
-    fetch(urls.validerUrl, {
-        method: 'POST',
-        headers: { 'X-CSRFToken': getCsrfToken() },
-        body: fd
-    })
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-            if (d.valide) {
-                showSuccess('✓ ' + d.message);
-                /* Compteur */
-                var ctr = document.getElementById('counterDisplay');
-                ctr.textContent = parseInt(ctr.textContent || 0) + 1;
-                document.getElementById('histoCount').textContent = ctr.textContent;
-                /* Injecter dans l'historique */
-                var histo = document.getElementById('histoList');
-                var empty = document.getElementById('emptyHisto');
-                if (empty) empty.remove();
-                var now = new Date();
-                var hhmm = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
-                var initiales = d.client.split(' ').map(function(w){return w[0];}).slice(0,2).join('');
-                var row = document.createElement('div');
-                row.className = 'scan-row';
-                row.style.background = 'rgba(74,222,128,.06)';
-                var platInfo = d.plat && d.plat !== '—' ?
-                    ' · <i class="fas fa-utensils" style="font-size:9px;"></i> ' + d.plat : '';
-                row.innerHTML =
-                    '<div style="width:36px;height:36px;border-radius:50%;background:var(--light-green);' +
-                    'display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--primary-green);font-size:13px;flex-shrink:0;">' +
-                    initiales + '</div>' +
-                    '<div style="flex:1;min-width:0;">' +
-                    '<div style="font-weight:600;font-size:13px;color:var(--text-primary);">' + d.client + '</div>' +
-                    '<div style="font-size:11px;color:var(--text-muted);">' + (d.agence||'—') +
-                    ' · <span style="font-family:monospace;">' + d.ticket_numero + '</span>' + platInfo + '</div>' +
-                    '</div>' +
-                    '<div style="font-size:11px;color:var(--primary-green);font-weight:600;flex-shrink:0;">' + hhmm + '</div>';
-                histo.insertBefore(row, histo.firstChild);
-                /* Reset pour prochain scan */
-                codeEnCours = ''; resetResult(); scanPaused = false; lastScanned = '';
-                /* Remettre status caméra */
-                if (cameraStream) document.getElementById('cameraStatus').textContent = '● Scan en cours — pointez vers le QR code';
-                /* Vider l'input manuel */
-                document.getElementById('qrManualInput').value = '';
-                /* Reset image */
-                document.getElementById('qrImageInput').value = '';
-                document.getElementById('imagePreviewWrap').style.display = 'none';
-            } else {
-                showError(d.error || 'Validation échouée');
+    /* ─────────────────────────────────────────────────────────────
+       IMAGE / PHOTO
+       ───────────────────────────────────────────────────────────── */
+    window.handleDrop = function (e) {
+        e.preventDefault();
+        var file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) decodeImageFile(file);
+    };
+
+    window.handleImageFile = function (e) {
+        var file = e.target.files[0];
+        if (file) decodeImageFile(file);
+    };
+
+    function decodeImageFile(file) {
+        var status = document.getElementById('imageDecodeStatus');
+        var preview = document.getElementById('imagePreview');
+        var wrap    = document.getElementById('imagePreviewWrap');
+
+        status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyse du QR code...';
+        wrap.style.display = 'block';
+
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            preview.src = e.target.result;
+            var img = new Image();
+            img.onload = function () {
+                var canvas = document.getElementById('imageCanvas');
+                canvas.width  = img.width;
+                canvas.height = img.height;
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                var code = window.jsQR && jsQR(data.data, data.width, data.height, { inversionAttempts: 'attemptBoth' });
+                if (code && code.data) {
+                    status.innerHTML = '<i class="fas fa-check" style="color:#4ade80;"></i> QR détecté — vérification...';
+                    verifierCode(code.data);
+                } else {
+                    status.innerHTML = '<i class="fas fa-times" style="color:#f87171;"></i> Aucun QR code trouvé dans cette image';
+                }
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       VÉRIFICATION (sans consommer)
+       ───────────────────────────────────────────────────────────── */
+    window.verifierCode = function (code) {
+        code = (code || '').trim();
+        if (!code) { if (scanPaused) { scanPaused = false; } showWarning('Saisissez un code QR'); return; }
+
+        resetResult();
+
+        fetch(urls.verifyUrl + '?code=' + encodeURIComponent(code))
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (d.valide) {
+                    codeEnCours = d.code;
+                    /* Infos client */
+                    document.getElementById('clientNom').textContent       = d.client;
+                    document.getElementById('clientMatricule').textContent = d.matricule;
+                    document.getElementById('clientAgence').textContent    = d.agence;
+                    document.getElementById('ticketNumero').textContent    = d.ticket_numero;
+                    document.getElementById('ticketsRestants').textContent = d.tickets_restants;
+                    /* Avatar */
+                    var av = document.getElementById('clientAvatar');
+                    if (d.photo_url) {
+                        av.innerHTML = '<img src="' + d.photo_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+                    } else {
+                        av.textContent = d.client.split(' ').map(function (w) { return w[0]; }).slice(0, 2).join('');
+                    }
+
+                    /* ── Plat consommé ── */
+                    var platReserv = document.getElementById('platReservation');
+                    var platPicker = document.getElementById('platPicker');
+                    var platAucun  = document.getElementById('platAucun');
+                    platReserv.style.display = 'none';
+                    platPicker.style.display = 'none';
+                    platAucun.style.display  = 'none';
+
+                    if (d.reservation && d.reservation.menu_id) {
+                        /* Cas A : reservation connue -> afficher le plat reserve */
+                        document.getElementById('platReserveNom').textContent = d.reservation.menu_nom;
+                        document.getElementById('menuIdReserve').value = d.reservation.menu_id;
+                        platReserv.style.display = 'block';
+                        /* Plat connu -> on peut valider directement */
+                        document.getElementById('btnValider').disabled = false;
+                    } else if (d.plats_du_jour && d.plats_du_jour.length > 0) {
+                        /* Cas B : pas de reservation -> plat OBLIGATOIRE */
+                        var sel = document.getElementById('platSelect');
+                        sel.innerHTML = '<option value="">⚠ Choisissez un plat pour continuer...</option>';
+                        d.plats_du_jour.forEach(function(p) {
+                            var opt = document.createElement('option');
+                            opt.value = p.id;
+                            var qty = p.quantite_disponible !== null ? ' (' + p.quantite_disponible + ' restants)' : '';
+                            opt.textContent = p.nom + qty;
+                            sel.appendChild(opt);
+                        });
+                        platPicker.style.display = 'block';
+                        /* Bloquer le bouton jusqu'à sélection d'un plat */
+                        document.getElementById('btnValider').disabled = true;
+                    } else {
+                        /* Cas C : aucun plat du jour -> on peut valider directement */
+                        platAucun.style.display = 'block';
+                        document.getElementById('btnValider').disabled = false;
+                    }
+
+                    document.getElementById('resultSuccess').style.display = 'block';
+                    if (cameraStream) {
+                        document.getElementById('cameraStatus').innerHTML =
+                            '<i class="fas fa-pause"></i> Scan suspendu — confirmez ou fermez pour continuer';
+                    }
+                } else {
+                    document.getElementById('errorMessage').textContent = d.error || 'Code invalide';
+                    document.getElementById('resultError').style.display = 'block';
+                    codeEnCours = '';
+                    setTimeout(function () { resetResult(); scanPaused = false; lastScanned = ''; }, 3000);
+                }
+            })
+            .catch(function () {
+                showError('Erreur réseau');
+                scanPaused = false;
+            });
+    };
+
+    /* ─────────────────────────────────────────────────────────────
+       VALIDATION DE LA SÉLECTION DU PLAT
+       ───────────────────────────────────────────────────────────── */
+    window.verifierPlatSelectionne = function () {
+        var sel = document.getElementById('platSelect');
+        var btn = document.getElementById('btnValider');
+        if (sel && btn) {
+            btn.disabled = !sel.value;
+        }
+    };
+
+    /* ─────────────────────────────────────────────────────────────
+       VALIDATION (consomme le ticket)
+       ───────────────────────────────────────────────────────────── */
+    window.validerCode = function () {
+        if (!codeEnCours) return;
+        var btn = document.getElementById('btnValider');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validation en cours...';
+
+        var fd = new FormData();
+        fd.append('code', codeEnCours);
+
+        /* Récupérer le menu_id selon le cas */
+        var menuIdReserve = document.getElementById('menuIdReserve');
+        var platSelect    = document.getElementById('platSelect');
+        var menuId = '';
+        if (menuIdReserve && menuIdReserve.value) {
+            menuId = menuIdReserve.value;  /* Cas A : réservation */
+        } else if (platSelect && platSelect.value) {
+            menuId = platSelect.value;     /* Cas B : choix manuel */
+        }
+        if (menuId) fd.append('menu_id', menuId);
+
+        fetch(urls.validerUrl, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCsrfToken() },
+            body: fd
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (d.valide) {
+                    showSuccess('✓ ' + d.message);
+                    /* Compteur */
+                    var ctr = document.getElementById('counterDisplay');
+                    ctr.textContent = parseInt(ctr.textContent || 0) + 1;
+                    document.getElementById('histoCount').textContent = ctr.textContent;
+                    /* Injecter dans l'historique */
+                    var histo = document.getElementById('histoList');
+                    var empty = document.getElementById('emptyHisto');
+                    if (empty) empty.remove();
+                    var now = new Date();
+                    var hhmm = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+                    var initiales = d.client.split(' ').map(function(w){return w[0];}).slice(0,2).join('');
+                    var row = document.createElement('div');
+                    row.className = 'scan-row';
+                    row.style.background = 'rgba(74,222,128,.06)';
+                    var platInfo = d.plat && d.plat !== '—' ?
+                        ' · <i class="fas fa-utensils" style="font-size:9px;"></i> ' + d.plat : '';
+                    row.innerHTML =
+                        '<div style="width:36px;height:36px;border-radius:50%;background:var(--light-green);' +
+                        'display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--primary-green);font-size:13px;flex-shrink:0;">' +
+                        initiales + '</div>' +
+                        '<div style="flex:1;min-width:0;">' +
+                        '<div style="font-weight:600;font-size:13px;color:var(--text-primary);">' + d.client + '</div>' +
+                        '<div style="font-size:11px;color:var(--text-muted);">' + (d.agence||'—') +
+                        ' · <span style="font-family:monospace;">' + d.ticket_numero + '</span>' + platInfo + '</div>' +
+                        '</div>' +
+                        '<div style="font-size:11px;color:var(--primary-green);font-weight:600;flex-shrink:0;">' + hhmm + '</div>';
+                    histo.insertBefore(row, histo.firstChild);
+                    /* Reset pour prochain scan */
+                    codeEnCours = ''; resetResult(); scanPaused = false; lastScanned = '';
+                    /* Remettre status caméra */
+                    if (cameraStream) document.getElementById('cameraStatus').textContent = '● Scan en cours — pointez vers le QR code';
+                    /* Vider l'input manuel */
+                    document.getElementById('qrManualInput').value = '';
+                    /* Reset image */
+                    document.getElementById('qrImageInput').value = '';
+                    document.getElementById('imagePreviewWrap').style.display = 'none';
+                } else {
+                    showError(d.error || 'Validation échouée');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check"></i> Confirmer la validation';
+                    scanPaused = false;
+                }
+            })
+            .catch(function () {
+                showError('Erreur réseau');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-check"></i> Confirmer la validation';
-                scanPaused = false;
-            }
-        })
-        .catch(function () {
-            showError('Erreur réseau');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-check"></i> Confirmer la validation';
-        });
-};
+            });
+    };
 
-/* ─────────────────────────────────────────────────────────────
-   HELPERS
-   ───────────────────────────────────────────────────────────── */
-function resetResult() {
-    document.getElementById('resultSuccess').style.display = 'none';
-    document.getElementById('resultError').style.display   = 'none';
-    codeEnCours = '';
-}
+    /* ─────────────────────────────────────────────────────────────
+       HELPERS
+       ───────────────────────────────────────────────────────────── */
+    function resetResult() {
+        document.getElementById('resultSuccess').style.display = 'none';
+        document.getElementById('resultError').style.display   = 'none';
+        codeEnCours = '';
+    }
 
-/* Démarrage auto caméra */
-document.addEventListener('DOMContentLoaded', function () {
-    startCamera();
-});
+    /* Démarrage auto caméra */
+    document.addEventListener('DOMContentLoaded', function () {
+        startCamera();
+    });
 
-})();
+    })();
 </script>
 {% endblock %}

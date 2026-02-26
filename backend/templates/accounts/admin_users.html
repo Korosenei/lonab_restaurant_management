@@ -1,0 +1,360 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Gestion des Utilisateurs{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
+{% endblock %}
+
+{% block sidebar_menu %}
+{% include 'dashboards/sidebars/admin_sidebar.html' %}
+{% endblock %}
+
+{% block page_content %}
+
+{# ── URL helpers ── #}
+<div id="user-urls"
+     data-create="{% url 'accounts:user_create' %}"
+     data-edit-base="{% url 'accounts:user_edit' pk=0 %}"
+     data-delete-base="{% url 'accounts:user_delete' pk=0 %}"
+     data-detail-base="{% url 'accounts:user_detail' pk=0 %}"
+     style="display:none;"></div>
+
+{# ── En-tête ── #}
+<div class="page-header-with-actions">
+    <div class="page-header">
+        <h1 class="page-title">Gestion des Utilisateurs</h1>
+    </div>
+    <div class="page-header-actions">
+        <a href="{% url 'accounts:export_users_pdf' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+           class="export-btn export-btn-pdf" title="Exporter PDF">
+            <i class="fas fa-file-pdf"></i> PDF
+        </a>
+        <a href="{% url 'accounts:export_users_excel' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+           class="export-btn export-btn-excel" title="Exporter Excel">
+            <i class="fas fa-file-excel"></i> Excel
+        </a>
+        <button class="btn btn-primary" onclick="ouvrirNouvelUtilisateur()">
+            <i class="fas fa-plus"></i> Nouveau
+        </button>
+    </div>
+</div>
+
+{# ── Stats ── #}
+<div class="stats-grid" style="margin-bottom:14px;">
+    <div class="stat-card stat-card-green">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Total</div>
+            <div class="stat-card-value">
+                {% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ users|length }}{% endif %}
+            </div>
+            <div class="stat-card-detail">utilisateurs</div>
+        </div>
+        <div class="stat-card-icon"><i class="fas fa-users"></i></div>
+    </div>
+    <div class="stat-card stat-card-blue">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Clients</div>
+            <div class="stat-card-value" id="statClients">—</div>
+            <div class="stat-card-detail">employés</div>
+        </div>
+        <div class="stat-card-icon"><i class="fas fa-user-tie"></i></div>
+    </div>
+    <div class="stat-card stat-card-yellow">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Caissiers</div>
+            <div class="stat-card-value" id="statCaissiers">—</div>
+            <div class="stat-card-detail">caissiers</div>
+        </div>
+        <div class="stat-card-icon"><i class="fas fa-cash-register"></i></div>
+    </div>
+    <div class="stat-card stat-card-purple">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Gestionnaires</div>
+            <div class="stat-card-value" id="statGest">—</div>
+            <div class="stat-card-detail">gestionnaires</div>
+        </div>
+        <div class="stat-card-icon"><i class="fas fa-utensils"></i></div>
+    </div>
+    <div class="stat-card stat-card-red">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Admins</div>
+            <div class="stat-card-value" id="statAdmins">—</div>
+            <div class="stat-card-detail">admins</div>
+        </div>
+        <div class="stat-card-icon"><i class="fas fa-user-shield"></i></div>
+    </div>
+    <div class="stat-card stat-card-green">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Actifs</div>
+            <div class="stat-card-value" id="statActifs">—</div>
+            <div class="stat-card-detail">comptes actifs</div>
+        </div>
+        <div class="stat-card-icon"><i class="fas fa-user-check"></i></div>
+    </div>
+</div>
+
+{# ── Filtres ── #}
+<form method="get" class="filters-search-bar">
+    <div class="filter-item">
+        <i class="fas fa-search" style="color:#6c757d;"></i>
+        <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Nom, email, matricule…">
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-item">
+        <label>Type</label>
+        <select name="type">
+            <option value="">Tous types</option>
+            <option value="CLIENT" {% if request.GET.type == "CLIENT" %}selected{% endif %}>Client</option>
+            <option value="CAISSIER" {% if request.GET.type == "CAISSIER" %}selected{% endif %}>Caissier</option>
+            <option value="GESTIONNAIRE_RESTAURANT" {% if request.GET.type == "GESTIONNAIRE_RESTAURANT" %}selected{% endif %}>Gestionnaire</option>
+            <option value="SUPER_ADMIN" {% if request.GET.type == "SUPER_ADMIN" %}selected{% endif %}>Admin</option>
+        </select>
+    </div>
+    <div class="filter-item">
+        <label>Direction</label>
+        <select name="direction">
+            <option value="">Toutes</option>
+            {% for direction in directions %}
+            <option value="{{ direction.id }}" {% if request.GET.direction == direction.id|stringformat:"s" %}selected{% endif %}>{{ direction.nom }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="filter-item">
+        <label>Agence</label>
+        <select name="agence">
+            <option value="">Toutes</option>
+            {% for agence in agences %}
+            <option value="{{ agence.id }}" {% if request.GET.agence == agence.id|stringformat:"s" %}selected{% endif %}>{{ agence.nom }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="filter-item">
+        <label>Statut</label>
+        <select name="statut">
+            <option value="">Tous</option>
+            <option value="actif" {% if request.GET.statut == "actif" %}selected{% endif %}>Actifs</option>
+            <option value="inactif" {% if request.GET.statut == "inactif" %}selected{% endif %}>Inactifs</option>
+        </select>
+    </div>
+    <div class="filter-item" style="gap:6px;">
+        <button type="submit" class="btn btn-primary" style="padding:4px 12px;font-size:12px;">
+            <i class="fas fa-search"></i> Filtrer
+        </button>
+        <a href="{% url 'accounts:users_list' %}" class="btn btn-outline" style="padding:4px 10px;font-size:12px;">
+            <i class="fas fa-times"></i>
+        </a>
+    </div>
+</form>
+
+{# ── Tableau ── #}
+<div class="data-table-wrapper">
+    <div class="data-table-body">
+        <div class="table-responsive">
+            <table class="table" id="usersTable">
+                <thead>
+                    <tr>
+                        <th style="width:40px;">#</th>
+                        <th data-sortable>Nom complet</th>
+                        <th data-sortable>Email</th>
+                        <th data-sortable>Username</th>
+                        <th data-sortable>Type</th>
+                        <th data-sortable>Direction</th>
+                        <th data-sortable>Agence</th>
+                        <th data-sortable>Statut</th>
+                        <th style="width:100px;" class="actions-column">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for u in users %}
+                <tr data-type="{{ u.type_utilisateur }}" data-active="{{ u.est_actif|yesno:'true,false' }}">
+                    <td>{{ forloop.counter }}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:28px;height:28px;background:var(--light-green);border-radius:50%;
+                                        display:flex;align-items:center;justify-content:center;
+                                        font-weight:700;color:var(--primary-green);font-size:10px;flex-shrink:0;overflow:hidden;">
+                                {% if u.photo_profil %}
+                                <img src="{{ u.photo_profil.url }}" alt="" style="width:100%;height:100%;object-fit:cover;">
+                                {% else %}
+                                {{ u.prenom.0 }}{{ u.nom.0 }}
+                                {% endif %}
+                            </div>
+                            <div>
+                                <div style="font-weight:600;font-size:12px;">{{ u.get_full_name }}</div>
+                                {% if u.matricule %}
+                                <div style="font-size:10px;color:var(--text-muted);font-family:monospace;">{{ u.matricule }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td style="font-size:12px;">{{ u.email }}</td>
+                    <td style="font-size:12px;font-family:monospace;">{{ u.nom_utilisateur|default:"-" }}</td>
+                    <td>
+                        <span class="badge {% if u.type_utilisateur == 'SUPER_ADMIN' %}badge-danger{% elif u.type_utilisateur == 'CAISSIER' %}badge-warning{% elif u.type_utilisateur == 'GESTIONNAIRE_RESTAURANT' %}badge-info{% else %}badge-success{% endif %}"
+                              style="font-size:10px;">
+                            {{ u.get_type_utilisateur_display }}
+                        </span>
+                    </td>
+                    <td style="font-size:11px;">{{ u.direction.nom|default:"-" }}</td>
+                    <td style="font-size:11px;">{{ u.agence.nom|default:"-" }}</td>
+                    <td>
+                        <span class="badge {% if u.est_actif %}badge-success{% else %}badge-danger{% endif %}"
+                              style="font-size:10px;">
+                            {% if u.est_actif %}<i class="fas fa-check"></i>{% else %}<i class="fas fa-times"></i>{% endif %}
+                        </span>
+                    </td>
+                    <td class="actions-cell">
+                        <button class="action-btn action-btn-view" onclick="viewUser({{ u.id }})" title="Voir">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn action-btn-edit" onclick="editUser({{ u.id }})" title="Modifier">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn action-btn-delete"
+                                onclick="deleteUser({{ u.id }},'{{ u.get_full_name|escapejs }}')"
+                                title="Supprimer">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">
+                        <div class="empty-state">
+                            <i class="fas fa-users"></i>
+                            <p>Aucun utilisateur trouvé{% if request.GET.search %} pour « {{ request.GET.search }} »{% endif %}</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% include 'components/pagination.html' with page_obj=users label="utilisateur(s)" %}
+    </div>
+</div>
+
+{% include 'accounts/modals/user_form.html' %}
+
+{% endblock %}
+
+
+{% block dashboard_js %}
+<script src="{% static 'js/components.js' %}"></script>
+<script>
+var USER_URLS = document.getElementById('user-urls').dataset;
+
+/* ── Stats dynamiques ── */
+(function() {
+    var rows = document.querySelectorAll('#usersTable tbody tr[data-type]');
+    var clients = 0, caissiers = 0, gestionnaires = 0, admins = 0, actifs = 0;
+    rows.forEach(function(tr) {
+        var type = tr.dataset.type;
+        if (type === 'CLIENT')                  clients++;
+        if (type === 'CAISSIER')                caissiers++;
+        if (type === 'GESTIONNAIRE_RESTAURANT') gestionnaires++;
+        if (type === 'ADMIN')             admins++;
+        if (tr.dataset.actif === 'true')        actifs++;
+    });
+    var el;
+    el = document.getElementById('statClients');    if (el) el.textContent = clients;
+    el = document.getElementById('statCaissiers');  if (el) el.textContent = caissiers;
+    el = document.getElementById('statGest');       if (el) el.textContent = gestionnaires;
+    el = document.getElementById('statAdmins');     if (el) el.textContent = admins;
+    el = document.getElementById('statActifs');     if (el) el.textContent = actifs;
+})();
+
+/* ── Voir le détail ── */
+function viewUser(id) {
+    window.location.href = USER_URLS.detailBase.replace('/0/', '/' + id + '/');
+}
+
+/* ── Ouvrir le modal pour un NOUVEL utilisateur ── */
+function ouvrirNouvelUtilisateur() {
+    var modal = document.getElementById('userFormModal');
+    if (!modal) return;
+    var form = modal.querySelector('form');
+    if (form) { form.reset(); form.action = USER_URLS.create; }
+    var hiddenId = document.getElementById('user_id');
+    if (hiddenId) hiddenId.value = '';
+    var infoBox = document.getElementById('password_info_box');
+    if (infoBox) infoBox.style.display = '';
+    var title = document.getElementById('userModalTitle');
+    if (title) title.textContent = 'Nouvel utilisateur';
+    if (typeof toggleUserFields === 'function') toggleUserFields('CLIENT');
+    openModal('userFormModal');
+}
+
+/* ── Éditer un utilisateur ── */
+function editUser(id) {
+    fetch(USER_URLS.editBase.replace('/0/', '/' + id + '/'))
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            var modal = document.getElementById('userFormModal');
+            if (!modal) return;
+            var map = {
+                'user_id':            data.id,
+                'u_prenom':           data.prenom,
+                'u_nom':              data.nom,
+                'u_email':            data.email,
+                'u_telephone':        data.telephone,
+                'u_type_utilisateur': data.type_utilisateur,
+                'u_genre':            data.genre,
+                'u_matricule':        data.matricule,
+                'u_nom_utilisateur':  data.nom_utilisateur,
+                'u_departement':      data.departement,
+                'u_poste':            data.poste,
+                'u_direction':        data.direction_id,
+                'u_agence':           data.agence_id,
+                'u_restaurant_gere':  data.restaurant_gere_id,
+                'u_adresse':          data.adresse,
+            };
+            Object.keys(map).forEach(function (elId) {
+                var el = document.getElementById(elId);
+                if (el) el.value = map[elId] || '';
+            });
+            var actif = document.getElementById('u_est_actif');
+            if (actif) actif.checked = !!data.est_actif;
+            var verifie = document.getElementById('u_est_verifie');
+            if (verifie) verifie.checked = !!data.est_verifie;
+            var infoBox = document.getElementById('password_info_box');
+            if (infoBox) infoBox.style.display = 'none';
+            var form = modal.querySelector('form');
+            if (form) form.action = USER_URLS.editBase.replace('/0/', '/' + id + '/');
+            var title = document.getElementById('userModalTitle');
+            if (title) title.textContent = 'Modifier l\'utilisateur';
+            if (typeof toggleUserFields === 'function') toggleUserFields(data.type_utilisateur);
+            openModal('userFormModal');
+        })
+        .catch(function () { showToast('Erreur lors du chargement', 'error'); });
+}
+
+/* ── Supprimer un utilisateur ── */
+function deleteUser(id, nom) {
+    showConfirm(
+        'Supprimer l\'utilisateur ?',
+        'L\'utilisateur <strong>' + nom + '</strong> sera définitivement supprimé. Cette action est irréversible.',
+        function () {
+            fetch(USER_URLS.deleteBase.replace('/0/', '/' + id + '/'), {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCsrfToken() }
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    showToast('Utilisateur supprimé avec succès', 'success');
+                    setTimeout(function () { location.reload(); }, 900);
+                } else {
+                    showToast(data.error || 'Erreur lors de la suppression', 'error');
+                }
+            })
+            .catch(function () { showToast('Erreur réseau', 'error'); });
+        },
+        'Supprimer'
+    );
+}
+</script>
+{% endblock %}

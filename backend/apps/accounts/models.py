@@ -47,7 +47,7 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
         ('CLIENT', 'Client (Employé)'),
         ('CAISSIER', 'Caissier'),
         ('GESTIONNAIRE_RESTAURANT', 'Gestionnaire de restaurant'),
-        ('SUPER_ADMIN', 'Super administrateur'),
+        ('ADMIN', 'Administrateur'),
     ]
 
     GENRES = [
@@ -214,9 +214,9 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
         return self.type_utilisateur == 'GESTIONNAIRE_RESTAURANT'
 
     @property
-    def est_super_admin(self):
+    def est_admin(self):
         """Vérifie si l'utilisateur est un super administrateur"""
-        return self.type_utilisateur == 'SUPER_ADMIN'
+        return self.type_utilisateur == 'ADMIN'
 
     @property
     def tickets_disponibles(self):

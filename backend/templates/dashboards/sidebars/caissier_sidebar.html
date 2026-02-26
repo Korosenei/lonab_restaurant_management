@@ -3,17 +3,15 @@
     <div class="nav-section-title">Menu Principal</div>
     <ul class="nav-menu">
         <li class="nav-item">
-            <a href="{% url 'transactions:caissier_dashboard' %}"
+            <a href="{% url 'accounts:caissier_dashboard' %}"
                class="nav-link {% if request.resolver_match.url_name == 'caissier_dashboard' %}active{% endif %}">
                 <i class="fas fa-home"></i>
                 <span class="nav-link-text">Tableau de bord</span>
             </a>
         </li>
         <li class="nav-item">
-           <!-- <a href="{% url 'tickets:caissier_tickets' %}"
-               class="nav-link {% if request.resolver_match.url_name == 'caissier_tickets' %}active{% endif %}">-->
-            <a href="{% url 'transactions:tickets_list' %}"
-               class="nav-link {% if request.resolver_match.url_name == 'tickets_list' %}active{% endif %}">
+            <a href="{% url 'tickets:caissier_tickets' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'caissier_tickets' %}active{% endif %}">
                 <i class="fas fa-ticket-alt"></i>
                 <span class="nav-link-text">Tickets</span>
             </a>
@@ -32,8 +30,8 @@
     <div class="nav-section-title">Restaurants</div>
     <ul class="nav-menu">
         <li class="nav-item">
-            <a href="{% url 'restaurants:restaurants_list' %}"
-               class="nav-link {% if request.resolver_match.url_name == 'restaurants_list' %}active{% endif %}">
+            <a href="{% url 'restaurants:caissier_restaurants' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'caissier_restaurants' %}active{% endif %}">
                 <i class="fas fa-utensils"></i>
                 <span class="nav-link-text">Restaurants</span>
             </a>
@@ -56,6 +54,28 @@
                class="nav-link {% if request.resolver_match.url_name == 'caissier_historique' %}active{% endif %}">
                 <i class="fas fa-history"></i>
                 <span class="nav-link-text">Historique</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+<div class="nav-section">
+    <div class="nav-section-title">Système</div>
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="{% url 'accounts:profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                <i class="fas fa-user"></i>
+                <span class="nav-link-text">Mon compte</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'notifs:mes_notifications' %}" class="nav-link {% if request.resolver_match.url_name == 'mes_notifications' %}active{% endif %}">
+                <i class="fas fa-bell"></i>
+                <span class="nav-link-text">Notifications
+                    {% if unread_notifications_count > 0 %}
+                    <span style="background:#dc3545;color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;margin-left:4px;">{{ unread_notifications_count }}</span>
+                    {% endif %}
+                </span>
             </a>
         </li>
     </ul>

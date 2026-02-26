@@ -1,0 +1,384 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Dashboard — {{ restaurant.nom }}{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
+<style>
+/* ═══════════════════════════════════════════════
+   GESTIONNAIRE DASHBOARD — Styles
+   ═══════════════════════════════════════════════ */
+
+.db-grid-3k { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:18px; }
+.db-grid-2  { display:grid; grid-template-columns:3fr 2fr; gap:16px; margin-bottom:16px; }
+.db-grid-22 { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+
+/* ── KPI card ── */
+.kpi {
+    background:white; border-radius:10px; padding:14px 16px;
+    box-shadow:0 2px 8px rgba(0,0,0,.07); border-left:4px solid;
+    display:flex; align-items:center; gap:12px;
+    transition:transform .2s, box-shadow .2s;
+}
+.kpi:hover { transform:translateY(-2px); box-shadow:0 5px 16px rgba(0,0,0,.1); }
+.kpi-icon { width:42px; height:42px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.kpi-val  { font-size:24px; font-weight:800; line-height:1; color:#2d3748; }
+.kpi-lbl  { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#6c757d; margin-bottom:2px; }
+
+/* ── Status bar réservations ── */
+.res-status {
+    display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;
+}
+.res-pill {
+    display:flex; align-items:center; gap:6px; padding:8px 14px;
+    border-radius:20px; font-size:12px; font-weight:700;
+}
+.rp-wait   { background:#fff3cd; color:#856404; }
+.rp-ok     { background:#d4edda; color:#155724; }
+.rp-done   { background:#d1ecf1; color:#0c5460; }
+
+/* ── Chart card ── */
+.cc { background:white; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.07); overflow:hidden; }
+.cc-head {
+    padding:11px 16px; border-bottom:1px solid #f0f0f0;
+    display:flex; align-items:center; justify-content:space-between;
+}
+.cc-title { font-size:13px; font-weight:700; color:#2d3748; display:flex; align-items:center; gap:7px; }
+.cc-title i { color:#28a745; }
+.cc-body  { padding:14px 16px; }
+
+/* ── Réservation row ── */
+.rv-row {
+    display:flex; align-items:center; gap:10px;
+    padding:9px 12px; border-bottom:1px solid #f5f5f5;
+    transition:background .15s;
+}
+.rv-row:last-child { border-bottom:none; }
+.rv-row:hover { background:#f8fff8; }
+.rv-avatar {
+    width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#28a745,#20c997);
+    display:flex; align-items:center; justify-content:center; color:white; font-weight:800; font-size:12px; flex-shrink:0;
+}
+.rv-name  { flex:1; font-size:12px; font-weight:600; color:#2d3748; line-height:1.3; }
+.rv-meta  { font-size:10px; color:#adb5bd; }
+.rv-st    { display:inline-block; padding:2px 7px; border-radius:9px; font-size:10px; font-weight:700; }
+.rv-wait  { background:#fff3cd; color:#856404; }
+.rv-conf  { background:#d4edda; color:#155724; }
+.rv-done  { background:#d1ecf1; color:#0c5460; }
+
+/* ── Menu card ── */
+.menu-row {
+    display:flex; align-items:center; gap:10px;
+    padding:8px 12px; border-bottom:1px solid #f5f5f5;
+}
+.menu-row:last-child { border-bottom:none; }
+.menu-row:hover { background:#f8fff8; }
+.menu-icon { width:36px; height:36px; border-radius:8px; background:#e8f5e9; display:flex; align-items:center; justify-content:center; color:#28a745; font-size:16px; flex-shrink:0; }
+.menu-name { flex:1; font-size:12px; font-weight:600; color:#2d3748; }
+.menu-sub  { font-size:10px; color:#adb5bd; }
+.menu-qty  { font-size:12px; font-weight:700; color:#28a745; }
+
+/* ── Scan row ── */
+.scan-row {
+    display:flex; align-items:center; gap:9px;
+    padding:7px 12px; border-bottom:1px solid #f5f5f5;
+}
+.scan-row:last-child { border-bottom:none; }
+.scan-row:hover { background:#f8fff8; }
+.scan-avatar {
+    width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#17a2b8,#6f42c1);
+    display:flex; align-items:center; justify-content:center; color:white; font-size:11px; font-weight:800; flex-shrink:0;
+}
+.scan-name { flex:1; font-size:11px; font-weight:600; color:#2d3748; }
+.scan-meta { font-size:10px; color:#adb5bd; }
+.scan-time { font-size:10px; color:#adb5bd; white-space:nowrap; }
+
+/* ── En-tête ── */
+.db-hdr { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
+.db-hdr h1 { font-size:20px; font-weight:800; color:#2d3748; margin:0 0 3px; }
+.db-hdr p  { font-size:12px; color:#6c757d; margin:0; }
+.db-hdr-r  { display:flex; gap:8px; flex-wrap:wrap; }
+
+/* ── Restaurant badge ── */
+.resto-badge {
+    display:inline-flex; align-items:center; gap:8px;
+    padding:6px 14px; background:#e8f5e9; border-radius:20px;
+    font-size:12px; font-weight:700; color:#155724; border:1px solid #c3e6cb;
+}
+
+/* ══ RESPONSIVE ════════════════════════════ */
+@media (max-width:1100px) { .db-grid-2 { grid-template-columns:1fr; } }
+@media (max-width:800px)  {
+    .db-grid-3k { grid-template-columns:1fr 1fr; }
+    .db-grid-22 { grid-template-columns:1fr; }
+    .db-hdr { flex-direction:column; }
+}
+@media (max-width:500px) {
+    .db-grid-3k { grid-template-columns:1fr; }
+    .kpi-val { font-size:20px; }
+}
+</style>
+{% endblock %}
+
+{% block sidebar_menu %}{% include 'dashboards/sidebars/gestionnaire_sidebar.html' %}{% endblock %}
+
+{% block page_content %}
+
+<!-- ══ EN-TÊTE ════════════════════════════════════════════════ -->
+<div class="db-hdr">
+    <div>
+        <h1>
+            <i class="fas fa-utensils" style="color:var(--primary-green);margin-right:8px;"></i>
+            {{ restaurant.nom }}
+        </h1>
+        <p>
+            <i class="fas fa-map-marker-alt" style="color:#dc3545;"></i>
+            {{ restaurant.ville }}
+            {% if restaurant.adresse %} · {{ restaurant.adresse }}{% endif %}
+            &nbsp;·&nbsp; {{ aujourd_hui|date:"l d F Y" }}
+        </p>
+    </div>
+    <div class="db-hdr-r">
+        <a href="{% url 'restaurants:gestionnaire_scanner' %}" class="btn btn-primary" style="font-size:12px;">
+            <i class="fas fa-qrcode"></i> Scanner
+        </a>
+        <a href="{% url 'restaurants:menus_list' %}" class="btn btn-outline" style="font-size:12px;">
+            <i class="fas fa-clipboard-list"></i> Menus
+        </a>
+        <a href="{% url 'restaurants:gestionnaire_reservations' %}" class="btn btn-outline" style="font-size:12px;">
+            <i class="fas fa-calendar-check"></i> Réservations
+        </a>
+    </div>
+</div>
+
+<!-- ══ KPI — 6 CARTES ════════════════════════════════════════ -->
+<div class="db-grid-3k">
+
+    <div class="kpi" style="border-color:#28a745;">
+        <div class="kpi-icon" style="background:#e8f5e9;"><i class="fas fa-ticket-alt" style="color:#28a745;"></i></div>
+        <div>
+            <div class="kpi-lbl">Aujourd'hui</div>
+            <div class="kpi-val" style="color:#28a745;">{{ tickets_aujourd_hui }}</div>
+        </div>
+    </div>
+
+    <div class="kpi" style="border-color:#17a2b8;">
+        <div class="kpi-icon" style="background:#d1ecf1;"><i class="fas fa-calendar-week" style="color:#17a2b8;"></i></div>
+        <div>
+            <div class="kpi-lbl">Cette semaine</div>
+            <div class="kpi-val" style="color:#17a2b8;">{{ tickets_semaine }}</div>
+        </div>
+    </div>
+
+    <div class="kpi" style="border-color:#6f42c1;">
+        <div class="kpi-icon" style="background:rgba(111,66,193,.1);"><i class="fas fa-calendar-alt" style="color:#6f42c1;"></i></div>
+        <div>
+            <div class="kpi-lbl">Ce mois</div>
+            <div class="kpi-val" style="color:#6f42c1;">{{ tickets_mois }}</div>
+        </div>
+    </div>
+
+    <div class="kpi" style="border-color:#ffc107;">
+        <div class="kpi-icon" style="background:#fff3cd;"><i class="fas fa-clock" style="color:#e0a800;"></i></div>
+        <div>
+            <div class="kpi-lbl">En attente</div>
+            <div class="kpi-val" style="color:#e0a800;">{{ nb_attente }}</div>
+        </div>
+    </div>
+
+    <div class="kpi" style="border-color:#20c997;">
+        <div class="kpi-icon" style="background:rgba(32,201,151,.1);"><i class="fas fa-check-double" style="color:#20c997;"></i></div>
+        <div>
+            <div class="kpi-lbl">Confirmées</div>
+            <div class="kpi-val" style="color:#20c997;">{{ nb_confirme }}</div>
+        </div>
+    </div>
+
+    <div class="kpi" style="border-color:#6c757d;">
+        <div class="kpi-icon" style="background:#f0f0f0;"><i class="fas fa-flag-checkered" style="color:#6c757d;"></i></div>
+        <div>
+            <div class="kpi-lbl">Terminées auj.</div>
+            <div class="kpi-val" style="color:#6c757d;">{{ nb_termine }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ LIGNE 2 — GRAPHE + RÉSERVATIONS ══════════════════════ -->
+<div class="db-grid-2">
+
+    <!-- Graphe 14 jours -->
+    <div class="cc">
+        <div class="cc-head">
+            <div class="cc-title"><i class="fas fa-chart-area"></i> Consommations — 14 derniers jours</div>
+        </div>
+        <div class="cc-body">
+            <canvas id="chartConso" height="150"></canvas>
+        </div>
+    </div>
+
+    <!-- Réservations du jour -->
+    <div class="cc">
+        <div class="cc-head">
+            <div class="cc-title"><i class="fas fa-calendar-day"></i> Réservations du jour</div>
+            <a href="{% url 'restaurants:gestionnaire_reservations' %}" style="font-size:11px;color:#28a745;">Gérer →</a>
+        </div>
+        <div style="max-height:320px;overflow-y:auto;">
+            {% for r in reservations_jour %}
+            <div class="rv-row">
+                <div class="rv-avatar">{{ r.client.prenom.0 }}{{ r.client.nom.0 }}</div>
+                <div style="flex:1;">
+                    <div class="rv-name">{{ r.client.prenom }} {{ r.client.nom }}</div>
+                    <div class="rv-meta">{% if r.menu %}{{ r.menu.nom }}{% else %}Sans menu{% endif %}</div>
+                </div>
+                <span class="rv-st {% if r.statut == 'EN_ATTENTE' %}rv-wait{% elif r.statut == 'CONFIRME' %}rv-conf{% else %}rv-done{% endif %}">
+                    {{ r.get_statut_display }}
+                </span>
+            </div>
+            {% empty %}
+            <div style="text-align:center;color:#adb5bd;padding:30px;">
+                <i class="fas fa-calendar-times" style="font-size:28px;display:block;margin-bottom:8px;opacity:.4;"></i>
+                Aucune réservation aujourd'hui
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- ══ LIGNE 3 — MENUS + DERNIERS SCANS ═════════════════════ -->
+<div class="db-grid-22">
+
+    <!-- Menus du jour -->
+    <div class="cc">
+        <div class="cc-head">
+            <div class="cc-title"><i class="fas fa-utensils"></i> Menus disponibles aujourd'hui</div>
+            <a href="{% url 'restaurants:menus_list' %}" style="font-size:11px;color:#28a745;">Gérer →</a>
+        </div>
+        <div>
+            {% for m in menus_aujourd_hui %}
+            <div class="menu-row">
+                <div class="menu-icon">
+                    {% if m.image %}<img src="{{ m.image.url }}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;">
+                    {% else %}<i class="fas fa-hamburger"></i>{% endif %}
+                </div>
+                <div style="flex:1;">
+                    <div class="menu-name">{{ m.nom }}</div>
+                    <div class="menu-sub">
+                        {{ m.prix }} FCFA
+                        {% if m.description %} · {{ m.description|truncatechars:40 }}{% endif %}
+                    </div>
+                </div>
+                <div class="menu-qty">{{ m.quantite_disponible }} restants</div>
+            </div>
+            {% empty %}
+            <div style="text-align:center;color:#adb5bd;padding:30px;">
+                <i class="fas fa-clipboard-list" style="font-size:28px;display:block;margin-bottom:8px;opacity:.4;"></i>
+                Aucun menu disponible aujourd'hui
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Stats menus -->
+        {% if total_menus %}
+        <div style="padding:10px 12px;border-top:1px solid #f0f0f0;display:flex;gap:10px;justify-content:space-around;background:#f8f9fa;">
+            <div style="text-align:center;">
+                <div style="font-size:16px;font-weight:800;color:#2d3748;">{{ total_menus }}</div>
+                <div style="font-size:10px;color:#6c757d;">Total</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="font-size:16px;font-weight:800;color:#28a745;">{{ menus_disponibles }}</div>
+                <div style="font-size:10px;color:#6c757d;">Disponibles</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="font-size:16px;font-weight:800;color:#dc3545;">{{ menus_epuises }}</div>
+                <div style="font-size:10px;color:#6c757d;">Épuisés</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Derniers scans -->
+    <div class="cc">
+        <div class="cc-head">
+            <div class="cc-title"><i class="fas fa-qrcode"></i> Derniers scans aujourd'hui</div>
+            <a href="{% url 'restaurants:gestionnaire_consommations' %}" style="font-size:11px;color:#28a745;">Historique →</a>
+        </div>
+        <div style="max-height:340px;overflow-y:auto;">
+            {% for s in derniers_scans %}
+            <div class="scan-row">
+                <div class="scan-avatar">{{ s.proprietaire.prenom.0 }}{{ s.proprietaire.nom.0 }}</div>
+                <div style="flex:1;">
+                    <div class="scan-name">{{ s.proprietaire.prenom }} {{ s.proprietaire.nom }}</div>
+                    <div class="scan-meta">
+                        {% if s.proprietaire.agence %}{{ s.proprietaire.agence.nom }}{% else %}—{% endif %}
+                    </div>
+                </div>
+                <div class="scan-time">{{ s.date_consommation|time:"H:i" }}</div>
+            </div>
+            {% empty %}
+            <div style="text-align:center;color:#adb5bd;padding:30px;">
+                <i class="fas fa-qrcode" style="font-size:28px;display:block;margin-bottom:8px;opacity:.4;"></i>
+                Aucun scan aujourd'hui
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Bouton scanner -->
+        <div style="padding:12px 16px;border-top:1px solid #f0f0f0;">
+            <a href="{% url 'restaurants:gestionnaire_scanner' %}" class="btn btn-primary" style="width:100%;justify-content:center;font-size:13px;">
+                <i class="fas fa-qrcode"></i> Ouvrir le scanner
+            </a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{% static 'js/components.js' %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+(function(){
+'use strict';
+Chart.defaults.font.family = "'Segoe UI',sans-serif";
+Chart.defaults.font.size   = 11;
+
+/* ── Graphe consommations 14j ── */
+var labels = [], values = [];
+{% for l in graph_labels %}labels.push("{{ l }}");{% endfor %}
+{% for v in graph_values %}values.push({{ v }});{% endfor %}
+
+var ctx = document.getElementById('chartConso');
+if (ctx) {
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Tickets consommés',
+                data: values,
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40,167,69,.12)',
+                borderWidth: 2.5,
+                pointRadius: 4,
+                pointBackgroundColor: '#28a745',
+                tension: 0.4,
+                fill: true,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: function(c){ return ' '+c.parsed.y+' tickets'; } } }
+            },
+            scales: {
+                x: { grid:{display:false}, ticks:{maxTicksLimit:7, font:{size:10}} },
+                y: { beginAtZero:true, grid:{color:'#f0f0f0'}, ticks:{font:{size:10}, stepSize:1} }
+            }
+        }
+    });
+}
+})();
+</script>
+{% endblock %}

@@ -8,13 +8,11 @@ app_name = 'transactions'
 
 urlpatterns = [
     # ── Admin ──────────────────────────────────────────────────
-    path('', views.admin_transactions_list, name='transactions_list'),
+    path('', views.admin_transactions, name='admin_transactions'),
     path('<int:pk>/', views.transaction_detail, name='transaction_detail'),
     path('stats/', views.admin_stats, name='transaction_stats'),
 
     # ── Caissier ───────────────────────────────────────────────
-    path('caissier/', views.caissier_dashboard, name='caissier_dashboard'),
-    path('caissier/tickets/', views.caissier_tickets_list, name='tickets_list'),
     path('caissier/vente/', views.caissier_confirmer_vente, name='caissier_confirmer_vente'),
     path('caissier/historique/', views.caissier_historique, name='caissier_historique'),
     path('caissier/clients/', views.caissier_clients, name='caissier_clients'),

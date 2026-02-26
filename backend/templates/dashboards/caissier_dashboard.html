@@ -5,216 +5,442 @@
 
 {% block dashboard_css %}
 <link rel="stylesheet" href="{% static 'css/components.css' %}">
+<style>
+/* ═══════════════════════════════════════════════
+   CAISSIER DASHBOARD — Styles
+   ═══════════════════════════════════════════════ */
+
+.db-grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
+.db-grid-3 { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:16px; }
+.db-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+
+.sc {
+    background:white; border-radius:10px; padding:16px 18px;
+    box-shadow:0 2px 8px rgba(0,0,0,.07); border-left:4px solid;
+    display:flex; align-items:center; justify-content:space-between;
+    transition:transform .2s, box-shadow .2s;
+}
+.sc:hover { transform:translateY(-3px); box-shadow:0 6px 18px rgba(0,0,0,.12); }
+.sc-val  { font-size:28px; font-weight:800; line-height:1.1; color:#2d3748; }
+.sc-lbl  { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:#6c757d; margin-bottom:4px; }
+.sc-sub  { font-size:11px; color:#6c757d; margin-top:3px; }
+.sc-icon { width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:21px; flex-shrink:0; }
+
+.sc-green  { border-color:#28a745; } .sc-green  .sc-icon { background:rgba(40,167,69,.12); color:#28a745; }
+.sc-blue   { border-color:#17a2b8; } .sc-blue   .sc-icon { background:rgba(23,162,184,.12); color:#17a2b8; }
+.sc-purple { border-color:#6f42c1; } .sc-purple .sc-icon { background:rgba(111,66,193,.12); color:#6f42c1; }
+.sc-yellow { border-color:#ffc107; } .sc-yellow .sc-icon { background:rgba(255,193,7,.15); color:#e0a800; }
+.sc-red    { border-color:#dc3545; } .sc-red    .sc-icon { background:rgba(220,53,69,.12); color:#dc3545; }
+
+/* ── QR Code widget ── */
+.qr-widget {
+    background:linear-gradient(145deg,#1a3a2a 0%,#2d6a4f 60%,#1a472a 100%);
+    border-radius:12px; padding:20px; color:white; text-align:center;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-height:260px;
+}
+.qr-frame {
+    width:160px; height:160px; background:white; border-radius:10px;
+    margin:12px auto; padding:8px; box-shadow:0 4px 20px rgba(0,0,0,.3);
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.qr-frame img { width:100%; height:100%; object-fit:contain; border-radius:6px; }
+.qr-timer {
+    font-size:28px; font-weight:900; letter-spacing:3px;
+    font-variant-numeric:tabular-nums; margin:6px 0;
+}
+.qr-btn {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700;
+    background:rgba(255,255,255,.15); color:white;
+    border:1px solid rgba(255,255,255,.35); cursor:pointer; transition:.2s; margin-top:10px;
+}
+.qr-btn:hover { background:rgba(255,255,255,.28); }
+.qr-btn:disabled { opacity:.55; cursor:not-allowed; }
+
+/* ── Chart card ── */
+.cc { background:white; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.07); overflow:hidden; }
+.cc-head {
+    padding:11px 16px; border-bottom:1px solid #f0f0f0;
+    display:flex; align-items:center; justify-content:space-between;
+}
+.cc-title { font-size:13px; font-weight:700; color:#2d3748; display:flex; align-items:center; gap:7px; }
+.cc-title i { color:#28a745; }
+.cc-body { padding:14px 16px; }
+
+/* ── Mini table ── */
+.mt { width:100%; border-collapse:collapse; font-size:12px; }
+.mt thead th {
+    padding:7px 10px; background:#f8f9fa; text-align:left;
+    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:#6c757d;
+    border-bottom:1px solid #e9ecef;
+}
+.mt tbody td { padding:8px 10px; border-bottom:1px solid #f5f5f5; color:#495057; vertical-align:middle; }
+.mt tbody tr:last-child td { border-bottom:none; }
+.mt tbody tr:hover { background:#f8fff8; }
+
+.sb { display:inline-block; padding:2px 7px; border-radius:9px; font-size:10px; font-weight:700; }
+.sb-ok   { background:#d4edda; color:#155724; }
+.sb-warn { background:#fff3cd; color:#856404; }
+.sb-err  { background:#f8d7da; color:#721c24; }
+
+/* ── Top client row ── */
+.tc-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #f0f0f0; }
+.tc-row:last-child { border-bottom:none; }
+.tc-avatar {
+    width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#28a745,#20c997);
+    display:flex; align-items:center; justify-content:center; color:white;
+    font-weight:800; font-size:12px; flex-shrink:0;
+}
+.tc-name  { flex:1; font-size:12px; font-weight:600; color:#2d3748; }
+.tc-meta  { font-size:10px; color:#adb5bd; }
+.tc-val   { font-size:12px; font-weight:700; color:#28a745; white-space:nowrap; }
+
+/* ── En-tête ── */
+.db-hdr { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:22px; }
+.db-hdr h1 { font-size:21px; font-weight:800; color:#2d3748; margin:0 0 4px; }
+.db-hdr p  { font-size:13px; color:#6c757d; margin:0; }
+.db-hdr-r  { display:flex; gap:8px; flex-wrap:wrap; }
+
+/* ══ RESPONSIVE ══════════════════════════ */
+@media (max-width:1200px) { .db-grid-4 { grid-template-columns:repeat(2,1fr); } }
+@media (max-width:960px)  { .db-grid-3, .db-grid-2 { grid-template-columns:1fr; } }
+@media (max-width:600px)  {
+    .db-grid-4 { grid-template-columns:1fr 1fr; }
+    .db-hdr { flex-direction:column; }
+    .sc-val  { font-size:22px; }
+}
+@media (max-width:380px)  { .db-grid-4 { grid-template-columns:1fr; } }
+</style>
 {% endblock %}
 
-{% block sidebar_menu %}
-{% include 'dashboards/sidebars/caissier_sidebar.html' %}
-{% endblock %}
+{% block sidebar_menu %}{% include 'dashboards/sidebars/caissier_sidebar.html' %}{% endblock %}
 
 {% block page_content %}
-<div class="page-header">
-    <h1 class="page-title">Tableau de bord — Caissier</h1>
-    <p class="page-subtitle">
-        {% if user.agence %}{{ user.agence.nom }}{% else %}Toutes les agences{% endif %} ·
-        {{ aujourd_hui|date:"l d F Y" }}
-    </p>
-    <div class="page-actions">
-        <a href="{% url 'tickets:caissier_tickets' %}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Vendre des tickets
+
+<div id="page-urls"
+     data-regen-url="# url 'transactions:caissier_regenerer_qr' %}"
+     style="display:none;"></div>
+
+<!-- ══ EN-TÊTE ════════════════════════════════════════════════ -->
+<div class="db-hdr">
+    <div>
+        <h1><i class="fas fa-cash-register" style="color:var(--primary-green);margin-right:10px;"></i>Tableau de bord</h1>
+        <p>{{ user.prenom }} {{ user.nom }}
+            {% if user.agence %} · {{ user.agence.nom }}{% endif %}
+            · {{ aujourd_hui|date:"l d F Y" }}</p>
+    </div>
+    <div class="db-hdr-r">
+        <a href="{% url 'tickets:caissier_tickets' %}" class="btn btn-primary" style="font-size:12px;">
+            <i class="fas fa-plus"></i> Vendre tickets
         </a>
-        <a href="{% url 'restaurants:plannings_list' %}" class="btn btn-outline">
-            <i class="fas fa-calendar-plus"></i> Programmations
+        <a href="{% url 'restaurants:caissier_planifier' %}" class="btn btn-outline" style="font-size:12px;">
+            <i class="fas fa-calendar-plus"></i> Programmer
         </a>
     </div>
 </div>
 
-<!-- ═══ Stats Cards ════════════════════════════════════════════ -->
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--spacing-md);margin-bottom:var(--spacing-lg);">
+<!-- ══ LIGNE 1 — STATS ════════════════════════════════════════ -->
+<div class="db-grid-4">
 
-    <!-- Ventes du jour -->
-    <div class="card" style="border-left:4px solid var(--primary-green);">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div>
-                <div style="color:var(--text-muted);font-size:12px;margin-bottom:4px;">Ventes du jour</div>
-                <div style="font-size:28px;font-weight:700;color:var(--primary-green);">{{ stats.aujourd_hui }}</div>
-                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">transactions</div>
-            </div>
-            <div style="width:50px;height:50px;background:var(--light-green);border-radius:50%;display:flex;align-items:center;justify-content:center;">
-                <i class="fas fa-cash-register" style="font-size:22px;color:var(--primary-green);"></i>
-            </div>
+    <div class="sc sc-green">
+        <div>
+            <div class="sc-lbl">Ventes aujourd'hui</div>
+            <div class="sc-val">{{ stats.aujourd_hui }}</div>
+            <div class="sc-sub">transactions</div>
+        </div>
+        <div class="sc-icon"><i class="fas fa-shopping-cart"></i></div>
+    </div>
+
+    <div class="sc sc-blue">
+        <div>
+            <div class="sc-lbl">Cette semaine</div>
+            <div class="sc-val">{{ stats.cette_semaine }}</div>
+            <div class="sc-sub">ventes terminées</div>
+        </div>
+        <div class="sc-icon"><i class="fas fa-calendar-week"></i></div>
+    </div>
+
+    <div class="sc sc-purple">
+        <div>
+            <div class="sc-lbl">Tickets ce mois</div>
+            <div class="sc-val">{{ stats.tickets_mois }}</div>
+            <div class="sc-sub">vendus</div>
+        </div>
+        <div class="sc-icon"><i class="fas fa-ticket-alt"></i></div>
+    </div>
+
+    <div class="sc sc-yellow">
+        <div>
+            <div class="sc-lbl">CA ce mois</div>
+            <div class="sc-val" style="font-size:18px;">{{ stats.ca_mois|floatformat:0 }}</div>
+            <div class="sc-sub">FCFA</div>
+        </div>
+        <div class="sc-icon"><i class="fas fa-coins"></i></div>
+    </div>
+</div>
+
+<!-- ══ LIGNE 2 — QR + GRAPHE ══════════════════════════════════ -->
+<div class="db-grid-3">
+
+    <!-- QR Code Caissier -->
+    <div class="cc">
+        <div class="cc-head">
+            <div class="cc-title"><i class="fas fa-chart-line"></i> Activité — 30 derniers jours</div>
+        </div>
+        <div class="cc-body">
+            <canvas id="chartActivite" height="160"></canvas>
         </div>
     </div>
 
-    <!-- Tickets vendus ce mois -->
-    <div class="card" style="border-left:4px solid #17a2b8;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div>
-                <div style="color:var(--text-muted);font-size:12px;margin-bottom:4px;">Tickets vendus (mois)</div>
-                <div style="font-size:28px;font-weight:700;color:var(--text-primary);">{{ stats.tickets_mois }}</div>
-                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">tickets</div>
-            </div>
-            <div style="width:50px;height:50px;background:#d1ecf1;border-radius:50%;display:flex;align-items:center;justify-content:center;">
-                <i class="fas fa-ticket-alt" style="font-size:22px;color:#17a2b8;"></i>
-            </div>
+    <!-- QR Code -->
+    <div class="qr-widget">
+        <div style="font-size:12px;font-weight:700;opacity:.8;text-transform:uppercase;letter-spacing:.5px;">
+            <i class="fas fa-qrcode"></i> Mon QR Code
         </div>
-    </div>
-
-    <!-- CA du mois -->
-    <div class="card" style="border-left:4px solid #28a745;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div>
-                <div style="color:var(--text-muted);font-size:12px;margin-bottom:4px;">CA du mois</div>
-                <div style="font-size:28px;font-weight:700;color:var(--text-primary);">{{ stats.ca_mois|floatformat:0 }}</div>
-                <div style="font-size:11px;color:var(--primary-green);margin-top:4px;">FCFA</div>
-            </div>
-            <div style="width:50px;height:50px;background:var(--light-green);border-radius:50%;display:flex;align-items:center;justify-content:center;">
-                <i class="fas fa-coins" style="font-size:22px;color:#28a745;"></i>
-            </div>
+        <div class="qr-frame" id="qrFrame">
+            {% if qr_caissier and qr_caissier.image_qr %}
+                <img src="{{ qr_caissier.image_qr.url }}" alt="QR Code" id="qrImg">
+            {% else %}
+                <div id="qrPlaceholder" style="text-align:center;color:#adb5bd;">
+                    <i class="fas fa-qrcode" style="font-size:50px;display:block;margin-bottom:6px;"></i>
+                    <div style="font-size:10px;">En attente…</div>
+                </div>
+            {% endif %}
         </div>
-    </div>
-
-    <!-- En attente -->
-    <div class="card" style="border-left:4px solid #ffc107;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div>
-                <div style="color:var(--text-muted);font-size:12px;margin-bottom:4px;">En attente</div>
-                <div style="font-size:28px;font-weight:700;color:var(--text-primary);">{{ stats.en_attente }}</div>
-                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">transactions</div>
-            </div>
-            <div style="width:50px;height:50px;background:#fff3cd;border-radius:50%;display:flex;align-items:center;justify-content:center;">
-                <i class="fas fa-hourglass-half" style="font-size:22px;color:#ffc107;"></i>
-            </div>
+        <div class="qr-timer" id="timerDisplay"
+             style="display:{% if qr_caissier %}block{% else %}none{% endif %};">--:--</div>
+        {% if qr_caissier %}
+        <div style="font-size:10px;opacity:.65;">Expire dans</div>
+        {% endif %}
+        <button class="qr-btn" id="btnRegen" onclick="regenererQR()">
+            <i class="fas fa-sync-alt" id="regenIcon"></i> Régénérer
+        </button>
+        <div style="font-size:10px;opacity:.55;margin-top:8px;line-height:1.5;">
+            Usage unique · Valide 30 min
         </div>
     </div>
 </div>
 
-<!-- ═══ Chart + Transactions récentes ══════════════════════════ -->
-<div style="display:grid;grid-template-columns:2fr 1fr;gap:var(--spacing-md);margin-bottom:var(--spacing-md);">
+<!-- ══ LIGNE 3 — TRANSACTIONS + TOP CLIENTS ══════════════════ -->
+<div class="db-grid-2">
 
     <!-- Transactions récentes -->
-    <div class="card">
-        <div class="card-header">
-            <i class="fas fa-receipt"></i> Transactions récentes
-            <a href="{% url 'transactions:caissier_historique' %}" class="btn btn-outline btn-sm" style="margin-left:auto;font-size:11px;">Voir tout</a>
+    <div class="cc">
+        <div class="cc-head">
+            <div class="cc-title"><i class="fas fa-exchange-alt"></i> Transactions récentes</div>
+            <a href="{% url 'transactions:caissier_historique' %}" style="font-size:11px;color:#28a745;">Tout voir →</a>
         </div>
-        {% if recentes %}
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>N° Transaction</th>
-                    <th>Client</th>
-                    <th>Tickets</th>
-                    <th>Montant</th>
-                    <th>Date</th>
-                    <th>Statut</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for t in recentes %}
-                <tr>
-                    <td style="font-size:11px;font-family:monospace;color:var(--primary-green);font-weight:700;">{{ t.numero_transaction|truncatechars:16 }}</td>
-                    <td style="font-size:12px;font-weight:600;">{{ t.client.get_full_name|truncatechars:20 }}</td>
-                    <td style="font-size:12px;text-align:center;">{{ t.nombre_tickets }}</td>
-                    <td style="font-size:12px;font-weight:600;">{{ t.montant_total|floatformat:0 }} <small style="color:var(--text-muted);">FCFA</small></td>
-                    <td style="font-size:11px;color:var(--text-muted);">{{ t.date_transaction|date:"d/m/Y H:i" }}</td>
-                    <td>
-                        <span class="badge {% if t.statut == 'TERMINEE' %}badge-success{% elif t.statut == 'EN_ATTENTE' %}badge-warning{% else %}badge-danger{% endif %}" style="font-size:10px;">
-                            {{ t.get_statut_display }}
-                        </span>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <div style="text-align:center;padding:var(--spacing-xl);color:var(--text-muted);">
-            <i class="fas fa-inbox" style="font-size:40px;display:block;margin-bottom:12px;opacity:.3;"></i>
-            <p>Aucune transaction récente</p>
+        <div style="overflow-x:auto;">
+            <table class="mt">
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Tickets</th>
+                        <th>Montant</th>
+                        <th>Statut</th>
+                        <th>Heure</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in recentes %}
+                    <tr>
+                        <td>
+                            <div style="font-weight:600;color:#2d3748;font-size:12px;">
+                                {% if t.client %}{{ t.client.prenom }} {{ t.client.nom }}{% else %}—{% endif %}
+                            </div>
+                            {% if t.client.matricule %}
+                            <div style="font-size:10px;color:#adb5bd;">{{ t.client.matricule }}</div>
+                            {% endif %}
+                        </td>
+                        <td style="text-align:center;font-weight:700;color:#28a745;">{{ t.nombre_tickets }}</td>
+                        <td style="white-space:nowrap;font-weight:600;">{{ t.montant_total|floatformat:0 }} F</td>
+                        <td>
+                            <span class="sb {% if t.statut == 'TERMINEE' %}sb-ok{% elif t.statut == 'EN_ATTENTE' %}sb-warn{% else %}sb-err{% endif %}">
+                                {{ t.get_statut_display }}
+                            </span>
+                        </td>
+                        <td style="color:#adb5bd;font-size:10px;">{{ t.date_transaction|date:"d/m H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align:center;color:#adb5bd;padding:20px;">Aucune transaction</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        {% endif %}
     </div>
 
-    <!-- Graphe + Actions rapides -->
-    <div style="display:flex;flex-direction:column;gap:var(--spacing-md);">
-
-        <!-- Mini graphe montants -->
-        <div class="card">
-            <div class="card-header"><i class="fas fa-chart-line"></i> Activité récente</div>
-            <div style="padding:12px 16px;">
-                <canvas id="caissierChart" height="140"></canvas>
+    <!-- Top clients du mois -->
+    <div class="cc">
+        <div class="cc-head">
+            <div class="cc-title"><i class="fas fa-star"></i> Top clients — ce mois</div>
+        </div>
+        <div class="cc-body">
+            {% for c in top_clients %}
+            <div class="tc-row">
+                <div class="tc-avatar">{{ c.client__prenom.0 }}{{ c.client__nom.0 }}</div>
+                <div style="flex:1;">
+                    <div class="tc-name">{{ c.client__prenom }} {{ c.client__nom }}</div>
+                    <div class="tc-meta">{{ c.client__matricule|default:"—" }}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div class="tc-val">{{ c.total_tickets }} tickets</div>
+                    <div class="tc-meta">{{ c.total_montant|floatformat:0 }} F</div>
+                </div>
             </div>
+            {% empty %}
+            <div style="text-align:center;color:#adb5bd;padding:20px;">Aucun client ce mois</div>
+            {% endfor %}
         </div>
 
-        <!-- Actions rapides -->
-        <div class="card">
-            <div class="card-header"><i class="fas fa-bolt"></i> Actions rapides</div>
-            <div style="display:flex;flex-direction:column;gap:var(--spacing-sm);padding:8px 0;">
-                <a href="{% url 'tickets:caissier_tickets' %}" class="btn btn-primary" style="width:100%;">
-                    <i class="fas fa-ticket-alt"></i> Vendre des tickets
-                </a>
-                <a href="{% url 'transactions:caissier_clients' %}" class="btn btn-outline" style="width:100%;">
-                    <i class="fas fa-users"></i> Mes clients
-                </a>
-                <a href="{% url 'restaurants:plannings_list' %}" class="btn btn-outline" style="width:100%;">
-                    <i class="fas fa-calendar-alt"></i> Programmations
-                </a>
-                <a href="{% url 'transactions:caissier_historique' %}" class="btn btn-outline" style="width:100%;">
-                    <i class="fas fa-history"></i> Historique
-                </a>
+        <!-- Stats en attente / terminées aujourd'hui -->
+        <div style="border-top:1px solid #f0f0f0;padding:12px 16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div style="text-align:center;padding:10px;background:#fff3cd;border-radius:8px;">
+                <div style="font-size:20px;font-weight:800;color:#e0a800;">{{ stats.en_attente }}</div>
+                <div style="font-size:10px;color:#6c757d;">En attente</div>
+            </div>
+            <div style="text-align:center;padding:10px;background:#d4edda;border-radius:8px;">
+                <div style="font-size:20px;font-weight:800;color:#155724;">{{ stats.terminees }}</div>
+                <div style="font-size:10px;color:#6c757d;">Terminées auj.</div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Données expiration QR -->
+{% if qr_caissier %}
+<script id="qrExpiryData" type="application/json">"{{ qr_caissier.expire_le|date:'c' }}"</script>
+{% endif %}
 
 {% endblock %}
 
 {% block dashboard_js %}
+<script src="{% static 'js/components.js' %}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
-(function () {
-    Chart.defaults.font.family = "'Inter','Segoe UI',sans-serif";
-    Chart.defaults.font.size   = 12;
+(function(){
+'use strict';
+Chart.defaults.font.family = "'Segoe UI',sans-serif";
+Chart.defaults.font.size   = 11;
 
-    /* Données injectées directement depuis le template Django */
-    var labels   = [{% for t in recentes|slice:":8" %}'{{ t.numero_transaction|slice:"-6:" }}'{% if not forloop.last %},{% endif %}{% endfor %}].reverse();
-    var montants = [{% for t in recentes|slice:":8" %}{{ t.montant_total|default:0 }}{% if not forloop.last %},{% endif %}{% endfor %}].reverse();
+/* ── Graphe activité 30j ── */
+var labels = [], tickets = [], montants = [];
+{% for l in graph_labels %}labels.push("{{ l }}");{% endfor %}
+{% for v in graph_tickets %}tickets.push({{ v }});{% endfor %}
+{% for v in graph_montants %}montants.push({{ v }});{% endfor %}
 
-    if (labels.length === 0) { labels = ['—']; montants = [0]; }
-
-    new Chart(document.getElementById('caissierChart'), {
-        type: 'line',
+var ctx = document.getElementById('chartActivite');
+if (ctx) {
+    new Chart(ctx, {
+        type: 'bar',
         data: {
             labels: labels,
-            datasets: [{
-                label: 'Montant',
-                data: montants,
-                borderColor: '#28a745',
-                backgroundColor: 'rgba(40,167,69,.1)',
-                borderWidth: 2,
-                pointRadius: 3,
-                pointBackgroundColor: '#28a745',
-                fill: true,
-                tension: 0.4,
-            }]
+            datasets: [
+                {
+                    label: 'Tickets vendus',
+                    data: tickets,
+                    backgroundColor: 'rgba(40,167,69,.75)',
+                    borderColor: '#28a745',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    yAxisID: 'y',
+                },
+                {
+                    label: 'Montant (kF)',
+                    data: montants.map(function(v){ return Math.round(v/1000); }),
+                    type: 'line',
+                    borderColor: '#ffc107',
+                    backgroundColor: 'rgba(255,193,7,.1)',
+                    borderWidth: 2,
+                    pointRadius: 2,
+                    tension: 0.4,
+                    yAxisID: 'y2',
+                }
+            ]
         },
         options: {
             responsive: true,
             plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: { label: function(c) { return c.parsed.y.toLocaleString('fr-FR') + ' FCFA'; } }
-                }
+                legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10, font:{size:10} } },
+                tooltip: {}
             },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: { color: 'rgba(0,0,0,.05)' },
-                    ticks: { callback: function(v) { return v >= 1000 ? (v/1000).toFixed(0)+'k' : v; } }
-                },
-                x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                x: { grid:{display:false}, ticks:{maxTicksLimit:10, font:{size:9}} },
+                y: { beginAtZero:true, grid:{color:'#f0f0f0'}, ticks:{font:{size:9}}, position:'left' },
+                y2: { beginAtZero:true, position:'right', grid:{display:false}, ticks:{font:{size:9}} }
             }
         }
     });
+}
+
+/* ── Timer QR ── */
+var expiryEl = document.getElementById('qrExpiryData');
+var timerEl  = document.getElementById('timerDisplay');
+var timerInt = null;
+var expiry   = null;
+
+function majTimer() {
+    if (!expiry || !timerEl) return;
+    var diff = Math.max(0, Math.floor((expiry - new Date()) / 1000));
+    if (diff === 0) {
+        timerEl.textContent = 'Expiré';
+        timerEl.style.color = '#fca5a5';
+        clearInterval(timerInt);
+        return;
+    }
+    var m = Math.floor(diff/60), s = diff%60;
+    timerEl.textContent = (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+    timerEl.style.color = diff < 120 ? '#fca5a5' : 'white';
+}
+if (expiryEl && timerEl) {
+    expiry = new Date(JSON.parse(expiryEl.textContent));
+    timerEl.style.display = 'block';
+    majTimer();
+    timerInt = setInterval(majTimer, 1000);
+}
+
+/* ── Régénérer QR ── */
+var regenUrl = (document.getElementById('page-urls') || {}).dataset && document.getElementById('page-urls').dataset.regenUrl;
+
+window.regenererQR = function() {
+    if (!regenUrl) return;
+    var btn  = document.getElementById('btnRegen');
+    var icon = document.getElementById('regenIcon');
+    btn.disabled = true;
+    icon.className = 'fas fa-spinner fa-spin';
+
+    fetch(regenUrl, { method:'POST', headers:{'X-CSRFToken': getCsrfToken()} })
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+        btn.disabled = false;
+        icon.className = 'fas fa-sync-alt';
+        if (d.success) {
+            showSuccess('QR Code régénéré');
+            if (d.image_url) {
+                document.getElementById('qrFrame').innerHTML =
+                    '<img src="'+d.image_url+'" alt="QR Code" style="width:100%;height:100%;object-fit:contain;border-radius:6px;">';
+            }
+            if (d.expire_le && timerEl) {
+                expiry = new Date(d.expire_le);
+                timerEl.style.display = 'block';
+                clearInterval(timerInt);
+                majTimer();
+                timerInt = setInterval(majTimer, 1000);
+            } else {
+                setTimeout(function(){ location.reload(); }, 800);
+            }
+        } else {
+            showError(d.error || 'Erreur');
+        }
+    })
+    .catch(function(){
+        btn.disabled = false;
+        icon.className = 'fas fa-sync-alt';
+        showError('Erreur réseau');
+    });
+};
 })();
 </script>
 {% endblock %}

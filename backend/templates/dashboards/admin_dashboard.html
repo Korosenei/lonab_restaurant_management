@@ -1,211 +1,448 @@
 {% extends 'dashboards/base_dashboard.html' %}
 {% load static %}
 
-{% block title %}Tableau de bord — Administration{% endblock %}
+{% block title %}Tableau de bord — Admin{% endblock %}
 
 {% block dashboard_css %}
 <link rel="stylesheet" href="{% static 'css/components.css' %}">
+<style>
+/* ═══════════════════════════════════════════════
+   ADMIN DASHBOARD — Styles spécifiques
+   ═══════════════════════════════════════════════ */
+
+/* ── Grille responsive ── */
+.db-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+}
+.db-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+.db-grid-3 {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+/* ── Carte stat admin ── */
+.as-card {
+    background: white;
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+    border-left: 4px solid;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: transform .2s, box-shadow .2s;
+}
+.as-card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,.12); }
+.as-content {}
+.as-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #6c757d; margin-bottom: 4px; }
+.as-value { font-size: 26px; font-weight: 800; line-height: 1.1; color: #2d3748; }
+.as-sub { font-size: 11px; color: #6c757d; margin-top: 3px; }
+.as-sub .badge-up { color: #28a745; font-weight: 700; }
+.as-sub .badge-down { color: #dc3545; font-weight: 700; }
+.as-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+}
+
+.as-green  { border-color: #28a745; }
+.as-green  .as-icon { background: rgba(40,167,69,.12); color: #28a745; }
+.as-purple { border-color: #6f42c1; }
+.as-purple .as-icon { background: rgba(111,66,193,.12); color: #6f42c1; }
+.as-blue   { border-color: #17a2b8; }
+.as-blue   .as-icon { background: rgba(23,162,184,.12); color: #17a2b8; }
+.as-yellow { border-color: #ffc107; }
+.as-yellow .as-icon { background: rgba(255,193,7,.15); color: #e0a800; }
+.as-red    { border-color: #dc3545; }
+.as-red    .as-icon { background: rgba(220,53,69,.12); color: #dc3545; }
+.as-teal   { border-color: #20c997; }
+.as-teal   .as-icon { background: rgba(32,201,151,.12); color: #20c997; }
+
+/* ── Carte graphique ── */
+.chart-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+    overflow: hidden;
+}
+.chart-card-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.chart-card-title {
+    font-size: 13px; font-weight: 700; color: #2d3748;
+    display: flex; align-items: center; gap: 8px;
+}
+.chart-card-title i { color: #28a745; font-size: 14px; }
+.chart-card-body { padding: 14px 16px; }
+
+/* ── Table mini ── */
+.mini-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.mini-table thead th {
+    padding: 8px 10px; background: #f8f9fa;
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .5px; color: #6c757d;
+    border-bottom: 1px solid #e9ecef;
+    text-align: left;
+}
+.mini-table tbody td {
+    padding: 9px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    color: #495057;
+    vertical-align: middle;
+}
+.mini-table tbody tr:last-child td { border-bottom: none; }
+.mini-table tbody tr:hover { background: #f8fff8; }
+
+/* ── Badge statut ── */
+.st-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 10px; font-weight: 700;
+}
+.st-ok     { background: #d4edda; color: #155724; }
+.st-warn   { background: #fff3cd; color: #856404; }
+.st-err    { background: #f8d7da; color: #721c24; }
+.st-info   { background: #d1ecf1; color: #0c5460; }
+
+/* ── Barre de progression ── */
+.prog-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.prog-label { font-size: 12px; color: #495057; min-width: 120px; font-weight: 500; }
+.prog-bar { flex: 1; height: 8px; background: #e9ecef; border-radius: 4px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 4px; transition: width .6s ease; }
+.prog-val { font-size: 11px; font-weight: 700; color: #2d3748; min-width: 36px; text-align: right; }
+
+/* ── Activity item ── */
+.act-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid #f0f0f0;
+}
+.act-item:last-child { border-bottom: none; }
+.act-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.act-text { flex: 1; font-size: 12px; color: #495057; line-height: 1.4; }
+.act-time { font-size: 10px; color: #adb5bd; white-space: nowrap; }
+
+/* ── En-tête page ── */
+.db-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 22px;
+}
+.db-header-left h1 { font-size: 22px; font-weight: 800; color: #2d3748; margin: 0 0 4px; }
+.db-header-left p  { font-size: 13px; color: #6c757d; margin: 0; }
+.db-header-right   { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── Taux ── */
+.rate-circle {
+    display: inline-flex; flex-direction: column; align-items: center;
+    justify-content: center; width: 80px; height: 80px;
+    border-radius: 50%; border: 6px solid #28a745;
+    font-size: 18px; font-weight: 800; color: #28a745;
+    background: white;
+}
+.rate-circle small { font-size: 9px; font-weight: 600; color: #6c757d; margin-top: 0; }
+
+/* ══════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════ */
+@media (max-width: 1200px) {
+    .db-grid-4 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 900px) {
+    .db-grid-2, .db-grid-3 { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+    .db-grid-4 { grid-template-columns: 1fr 1fr; }
+    .db-header { flex-direction: column; }
+    .as-value { font-size: 20px; }
+}
+@media (max-width: 400px) {
+    .db-grid-4 { grid-template-columns: 1fr; }
+}
+</style>
 {% endblock %}
 
-{% block sidebar_menu %}
-{% include 'dashboards/sidebars/admin_sidebar.html' %}
-{% endblock %}
+{% block sidebar_menu %}{% include 'dashboards/sidebars/admin_sidebar.html' %}{% endblock %}
 
 {% block page_content %}
-<div class="page-header">
-    <h1 class="page-title">Administration Générale</h1>
-    <p class="page-subtitle">Vue d'ensemble du système LONAB — MUTRALO</p>
-</div>
 
-<!-- ═══ Stats Cards ════════════════════════════════════════════ -->
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--spacing-md);margin-bottom:var(--spacing-lg);">
-
-    <div class="card" style="border-left:4px solid var(--primary-green);">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div>
-                <div style="color:var(--text-muted);font-size:11px;margin-bottom:4px;">EMPLOYÉS</div>
-                <div style="font-size:24px;font-weight:700;color:var(--text-primary);">{{ total_employes }}</div>
-                <div style="font-size:10px;color:var(--primary-green);margin-top:2px;">+{{ nouveaux_employes_mois }} ce mois</div>
-            </div>
-            <div style="width:45px;height:45px;background:var(--light-green);border-radius:50%;display:flex;align-items:center;justify-content:center;">
-                <i class="fas fa-users" style="font-size:20px;color:var(--primary-green);"></i>
-            </div>
-        </div>
+<!-- ══ EN-TÊTE ════════════════════════════════════════════════ -->
+<div class="db-header">
+    <div class="db-header-left">
+        <h1><i class="fas fa-tachometer-alt" style="color:var(--primary-green);margin-right:10px;"></i>Tableau de bord</h1>
+        <p>Bienvenue, <strong>{{ user.prenom }}</strong> · {{ aujourd_hui|date:"l d F Y" }}</p>
     </div>
-
-    <div class="card" style="border-left:4px solid #6f42c1;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div>
-                <div style="color:var(--text-muted);font-size:11px;margin-bottom:4px;">DIRECTIONS</div>
-                <div style="font-size:24px;font-weight:700;color:var(--text-primary);">{{ total_directions }}</div>
-                <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">{{ directions_actives }} actives</div>
-            </div>
-            <div style="width:45px;height:45px;background:#e7d9ff;border-radius:50%;display:flex;align-items:center;justify-content:center;">
-                <i class="fas fa-sitemap" style="font-size:20px;color:#6f42c1;"></i>
-            </div>
-        </div>
-    </div>
-
-    <div class="card" style="border-left:4px solid #17a2b8;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div>
-                <div style="color:var(--text-muted);font-size:11px;margin-bottom:4px;">AGENCES</div>
-                <div style="font-size:24px;font-weight:700;color:var(--text-primary);">{{ total_agences }}</div>
-                <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">{{ agences_actives }} actives</div>
-            </div>
-            <div style="width:45px;height:45px;background:#d1ecf1;border-radius:50%;display:flex;align-items:center;justify-content:center;">
-                <i class="fas fa-building" style="font-size:20px;color:#17a2b8;"></i>
-            </div>
-        </div>
-    </div>
-
-    <div class="card" style="border-left:4px solid #ffc107;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div>
-                <div style="color:var(--text-muted);font-size:11px;margin-bottom:4px;">RESTAURANTS</div>
-                <div style="font-size:24px;font-weight:700;color:var(--text-primary);">{{ total_restaurants }}</div>
-                <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">{{ restaurants_actifs }} actifs</div>
-            </div>
-            <div style="width:45px;height:45px;background:#fff3cd;border-radius:50%;display:flex;align-items:center;justify-content:center;">
-                <i class="fas fa-utensils" style="font-size:20px;color:#ffc107;"></i>
-            </div>
-        </div>
-    </div>
-
-    <div class="card" style="border-left:4px solid var(--accent-red);">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div>
-                <div style="color:var(--text-muted);font-size:11px;margin-bottom:4px;">TICKETS (MOIS)</div>
-                <div style="font-size:24px;font-weight:700;color:var(--text-primary);">{{ tickets_vendus_mois }}</div>
-                <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">{{ tickets_consommes_mois }} consommés</div>
-            </div>
-            <div style="width:45px;height:45px;background:var(--red-light);border-radius:50%;display:flex;align-items:center;justify-content:center;">
-                <i class="fas fa-ticket-alt" style="font-size:20px;color:var(--accent-red);"></i>
-            </div>
-        </div>
-    </div>
-
-    <div class="card" style="border-left:4px solid #28a745;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div>
-                <div style="color:var(--text-muted);font-size:11px;margin-bottom:4px;">REVENUS (MOIS)</div>
-                <div style="font-size:24px;font-weight:700;color:var(--text-primary);">{{ revenu_mois|floatformat:0 }}</div>
-                <div style="font-size:10px;color:var(--primary-green);margin-top:2px;">FCFA</div>
-            </div>
-            <div style="width:45px;height:45px;background:var(--light-green);border-radius:50%;display:flex;align-items:center;justify-content:center;">
-                <i class="fas fa-coins" style="font-size:20px;color:var(--primary-green);"></i>
-            </div>
-        </div>
+    <div class="db-header-right">
+        <a href="{% url 'accounts:users_list' %}" class="btn btn-outline" style="font-size:12px;">
+            <i class="fas fa-users"></i> Utilisateurs
+        </a>
+        <a href="{% url 'settings:admin_reports' %}" class="btn btn-primary" style="font-size:12px;">
+            <i class="fas fa-chart-bar"></i> Rapports
+        </a>
     </div>
 </div>
 
-<!-- ═══ Charts Row ═════════════════════════════════════════════ -->
-<div style="display:grid;grid-template-columns:2fr 1fr;gap:var(--spacing-md);margin-bottom:var(--spacing-md);">
+<!-- ══ LIGNE 1 — 4 STAT CARDS ════════════════════════════════ -->
+<div class="db-grid-4">
 
-    <!-- Transactions récentes — graphe barres -->
-    <div class="card">
-        <div class="card-header">
-            <i class="fas fa-chart-bar"></i> Transactions récentes — montants
+    <div class="as-card as-green">
+        <div class="as-content">
+            <div class="as-label">Employés actifs</div>
+            <div class="as-value">{{ total_employes }}</div>
+            <div class="as-sub"><span class="badge-up">+{{ nouveaux_mois }}</span> ce mois</div>
         </div>
-        <div style="padding:16px 20px;">
-            <canvas id="transactionsChart" height="110"></canvas>
-        </div>
+        <div class="as-icon"><i class="fas fa-users"></i></div>
     </div>
 
-    <!-- Répartition par direction -->
-    <div class="card">
-        <div class="card-header">
-            <i class="fas fa-chart-pie"></i> Employés par direction
+    <div class="as-card as-purple">
+        <div class="as-content">
+            <div class="as-label">Directions</div>
+            <div class="as-value">{{ total_directions }}</div>
+            <div class="as-sub">{{ directions_actives }} actives</div>
         </div>
-        <div style="padding:var(--spacing-md);">
-            {% for d in directions_principales %}
-            <div style="margin-bottom:var(--spacing-md);">
-                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;">
-                    <span style="font-weight:600;color:var(--text-primary);">{{ d.nom|truncatechars:22 }}</span>
-                    <span style="color:var(--text-muted);font-weight:600;">{{ d.nombre_employes }}</span>
-                </div>
-                <div style="height:7px;background:var(--bg-secondary);border-radius:4px;overflow:hidden;">
-                    <div style="height:100%;background:linear-gradient(90deg,var(--primary-green),#52c27a);border-radius:4px;width:{{ d.pourcentage|floatformat:0 }}%;transition:width .6s ease;"></div>
-                </div>
-            </div>
-            {% empty %}
-            <div style="text-align:center;color:var(--text-muted);padding:20px;font-size:13px;">Aucune direction</div>
-            {% endfor %}
+        <div class="as-icon"><i class="fas fa-sitemap"></i></div>
+    </div>
 
-            <!-- Donut Chart directions -->
-            <div style="margin-top:16px;">
-                <canvas id="directionsDonut" height="160"></canvas>
-            </div>
+    <div class="as-card as-blue">
+        <div class="as-content">
+            <div class="as-label">Agences</div>
+            <div class="as-value">{{ total_agences }}</div>
+            <div class="as-sub">{{ agences_actives }} actives</div>
         </div>
+        <div class="as-icon"><i class="fas fa-building"></i></div>
+    </div>
+
+    <div class="as-card as-teal">
+        <div class="as-content">
+            <div class="as-label">Restaurants</div>
+            <div class="as-value">{{ total_restaurants }}</div>
+            <div class="as-sub">{{ restaurants_actifs }} actifs</div>
+        </div>
+        <div class="as-icon"><i class="fas fa-utensils"></i></div>
     </div>
 </div>
 
-<!-- ═══ Tables Row ══════════════════════════════════════════════ -->
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--spacing-md);">
+<!-- ══ LIGNE 2 — 2 STAT CARDS + TAUX ═════════════════════════ -->
+<div class="db-grid-4" style="margin-bottom:20px;">
 
-    <!-- Dernières transactions -->
-    <div class="card">
-        <div class="card-header">
-            <i class="fas fa-exchange-alt"></i> Dernières transactions
-            <a href="{% url 'transactions:transactions_list' %}" class="btn btn-outline btn-sm" style="margin-left:auto;font-size:11px;">Voir tout</a>
+    <div class="as-card as-yellow">
+        <div class="as-content">
+            <div class="as-label">Tickets ce mois</div>
+            <div class="as-value">{{ tickets_mois }}</div>
+            <div class="as-sub">vendus</div>
         </div>
-        {% if transactions_recentes %}
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>N° Transaction</th>
-                    <th>Client</th>
-                    <th>Montant</th>
-                    <th>Statut</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for t in transactions_recentes|slice:":6" %}
-                <tr>
-                    <td style="font-size:11px;font-family:monospace;color:var(--primary-green);font-weight:700;">{{ t.numero_transaction|truncatechars:16 }}</td>
-                    <td style="font-size:12px;">{{ t.client.get_full_name|truncatechars:20 }}</td>
-                    <td style="font-size:12px;font-weight:600;">{{ t.montant_total|floatformat:0 }} <small style="color:var(--text-muted);">FCFA</small></td>
-                    <td>
-                        <span class="badge {% if t.statut == 'TERMINEE' %}badge-success{% elif t.statut == 'EN_ATTENTE' %}badge-warning{% else %}badge-danger{% endif %}" style="font-size:10px;">
-                            {{ t.get_statut_display }}
-                        </span>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <div style="text-align:center;padding:var(--spacing-lg);color:var(--text-muted);font-size:13px;">
-            <i class="fas fa-inbox" style="font-size:32px;display:block;margin-bottom:8px;opacity:.4;"></i>
-            Aucune transaction récente
-        </div>
-        {% endif %}
+        <div class="as-icon"><i class="fas fa-ticket-alt"></i></div>
     </div>
 
-    <!-- Activité système -->
-    <div class="card">
-        <div class="card-header">
-            <i class="fas fa-history"></i> Activité système
+    <div class="as-card as-red">
+        <div class="as-content">
+            <div class="as-label">Consommés mois</div>
+            <div class="as-value">{{ tickets_consommes_mois }}</div>
+            <div class="as-sub">validés au restaurant</div>
         </div>
-        <div style="padding:var(--spacing-md);">
-            {% for a in activites_recentes %}
-            <div style="display:flex;gap:var(--spacing-sm);margin-bottom:var(--spacing-md);padding-bottom:var(--spacing-sm);border-bottom:1px solid var(--border-color);">
-                <div style="width:32px;height:32px;background:var(--light-green);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                    <i class="fas fa-{{ a.icone|default:'info-circle' }}" style="font-size:13px;color:var(--primary-green);"></i>
+        <div class="as-icon"><i class="fas fa-check-circle"></i></div>
+    </div>
+
+    <div class="as-card as-green" style="border-color:#20c997;">
+        <div class="as-content">
+            <div class="as-label">Revenu ce mois</div>
+            <div class="as-value" style="font-size:18px;">{{ revenu_mois|floatformat:0 }}</div>
+            <div class="as-sub">FCFA</div>
+        </div>
+        <div class="as-icon" style="background:rgba(32,201,151,.12);color:#20c997;">
+            <i class="fas fa-coins"></i>
+        </div>
+    </div>
+
+    <div class="as-card" style="border-color:#6f42c1;justify-content:space-around;flex-direction:column;align-items:center;text-align:center;">
+        <div class="as-label" style="font-size:10px;text-align:center;color:#6c757d;">Taux consommation</div>
+        <div class="rate-circle">{{ taux_consommation }}<small>%</small></div>
+    </div>
+</div>
+
+<!-- ══ LIGNE 3 — GRAPHE + RÉPARTITION ════════════════════════ -->
+<div class="db-grid-3">
+
+    <!-- Graphe 30 jours -->
+    <div class="chart-card">
+        <div class="chart-card-header">
+            <div class="chart-card-title">
+                <i class="fas fa-chart-bar"></i> Tickets vendus — 30 derniers jours
+            </div>
+            <span style="font-size:11px;color:#adb5bd;">Quotidien</span>
+        </div>
+        <div class="chart-card-body">
+            <canvas id="chartTickets" height="130"></canvas>
+        </div>
+    </div>
+
+    <!-- Répartition utilisateurs -->
+    <div class="chart-card">
+        <div class="chart-card-header">
+            <div class="chart-card-title">
+                <i class="fas fa-chart-pie"></i> Utilisateurs
+            </div>
+        </div>
+        <div class="chart-card-body" style="display:flex;flex-direction:column;gap:10px;">
+            {% for t in types_users %}
+            <div class="prog-row">
+                <div class="prog-label">
+                    {% if t.type_utilisateur == 'CLIENT' %}Clients
+                    {% elif t.type_utilisateur == 'CAISSIER' %}Caissiers
+                    {% elif t.type_utilisateur == 'GESTIONNAIRE' %}Gestionnaires
+                    {% elif t.type_utilisateur == 'SUPER_ADMIN' %}Admins
+                    {% else %}{{ t.type_utilisateur }}{% endif %}
                 </div>
-                <div style="flex:1;min-width:0;">
-                    <div style="font-size:12px;font-weight:500;color:var(--text-primary);margin-bottom:2px;">
-                        {% if a.description %}{{ a.description|truncatechars:60 }}{% else %}{{ a.action }}{% endif %}
+                <div class="prog-bar">
+                    <div class="prog-fill"
+                         style="width:{% widthratio t.nb total_employes 100 %}%;
+                                background:{% if t.type_utilisateur == 'CLIENT' %}#28a745{% elif t.type_utilisateur == 'CAISSIER' %}#17a2b8{% elif t.type_utilisateur == 'GESTIONNAIRE' %}#6f42c1{% else %}#ffc107{% endif %};">
                     </div>
-                    <div style="font-size:10px;color:var(--text-muted);">{{ a.cree_le|timesince }} ago</div>
                 </div>
-            </div>
-            {% empty %}
-            <div style="text-align:center;padding:var(--spacing-lg);color:var(--text-muted);font-size:13px;">
-                <i class="fas fa-inbox" style="font-size:32px;display:block;margin-bottom:8px;opacity:.4;"></i>
-                Aucune activité récente
+                <div class="prog-val">{{ t.nb }}</div>
             </div>
             {% endfor %}
+
+            <!-- Organisations -->
+            <div style="border-top:1px solid #f0f0f0;padding-top:10px;margin-top:4px;">
+                <div class="prog-row">
+                    <div class="prog-label">Directions actives</div>
+                    <div class="prog-bar">
+                        <div class="prog-fill" style="width:{% widthratio directions_actives total_directions 100 %}%;background:#6f42c1;"></div>
+                    </div>
+                    <div class="prog-val">{{ directions_actives }}/{{ total_directions }}</div>
+                </div>
+                <div class="prog-row" style="margin-bottom:0;">
+                    <div class="prog-label">Restaurants actifs</div>
+                    <div class="prog-bar">
+                        <div class="prog-fill" style="width:{% widthratio restaurants_actifs total_restaurants 100 %}%;background:#20c997;"></div>
+                    </div>
+                    <div class="prog-val">{{ restaurants_actifs }}/{{ total_restaurants }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ LIGNE 4 — TRANSACTIONS + ACTIVITÉ ═════════════════════ -->
+<div class="db-grid-2">
+
+    <!-- Transactions récentes -->
+    <div class="chart-card">
+        <div class="chart-card-header">
+            <div class="chart-card-title">
+                <i class="fas fa-exchange-alt"></i> Transactions récentes
+            </div>
+            <a href="{% url 'transactions:admin_transactions' %}" style="font-size:11px;color:#28a745;">Voir tout →</a>
+        </div>
+        <div style="overflow-x:auto;">
+            <table class="mini-table">
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Caissier</th>
+                        <th>Tickets</th>
+                        <th>Montant</th>
+                        <th>Statut</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in transactions_recentes %}
+                    <tr>
+                        <td>
+                            <div style="font-weight:600;color:#2d3748;">
+                                {% if t.client %}{{ t.client.prenom }} {{ t.client.nom }}{% else %}—{% endif %}
+                            </div>
+                        </td>
+                        <td style="color:#6c757d;">
+                            {% if t.caissier %}{{ t.caissier.prenom }}{% else %}—{% endif %}
+                        </td>
+                        <td style="font-weight:700;color:#28a745;text-align:center;">{{ t.nombre_tickets }}</td>
+                        <td style="font-weight:600;color:#2d3748;white-space:nowrap;">{{ t.montant_total|floatformat:0 }} F</td>
+                        <td>
+                            <span class="st-badge {% if t.statut == 'TERMINEE' %}st-ok{% elif t.statut == 'EN_ATTENTE' %}st-warn{% elif t.statut == 'ANNULEE' %}st-err{% else %}st-info{% endif %}">
+                                {{ t.get_statut_display }}
+                            </span>
+                        </td>
+                        <td style="color:#adb5bd;font-size:11px;white-space:nowrap;">
+                            {{ t.date_transaction|date:"d/m H:i" }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align:center;color:#adb5bd;padding:20px;">
+                            <i class="fas fa-inbox" style="font-size:24px;display:block;margin-bottom:6px;opacity:.4;"></i>
+                            Aucune transaction
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Dernières connexions -->
+    <div class="chart-card">
+        <div class="chart-card-header">
+            <div class="chart-card-title">
+                <i class="fas fa-user-clock"></i> Dernières connexions
+            </div>
+            <a href="{% url 'settings:admin_audit' %}" style="font-size:11px;color:#28a745;">Audit →</a>
+        </div>
+        <div class="chart-card-body">
+            {% for u in derniers_connectes %}
+            <div class="act-item">
+                <div style="width:32px;height:32px;border-radius:50%;
+                            background:linear-gradient(135deg,#28a745,#20c997);
+                            display:flex;align-items:center;justify-content:center;
+                            color:white;font-weight:700;font-size:12px;flex-shrink:0;">
+                    {{ u.prenom.0 }}{{ u.nom.0 }}
+                </div>
+                <div class="act-text">
+                    <strong>{{ u.prenom }} {{ u.nom }}</strong>
+                    <div style="font-size:10px;color:#adb5bd;">
+                        {% if u.type_utilisateur == 'CLIENT' %}Client
+                        {% elif u.type_utilisateur == 'CAISSIER' %}Caissier
+                        {% elif u.type_utilisateur == 'GESTIONNAIRE' %}Gestionnaire
+                        {% else %}Admin{% endif %}
+                        {% if u.agence %} · {{ u.agence.nom }}{% endif %}
+                    </div>
+                </div>
+                <div class="act-time">{{ u.derniere_connexion|timesince }} ago</div>
+            </div>
+            {% empty %}
+            <div style="text-align:center;color:#adb5bd;padding:20px;">Aucune connexion récente</div>
+            {% endfor %}
+        </div>
+
+        <!-- Liens rapides -->
+        <div style="padding:12px 16px;border-top:1px solid #f0f0f0;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <a href="{% url 'accounts:directions_list' %}" style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:#f8f9fa;border-radius:6px;font-size:11px;font-weight:600;color:#495057;text-decoration:none;">
+                <i class="fas fa-sitemap" style="color:#6f42c1;"></i> Directions
+            </a>
+            <a href="{% url 'accounts:agences_list' %}" style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:#f8f9fa;border-radius:6px;font-size:11px;font-weight:600;color:#495057;text-decoration:none;">
+                <i class="fas fa-building" style="color:#17a2b8;"></i> Agences
+            </a>
+            <a href="{% url 'tickets:admin_tickets' %}" style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:#f8f9fa;border-radius:6px;font-size:11px;font-weight:600;color:#495057;text-decoration:none;">
+                <i class="fas fa-ticket-alt" style="color:#28a745;"></i> Tickets
+            </a>
+            <a href="{% url 'notifs:admin_notifications' %}" style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:#f8f9fa;border-radius:6px;font-size:11px;font-weight:600;color:#495057;text-decoration:none;">
+                <i class="fas fa-bell" style="color:#ffc107;"></i> Notifications
+            </a>
         </div>
     </div>
 </div>
@@ -213,100 +450,53 @@
 {% endblock %}
 
 {% block dashboard_js %}
+<script src="{% static 'js/components.js' %}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
-(function () {
-    /* ── Palette commune ──────────────────────────────────────── */
-    var GREEN    = '#28a745';
-    var GREEN_BG = 'rgba(40,167,69,0.15)';
-    var PURPLE   = '#6f42c1';
-    var TEAL     = '#17a2b8';
-    var YELLOW   = '#ffc107';
-    var RED      = '#dc3545';
+(function(){
+'use strict';
+Chart.defaults.font.family = "'Segoe UI',sans-serif";
+Chart.defaults.font.size   = 11;
 
-    Chart.defaults.font.family = "'Inter','Segoe UI',sans-serif";
-    Chart.defaults.font.size   = 12;
+/* ── Graphe tickets 30j ── */
+var labels = [];
+var values = [];
+{% for i in "0123456789012345678901234567890"|make_list %}{% endfor %}
+{% for l in graph_labels %}labels.push("{{ l }}");{% endfor %}
+{% for v in graph_values %}values.push({{ v }});{% endfor %}
 
-    /* ── 1. Graphe barres : montants des transactions récentes ── */
-    /* Données construites directement dans le template Django     */
-    var txLabels  = [{% for t in transactions_recentes|slice:":8" %}'{{ t.numero_transaction|slice:"-8:" }}'{% if not forloop.last %},{% endif %}{% endfor %}];
-    var txMontant = [{% for t in transactions_recentes|slice:":8" %}{{ t.montant_total|default:0 }}{% if not forloop.last %},{% endif %}{% endfor %}];
-
-    /* Inverser pour ordre chronologique (plus ancien → plus récent) */
-    txLabels  = txLabels.reverse();
-    txMontant = txMontant.reverse();
-
-    if (txLabels.length === 0) {
-        txLabels  = ['Aucune donnée'];
-        txMontant = [0];
-    }
-
-    new Chart(document.getElementById('transactionsChart'), {
+var ctx = document.getElementById('chartTickets');
+if (ctx) {
+    new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: txLabels,
+            labels: labels,
             datasets: [{
-                label: 'Montant (FCFA)',
-                data: txMontant,
-                backgroundColor: GREEN_BG,
-                borderColor: GREEN,
-                borderWidth: 2,
-                borderRadius: 5,
+                label: 'Tickets vendus',
+                data: values,
+                backgroundColor: 'rgba(40,167,69,.7)',
+                borderColor: '#28a745',
+                borderWidth: 1,
+                borderRadius: 4,
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: true,
             plugins: {
                 legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: function(c) { return c.parsed.y.toLocaleString('fr-FR') + ' FCFA'; }
-                    }
-                }
+                tooltip: { callbacks: { label: function(c){ return ' '+c.parsed.y+' tickets'; } } }
             },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: { color: 'rgba(0,0,0,.05)' },
-                    ticks: {
-                        callback: function(v) { return v >= 1000 ? (v/1000).toFixed(0) + 'k' : v; }
-                    }
+                x: {
+                    grid: { display: false },
+                    ticks: { maxTicksLimit: 10, font: { size: 9 } }
                 },
-                x: { grid: { display: false } }
+                y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { font: { size: 9 } } }
             }
         }
     });
-
-    /* ── 2. Donut : employés par direction ────────────────────── */
-    var dirLabels = [{% for d in directions_principales %}'{{ d.nom|truncatechars:18 }}'{% if not forloop.last %},{% endif %}{% endfor %}];
-    var dirData   = [{% for d in directions_principales %}{{ d.nombre_employes }}{% if not forloop.last %},{% endif %}{% endfor %}];
-
-    if (dirLabels.length > 0) {
-        new Chart(document.getElementById('directionsDonut'), {
-            type: 'doughnut',
-            data: {
-                labels: dirLabels,
-                datasets: [{
-                    data: dirData,
-                    backgroundColor: [GREEN, TEAL, PURPLE, YELLOW, RED],
-                    borderWidth: 2,
-                    borderColor: '#fff',
-                }]
-            },
-            options: {
-                responsive: true,
-                cutout: '65%',
-                plugins: {
-                    legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10, font: { size: 11 } } },
-                    tooltip: {
-                        callbacks: {
-                            label: function(c) { return ' ' + c.label + ' : ' + c.parsed + ' employés'; }
-                        }
-                    }
-                }
-            }
-        });
-    }
+}
 })();
 </script>
 {% endblock %}

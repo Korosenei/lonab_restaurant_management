@@ -1,0 +1,333 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Gestion des Agences{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
+{% endblock %}
+
+{% block sidebar_menu %}
+{% include 'dashboards/sidebars/admin_sidebar.html' %}
+{% endblock %}
+
+{% block page_content %}
+
+{# ── URL helpers ── #}
+<div id="agence-urls"
+     data-create="{% url 'accounts:agence_create' %}"
+     data-edit-base="{% url 'accounts:agence_edit' pk=0 %}"
+     data-delete-base="{% url 'accounts:agence_delete' pk=0 %}"
+     data-detail-base="{% url 'accounts:agence_detail' pk=0 %}"
+     style="display:none;"></div>
+
+{# ── En-tête ── #}
+<div class="page-header-with-actions">
+    <div class="page-header">
+        <h1 class="page-title">Gestion des Agences</h1>
+    </div>
+    <div class="page-header-actions">
+        <a href="{% url 'accounts:export_agencies_pdf' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+           class="export-btn export-btn-pdf" title="Exporter PDF">
+            <i class="fas fa-file-pdf"></i> PDF
+        </a>
+        <a href="{% url 'accounts:export_agencies_excel' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+           class="export-btn export-btn-excel" title="Exporter Excel">
+            <i class="fas fa-file-excel"></i> Excel
+        </a>
+        <button class="btn btn-primary" onclick="ouvrirNouvelleAgence()">
+            <i class="fas fa-plus"></i> Nouvelle
+        </button>
+    </div>
+</div>
+
+{# ── Stats ── #}
+<div class="stats-grid" style="margin-bottom:14px;">
+    <div class="stat-card stat-card-blue">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Total</div>
+            <div class="stat-card-value">{{ page_obj.paginator.count }}</div>
+            <div class="stat-card-detail">agences</div>
+        </div>
+        <div class="stat-card-icon"><i class="fas fa-map-marker-alt"></i></div>
+    </div>
+    <div class="stat-card stat-card-green">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Actives</div>
+            <div class="stat-card-value" id="statAgActives">—</div>
+            <div class="stat-card-detail">agences actives</div>
+        </div>
+        <div class="stat-card-icon"><i class="fas fa-check-circle"></i></div>
+    </div>
+    <div class="stat-card stat-card-purple">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Sièges</div>
+            <div class="stat-card-value" id="statAgSiege">—</div>
+            <div class="stat-card-detail">sièges</div>
+        </div>
+        <div class="stat-card-icon"><i class="fas fa-star"></i></div>
+    </div>
+    <div class="stat-card stat-card-yellow">
+        <div class="stat-card-content">
+            <div class="stat-card-label">Employés</div>
+            <div class="stat-card-value" id="statAgEmployes">—</div>
+            <div class="stat-card-detail">total actifs</div>
+        </div>
+        <div class="stat-card-icon"><i class="fas fa-users"></i></div>
+    </div>
+</div>
+
+{# ── Filtres ── #}
+<form method="get" class="filters-search-bar">
+    <div class="filter-item">
+        <i class="fas fa-search" style="color:#6c757d;"></i>
+        <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Nom, code, ville…">
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-item">
+        <label>Type</label>
+        <select name="type">
+            <option value="">Tous types</option>
+            <option value="SIEGE" {% if request.GET.type == "SIEGE" %}selected{% endif %}>Siège</option>
+            <option value="REGIONALE" {% if request.GET.type == "REGIONALE" %}selected{% endif %}>Régionale</option>
+            <option value="LOCALE" {% if request.GET.type == "LOCALE" %}selected{% endif %}>Locale</option>
+        </select>
+    </div>
+    <div class="filter-item">
+        <label>Direction</label>
+        <select name="direction">
+            <option value="">Toutes</option>
+            {% for d in directions %}
+            <option value="{{ d.id }}" {% if request.GET.direction == d.id|stringformat:"s" %}selected{% endif %}>{{ d.nom }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="filter-item">
+        <label>Statut</label>
+        <select name="statut">
+            <option value="">Tous</option>
+            <option value="actif" {% if request.GET.statut == "actif" %}selected{% endif %}>Active</option>
+            <option value="inactif" {% if request.GET.statut == "inactif" %}selected{% endif %}>Inactive</option>
+        </select>
+    </div>
+    <div class="filter-item" style="gap:6px;">
+        <button type="submit" class="btn btn-primary" style="padding:4px 12px;font-size:12px;">
+            <i class="fas fa-search"></i> Filtrer
+        </button>
+        <a href="{% url 'accounts:agences_list' %}" class="btn btn-outline" style="padding:4px 10px;font-size:12px;">
+            <i class="fas fa-times"></i>
+        </a>
+    </div>
+</form>
+
+{# ── Tableau ── #}
+<div class="data-table-wrapper">
+    <div class="data-table-body">
+        <div class="table-responsive">
+            <table class="table" id="agencesTable">
+                <thead>
+                    <tr>
+                        <th style="width:38px;">#</th>
+                        <th data-sortable>Agence</th>
+                        <th data-sortable>Code</th>
+                        <th data-sortable>Type</th>
+                        <th data-sortable>Ville</th>
+                        <th data-sortable>Direction</th>
+                        <th data-sortable>Responsable</th>
+                        <th data-sortable style="text-align:center;">Employés</th>
+                        <th data-sortable>Statut</th>
+                        <th style="width:110px;" class="actions-column">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for a in page_obj %}
+                <tr data-type="{{ a.type_agence }}" data-active="{{ a.est_active|yesno:'true,false' }}">
+                    <td style="color:var(--text-muted);font-size:11px;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:30px;height:30px;border-radius:8px;
+                                        display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;
+                                        {% if a.type_agence == 'SIEGE' %}background:#e7d9ff;color:#6f42c1;
+                                        {% elif a.type_agence == 'REGIONALE' %}background:#d1ecf1;color:#17a2b8;
+                                        {% else %}background:var(--light-green);color:var(--primary-green);{% endif %}">
+                                {% if a.type_agence == 'SIEGE' %}<i class="fas fa-star"></i>
+                                {% elif a.type_agence == 'REGIONALE' %}<i class="fas fa-map"></i>
+                                {% else %}<i class="fas fa-store"></i>{% endif %}
+                            </div>
+                            <div>
+                                <div style="font-weight:600;font-size:12px;">{{ a.nom }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span style="font-family:monospace;font-size:12px;
+                                     background:#f8f9fa;color:#495057;
+                                     padding:2px 7px;border-radius:4px;border:1px solid #dee2e6;">{{ a.code }}</span>
+                    </td>
+                    <td>
+                        <span class="badge
+                            {% if a.type_agence == 'SIEGE' %}badge-info
+                            {% elif a.type_agence == 'REGIONALE' %}badge-warning
+                            {% else %}badge-success{% endif %}" style="font-size:10px;">
+                            {{ a.get_type_agence_display }}
+                        </span>
+                    </td>
+                    <td style="font-size:12px;">
+                        <div>{{ a.ville }}</div>
+                        {% if a.region %}<div style="font-size:10px;color:var(--text-muted);">{{ a.region }}</div>{% endif %}
+                    </td>
+                    <td style="font-size:11px;">{{ a.direction.nom|default:"—" }}</td>
+                    <td style="font-size:11px;">
+                        {% if a.responsable %}
+                        <div style="display:flex;align-items:center;gap:5px;">
+                            <div style="width:20px;height:20px;background:var(--light-green);border-radius:50%;
+                                        display:flex;align-items:center;justify-content:center;
+                                        font-size:8px;font-weight:700;color:var(--primary-green);flex-shrink:0;">
+                                {{ a.responsable.prenom.0 }}{{ a.responsable.nom.0 }}
+                            </div>
+                            {{ a.responsable.get_full_name }}
+                        </div>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td style="text-align:center;">
+                        <span style="font-weight:600;color:var(--primary-green);">{{ a.nombre_employes|default:0 }}</span>
+                    </td>
+                    <td>
+                        <span class="badge {% if a.est_active %}badge-success{% else %}badge-danger{% endif %}" style="font-size:10px;">
+                            {% if a.est_active %}<i class="fas fa-check"></i> Active{% else %}<i class="fas fa-times"></i> Inactive{% endif %}
+                        </span>
+                    </td>
+                    <td class="actions-cell">
+                        <button class="action-btn action-btn-view" onclick="viewAgence({{ a.pk }})" title="Voir">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn action-btn-edit" onclick="editAgence({{ a.pk }})" title="Modifier">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn action-btn-delete" onclick="deleteAgence({{ a.pk }},'{{ a.nom|escapejs }}')" title="Supprimer">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10">
+                        <div class="empty-state">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <p>Aucune agence trouvée{% if request.GET.search %} pour « {{ request.GET.search }} »{% endif %}</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# ── Pagination ── #}
+        {% include 'components/pagination.html' with page_obj=page_obj label="agence(s)" %}
+    </div>
+</div>
+
+{# ── Modal formulaire ── #}
+{% include 'accounts/modals/agence_form.html' %}
+
+{% endblock %}
+
+
+{% block dashboard_js %}
+<script src="{% static 'js/components.js' %}"></script>
+<script>
+var AG_URLS = document.getElementById('agence-urls').dataset;
+
+/* ── Stats dynamiques ── */
+(function() {
+    var rows = document.querySelectorAll('#agencesTable tbody tr[data-type]');
+    var actives = 0, sieges = 0, totalEmployes = 0;
+    rows.forEach(function(tr) {
+        if (tr.dataset.active === 'true') actives++;
+        if (tr.dataset.type === 'SIEGE') sieges++;
+        var emp = tr.querySelector('td:nth-child(8) span');
+        if (emp) totalEmployes += parseInt(emp.textContent) || 0;
+    });
+    var el;
+    el = document.getElementById('statAgActives');  if(el) el.textContent = actives;
+    el = document.getElementById('statAgSiege');    if(el) el.textContent = sieges;
+    el = document.getElementById('statAgEmployes'); if(el) el.textContent = totalEmployes;
+})();
+
+/* ── Voir détail ── */
+function viewAgence(id) {
+    window.location.href = AG_URLS.detailBase.replace('/0/', '/' + id + '/');
+}
+
+/* ── Ouvrir formulaire nouvelle agence ── */
+function ouvrirNouvelleAgence() {
+    var modal = document.getElementById('agenceFormModal');
+    if (!modal) return;
+    var form = modal.querySelector('form');
+    if (form) { form.reset(); form.action = AG_URLS.create; }
+    var hiddenId = document.getElementById('agence_id');
+    if (hiddenId) hiddenId.value = '';
+    var title = document.getElementById('agenceModalTitle');
+    if (title) title.textContent = 'Nouvelle agence';
+    openModal('agenceFormModal');
+}
+
+/* ── Éditer une agence ── */
+function editAgence(id) {
+    fetch(AG_URLS.editBase.replace('/0/', '/' + id + '/'))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var modal = document.getElementById('agenceFormModal');
+            if (!modal) return;
+            var map = {
+                'a_nom': data.nom, 'a_code': data.code,
+                'a_type_agence': data.type_agence, 'a_adresse': data.adresse,
+                'a_ville': data.ville, 'a_region': data.region,
+                'a_telephone': data.telephone, 'a_email': data.email,
+                'a_direction': data.direction_id, 'a_agence_parente': data.agence_parente_id,
+                'a_responsable': data.responsable_id,
+            };
+            Object.keys(map).forEach(function(elId) {
+                var el = document.getElementById(elId);
+                if (el) el.value = map[elId] || '';
+            });
+            var actif = document.getElementById('a_est_active');
+            if (actif) actif.checked = !!data.est_active;
+            var hiddenId = document.getElementById('agence_id');
+            if (hiddenId) hiddenId.value = id;
+            var form = modal.querySelector('form');
+            if (form) form.action = AG_URLS.editBase.replace('/0/', '/' + id + '/');
+            var title = document.getElementById('agenceModalTitle');
+            if (title) title.textContent = 'Modifier l\'agence';
+            openModal('agenceFormModal');
+        })
+        .catch(function() { showToast('Erreur lors du chargement', 'error'); });
+}
+
+/* ── Supprimer une agence ── */
+function deleteAgence(id, nom) {
+    showConfirm(
+        'Supprimer l\'agence ?',
+        'L\'agence <strong>' + nom + '</strong> sera supprimée. Impossible si elle a des employés liés.',
+        function() {
+            fetch(AG_URLS.deleteBase.replace('/0/', '/' + id + '/'), {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCsrfToken() }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    showToast('Agence supprimée', 'success');
+                    setTimeout(function() { location.reload(); }, 900);
+                } else {
+                    showToast(data.error || 'Erreur', 'error');
+                }
+            })
+            .catch(function() { showToast('Erreur réseau', 'error'); });
+        },
+        'Supprimer'
+    );
+}
+</script>
+{% endblock %}

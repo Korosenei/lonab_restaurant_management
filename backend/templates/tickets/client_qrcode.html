@@ -2,17 +2,18 @@
 {% load static %}
 
 {% block title %}Mon QR Code{% endblock %}
-{% block dashboard_css %}<link rel="stylesheet" href="{% static 'css/components.css' %}">
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
 <style>
-.qr-hero{background:linear-gradient(135deg,#1a5c2e,#28a745);border-radius:14px;padding:24px;color:white;text-align:center;}
-.qr-frame{width:180px;height:180px;background:white;border-radius:12px;margin:14px auto;padding:10px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.22);}
-.qr-frame img{width:100%;height:100%;object-fit:contain;border-radius:6px;}
-.timer-val{font-size:30px;font-weight:900;letter-spacing:2px;font-variant-numeric:tabular-nums;margin:6px 0 2px;}
-.btn-regen{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:8px;font-size:12px;font-weight:700;background:rgba(255,255,255,.18);color:white;border:1px solid rgba(255,255,255,.4);cursor:pointer;transition:.2s;margin-top:12px;}
-.btn-regen:hover{background:rgba(255,255,255,.28);}
-.btn-regen:disabled{opacity:.6;cursor:not-allowed;}
-.histo-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border-color);font-size:12px;}
-.histo-row:last-child{border-bottom:none;}
+    .qr-hero{background:linear-gradient(135deg,#1a5c2e,#28a745);border-radius:14px;padding:24px;color:white;text-align:center;}
+    .qr-frame{width:180px;height:180px;background:white;border-radius:12px;margin:14px auto;padding:10px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.22);}
+    .qr-frame img{width:100%;height:100%;object-fit:contain;border-radius:6px;}
+    .timer-val{font-size:30px;font-weight:900;letter-spacing:2px;font-variant-numeric:tabular-nums;margin:6px 0 2px;}
+    .btn-regen{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:8px;font-size:12px;font-weight:700;background:rgba(255,255,255,.18);color:white;border:1px solid rgba(255,255,255,.4);cursor:pointer;transition:.2s;margin-top:12px;}
+    .btn-regen:hover{background:rgba(255,255,255,.28);}
+    .btn-regen:disabled{opacity:.6;cursor:not-allowed;}
+    .histo-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border-color);font-size:12px;}
+    .histo-row:last-child{border-bottom:none;}
 </style>
 {% endblock %}
 
@@ -36,9 +37,11 @@
     <div>
         {% if tickets_valides == 0 %}
         <div style="background:white;border-radius:12px;padding:40px;text-align:center;box-shadow:0 1px 6px rgba(0,0,0,.07);">
-            <i class="fas fa-exclamation-triangle" style="font-size:40px;color:#f59e0b;display:block;margin-bottom:14px;"></i>
+            <i class="fas fa-exclamation-triangle"
+               style="font-size:40px;color:#f59e0b;display:block;margin-bottom:14px;"></i>
             <h2 style="font-size:16px;font-weight:700;margin:0 0 8px;">Aucun ticket disponible</h2>
-            <p style="color:var(--text-muted);font-size:13px;margin:0;">Contactez votre caissier pour acquérir des tickets.</p>
+            <p style="color:var(--text-muted);font-size:13px;margin:0;">Contactez votre caissier pour acquérir des
+                tickets.</p>
         </div>
         {% else %}
         <div class="qr-hero">
@@ -77,9 +80,13 @@
 
         <!-- Info -->
         <div style="margin-top:12px;padding:12px 16px;background:var(--bg-secondary);border-radius:10px;border-left:3px solid var(--primary-green);font-size:12px;color:var(--text-muted);line-height:1.7;">
-            <strong style="color:var(--text-primary);"><i class="fas fa-info-circle" style="color:var(--primary-green);margin-right:4px;"></i>Comment ça marche ?</strong><br>
-            Ce QR code est généré automatiquement et est valide pendant <strong>30 minutes</strong> pour <strong>une seule utilisation</strong>.
-            Si vous avez réservé un plat, le gestionnaire le verra directement. Régénérer un nouveau code invalide l'ancien.
+            <strong style="color:var(--text-primary);"><i class="fas fa-info-circle"
+                                                          style="color:var(--primary-green);margin-right:4px;"></i>Comment
+                ça marche ?</strong><br>
+            Ce QR code est généré automatiquement et est valide pendant <strong>30 minutes</strong> pour <strong>une
+            seule utilisation</strong>.
+            Si vous avez réservé un plat, le gestionnaire le verra directement. Régénérer un nouveau code invalide
+            l'ancien.
         </div>
     </div>
 
@@ -88,7 +95,10 @@
 
         <!-- Mes tickets -->
         <div class="card" style="padding:14px;">
-            <div style="font-size:12px;font-weight:700;margin-bottom:12px;"><i class="fas fa-ticket-alt" style="color:var(--primary-green);margin-right:6px;"></i>Mes tickets</div>
+            <div style="font-size:12px;font-weight:700;margin-bottom:12px;"><i class="fas fa-ticket-alt"
+                                                                               style="color:var(--primary-green);margin-right:6px;"></i>Mes
+                tickets
+            </div>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
                 <span style="font-size:12px;color:var(--text-muted);">Valides ce mois</span>
                 <span style="font-size:18px;font-weight:800;color:var(--primary-green);">{{ tickets_valides }}</span>
@@ -102,7 +112,8 @@
                 <span class="badge badge-warning" style="font-size:10px;">Aucun</span>
                 {% endif %}
             </div>
-            <a href="{% url 'tickets:client_tickets' %}" class="btn btn-outline" style="width:100%;margin-top:12px;font-size:12px;text-align:center;">
+            <a href="{% url 'tickets:client_tickets' %}" class="btn btn-outline"
+               style="width:100%;margin-top:12px;font-size:12px;text-align:center;">
                 <i class="fas fa-list"></i> Voir mes tickets
             </a>
         </div>
@@ -110,7 +121,8 @@
         <!-- Historique QR -->
         <div class="card" style="overflow:hidden;">
             <div style="padding:11px 14px;border-bottom:1px solid var(--border-color);">
-                <span style="font-size:12px;font-weight:700;"><i class="fas fa-history" style="color:var(--primary-green);margin-right:5px;"></i>Historique</span>
+                <span style="font-size:12px;font-weight:700;"><i class="fas fa-history"
+                                                                 style="color:var(--primary-green);margin-right:5px;"></i>Historique</span>
             </div>
             {% for qr in historique_qr %}
             <div class="histo-row">
@@ -132,27 +144,28 @@
     </div>
 </div>
 
-{% if qr_actif %}<script id="qrExpiryData" type="application/json">"{{ qr_actif.expire_le|date:'c' }}"</script>{% endif %}
+{% if qr_actif %}
+<script id="qrExpiryData" type="application/json">"{{ qr_actif.expire_le|date:'c' }}"</script>{% endif %}
 {% endblock %}
 
 {% block dashboard_js %}
 <script src="{% static 'js/components.js' %}"></script>
 <script>
-(function(){
-'use strict';
-var urls=document.getElementById('page-urls').dataset;
-var timerEl=document.getElementById('timerBadge'),expiry=null,timerInt=null;
+    (function(){
+    'use strict';
+    var urls=document.getElementById('page-urls').dataset;
+    var timerEl=document.getElementById('timerBadge'),expiry=null,timerInt=null;
 
-function majTimer(){if(!expiry||!timerEl)return;var diff=Math.max(0,Math.floor((expiry-new Date())/1000));if(diff===0){timerEl.textContent='Expiré';timerEl.style.color='#fca5a5';clearInterval(timerInt);return;}var m=Math.floor(diff/60),s=diff%60;timerEl.textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;timerEl.style.color=diff<120?'#fca5a5':'white';}
+    function majTimer(){if(!expiry||!timerEl)return;var diff=Math.max(0,Math.floor((expiry-new Date())/1000));if(diff===0){timerEl.textContent='Expiré';timerEl.style.color='#fca5a5';clearInterval(timerInt);return;}var m=Math.floor(diff/60),s=diff%60;timerEl.textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;timerEl.style.color=diff<120?'#fca5a5':'white';}
 
-var expiryEl=document.getElementById('qrExpiryData');
-if(expiryEl&&timerEl){expiry=new Date(JSON.parse(expiryEl.textContent));majTimer();timerInt=setInterval(majTimer,1000);}
+    var expiryEl=document.getElementById('qrExpiryData');
+    if(expiryEl&&timerEl){expiry=new Date(JSON.parse(expiryEl.textContent));majTimer();timerInt=setInterval(majTimer,1000);}
 
-{% if not qr_actif and tickets_valides > 0 %}
-(function autoGen(){fetch(urls.genererUrl,{method:'POST',headers:{'X-CSRFToken':getCsrfToken()}}).then(function(r){return r.json();}).then(function(d){if(d.success&&d.image_url){var frame=document.getElementById('qrFrame'),ph=document.getElementById('qrPlaceholder');if(ph)ph.remove();var img=document.createElement('img');img.src=d.image_url;img.alt='QR Code';img.style.cssText='width:100%;height:100%;object-fit:contain;border-radius:6px;';frame.appendChild(img);expiry=new Date(d.expire_le);var zone=document.getElementById('timerZone');zone.innerHTML='<div class="timer-val" id="timerBadge">--:--</div><div style="font-size:11px;opacity:.75;">Expire dans</div>';timerEl=document.getElementById('timerBadge');majTimer();timerInt=setInterval(majTimer,1000);}}).catch(function(){});})();
-{% endif %}
+    {% if not qr_actif and tickets_valides > 0 %}
+    (function autoGen(){fetch(urls.genererUrl,{method:'POST',headers:{'X-CSRFToken':getCsrfToken()}}).then(function(r){return r.json();}).then(function(d){if(d.success&&d.image_url){var frame=document.getElementById('qrFrame'),ph=document.getElementById('qrPlaceholder');if(ph)ph.remove();var img=document.createElement('img');img.src=d.image_url;img.alt='QR Code';img.style.cssText='width:100%;height:100%;object-fit:contain;border-radius:6px;';frame.appendChild(img);expiry=new Date(d.expire_le);var zone=document.getElementById('timerZone');zone.innerHTML='<div class="timer-val" id="timerBadge">--:--</div><div style="font-size:11px;opacity:.75;">Expire dans</div>';timerEl=document.getElementById('timerBadge');majTimer();timerInt=setInterval(majTimer,1000);}}).catch(function(){});})();
+    {% endif %}
 
-window.regenererQR=function(){var btn=document.getElementById('btnRegen'),icon=document.getElementById('regenIcon');btn.disabled=true;icon.className='fas fa-spinner fa-spin';fetch(urls.genererUrl,{method:'POST',headers:{'X-CSRFToken':getCsrfToken()}}).then(function(r){return r.json();}).then(function(d){btn.disabled=false;icon.className='fas fa-sync-alt';if(d.success){showSuccess('QR Code régénéré');if(d.image_url){document.getElementById('qrFrame').innerHTML='<img src="'+d.image_url+'" alt="QR Code" style="width:100%;height:100%;object-fit:contain;border-radius:6px;">';if(d.expire_le){expiry=new Date(d.expire_le);var zone=document.getElementById('timerZone');if(!timerEl){zone.innerHTML='<div class="timer-val" id="timerBadge">--:--</div><div style="font-size:11px;opacity:.75;">Expire dans</div>';timerEl=document.getElementById('timerBadge');}clearInterval(timerInt);majTimer();timerInt=setInterval(majTimer,1000);}}else{setTimeout(function(){location.reload();},700);}}else{showError(d.error||'Erreur');}}).catch(function(){btn.disabled=false;icon.className='fas fa-sync-alt';showError('Erreur réseau');});};
-})();
+    window.regenererQR=function(){var btn=document.getElementById('btnRegen'),icon=document.getElementById('regenIcon');btn.disabled=true;icon.className='fas fa-spinner fa-spin';fetch(urls.genererUrl,{method:'POST',headers:{'X-CSRFToken':getCsrfToken()}}).then(function(r){return r.json();}).then(function(d){btn.disabled=false;icon.className='fas fa-sync-alt';if(d.success){showSuccess('QR Code régénéré');if(d.image_url){document.getElementById('qrFrame').innerHTML='<img src="'+d.image_url+'" alt="QR Code" style="width:100%;height:100%;object-fit:contain;border-radius:6px;">';if(d.expire_le){expiry=new Date(d.expire_le);var zone=document.getElementById('timerZone');if(!timerEl){zone.innerHTML='<div class="timer-val" id="timerBadge">--:--</div><div style="font-size:11px;opacity:.75;">Expire dans</div>';timerEl=document.getElementById('timerBadge');}clearInterval(timerInt);majTimer();timerInt=setInterval(majTimer,1000);}}else{setTimeout(function(){location.reload();},700);}}else{showError(d.error||'Erreur');}}).catch(function(){btn.disabled=false;icon.className='fas fa-sync-alt';showError('Erreur réseau');});};
+    })();
 </script>
 {% endblock %}

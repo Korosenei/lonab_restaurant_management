@@ -1,149 +1,269 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Connexion - LONAB MUTRALO{% endblock %}
+{% block title %}Connexion — LONAB MUTRALO{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+
+  body { background:#f0f4f1; min-height:100vh; }
+
+  .auth-wrapper {
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:24px 16px;
+    background:radial-gradient(ellipse at top left,#e8f5ee 0%,#f0f4f1 50%,#e8f0ea 100%);
+  }
+
+  .auth-container {
+    width:100%; max-width:900px;
+    display:grid; grid-template-columns:1fr 1fr;
+    background:#fff; border-radius:20px;
+    box-shadow:0 20px 60px rgba(0,0,0,.12);
+    overflow:hidden;
+  }
+
+  /* ── Illustration side ── */
+  .auth-illustration {
+    background:linear-gradient(160deg,#1a3a2a 0%,#1e5c3a 50%,#2d7a50 100%);
+    padding:48px 40px; display:flex; flex-direction:column; justify-content:center;
+    position:relative; overflow:hidden;
+  }
+  .auth-illustration::before {
+    content:''; position:absolute; top:-80px; right:-80px;
+    width:250px; height:250px; background:rgba(255,255,255,.05);
+    border-radius:50%;
+  }
+  .auth-illustration::after {
+    content:''; position:absolute; bottom:-60px; left:-60px;
+    width:200px; height:200px; background:rgba(255,255,255,.05);
+    border-radius:50%;
+  }
+  .auth-logo {
+    width:64px; height:64px; background:rgba(255,255,255,.15);
+    border-radius:16px; display:flex; align-items:center; justify-content:center;
+    font-size:28px; color:#fff; margin-bottom:28px; position:relative; z-index:1;
+  }
+  .auth-illustration h1 { color:#fff; font-size:26px; font-weight:800; line-height:1.2; margin-bottom:10px; position:relative; z-index:1; }
+  .auth-illustration p { color:rgba(255,255,255,.75); font-size:14px; line-height:1.6; margin-bottom:36px; position:relative; z-index:1; }
+
+  .auth-features { display:flex; flex-direction:column; gap:14px; position:relative; z-index:1; }
+  .auth-feature { display:flex; align-items:center; gap:12px; }
+  .auth-feature-icon { width:32px; height:32px; background:rgba(255,255,255,.15); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; color:#fff; flex-shrink:0; }
+  .auth-feature span { color:rgba(255,255,255,.9); font-size:13px; font-weight:500; }
+
+  .auth-brand {
+    margin-top:auto; padding-top:36px; border-top:1px solid rgba(255,255,255,.15);
+    display:flex; align-items:center; gap:10px; position:relative; z-index:1;
+  }
+  .auth-brand-text { color:rgba(255,255,255,.7); font-size:12px; }
+
+  /* ── Form side ── */
+  .auth-form-container {
+    padding:48px 44px; display:flex; flex-direction:column; justify-content:center;
+  }
+  .auth-form-header { margin-bottom:28px; }
+  .auth-form-header h2 { font-size:24px; font-weight:800; color:#1a2332; margin-bottom:6px; }
+  .auth-form-header p { font-size:14px; color:#6b7280; }
+
+  /* Alert */
+  .alert {
+    padding:12px 16px; border-radius:10px; font-size:13px; margin-bottom:16px;
+    display:flex; align-items:center; gap:10px; animation:fadeIn .3s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:none; } }
+  .alert-error { background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; }
+  .alert-success { background:#d1fae5; color:#065f46; border:1px solid #6ee7b7; }
+  .alert-warning { background:#fef3c7; color:#92400e; border:1px solid #fcd34d; }
+  .alert i { flex-shrink:0; }
+
+  /* Form */
+  .form-group { margin-bottom:18px; }
+  .form-label { display:block; font-size:12px; font-weight:700; color:#374151; text-transform:uppercase; letter-spacing:.5px; margin-bottom:7px; }
+  .form-control {
+    width:100%; padding:12px 14px; border:2px solid #e5e7eb; border-radius:10px;
+    font-size:14px; color:#1a2332; background:#fff; transition:all .2s;
+    font-family:inherit;
+  }
+  .form-control:focus { outline:none; border-color:#2d7a50; box-shadow:0 0 0 4px rgba(45,122,80,.12); }
+  .form-control::placeholder { color:#9ca3af; }
+
+  .password-wrap { position:relative; }
+  .password-wrap .form-control { padding-right:46px; }
+  .password-toggle-btn {
+    position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    background:none; border:none; color:#9ca3af; cursor:pointer; padding:4px;
+    font-size:15px; transition:color .2s;
+  }
+  .password-toggle-btn:hover { color:#374151; }
+
+  .remember-forgot { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
+  .remember-me { display:flex; align-items:center; gap:7px; cursor:pointer; font-size:13px; color:#4b5563; }
+  .remember-me input[type="checkbox"] { width:16px; height:16px; accent-color:#1e5c3a; cursor:pointer; }
+  .forgot-link { font-size:13px; color:#2d7a50; text-decoration:none; font-weight:600; }
+  .forgot-link:hover { text-decoration:underline; }
+
+  .auth-submit {
+    width:100%; padding:13px; background:linear-gradient(135deg,#1e5c3a,#3a9e6a);
+    color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:700;
+    cursor:pointer; transition:all .3s; display:flex; align-items:center; justify-content:center; gap:8px;
+    box-shadow:0 4px 14px rgba(30,92,58,.3);
+  }
+  .auth-submit:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(30,92,58,.4); }
+  .auth-submit:active { transform:none; }
+  .auth-submit:disabled { opacity:.7; cursor:not-allowed; transform:none; }
+
+  .auth-footer { text-align:center; margin-top:20px; font-size:13px; color:#6b7280; }
+  .auth-footer a { color:#2d7a50; font-weight:600; text-decoration:none; }
+  .auth-footer a:hover { text-decoration:underline; }
+
+  /* Input icon prefix */
+  .input-icon-wrap { position:relative; }
+  .input-icon { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:#9ca3af; font-size:14px; }
+  .input-icon-wrap .form-control { padding-left:38px; }
+
+  /* Responsive */
+  @media (max-width:768px) {
+    .auth-container { grid-template-columns:1fr; max-width:420px; }
+    .auth-illustration { display:none; }
+    .auth-form-container { padding:40px 32px; }
+  }
+  @media (max-width:400px) {
+    .auth-form-container { padding:32px 24px; }
+  }
+</style>
 {% endblock %}
 
 {% block body %}
 <div class="auth-wrapper">
-    <div class="auth-container">
-        <!-- Section Illustration -->
-        <div class="auth-illustration">
-            <div class="auth-logo">
-                <i class="fas fa-utensils"></i>
-            </div>
-            <h1>LONAB - MUTRALO</h1>
-            <p>Système de Gestion des Tickets de Restauration Subventionnés</p>
+  <div class="auth-container">
+    <!-- Illustration -->
+    <div class="auth-illustration">
+      <div class="auth-logo"><i class="fas fa-utensils"></i></div>
+      <h1>LONAB<br>MUTRALO</h1>
+      <p>Système de Gestion des Tickets de Restauration Subventionnés pour les employés LONAB.</p>
 
-            <div class="auth-features">
-                <div class="auth-feature">
-                    <i class="fas fa-check"></i>
-                    <span>Gestion simplifiée des tickets</span>
-                </div>
-                <div class="auth-feature">
-                    <i class="fas fa-check"></i>
-                    <span>QR codes sécurisés</span>
-                </div>
-                <div class="auth-feature">
-                    <i class="fas fa-check"></i>
-                    <span>Suivi en temps réel</span>
-                </div>
-            </div>
+      <div class="auth-features">
+        <div class="auth-feature">
+          <div class="auth-feature-icon"><i class="fas fa-ticket-alt"></i></div>
+          <span>Gestion simplifiée des tickets</span>
         </div>
-
-        <!-- Section Formulaire -->
-        <div class="auth-form-container">
-            <div class="auth-form-header">
-                <h2>Connexion</h2>
-                <p>Connectez-vous pour accéder à votre espace</p>
-            </div>
-
-            {% if messages %}
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">
-                <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
-                {{ message }}
-            </div>
-            {% endfor %}
-            {% endif %}
-
-            <form method="post" action="{% url 'accounts:login' %}" class="auth-form" id="loginForm">
-                {% csrf_token %}
-
-                <div class="form-group">
-                    <label for="email" class="form-label">Email ou nom d'utilisateur</label>
-                    <input
-                            type="text"
-                            id="email"
-                            name="email"
-                            class="form-control"
-                            placeholder="email@lonab.bf  ou  matricule"
-                            required
-                            autocomplete="username"
-                            value="{{ request.POST.email }}"
-                    >
-                </div>
-
-                <div class="form-group">
-                    <label for="password" class="form-label">Mot de passe</label>
-                    <div class="password-toggle">
-                        <input
-                                type="password"
-                                id="password"
-                                name="password"
-                                class="form-control"
-                                placeholder="••••••••"
-                                required
-                                autocomplete="current-password"
-                        >
-                        <button type="button" class="password-toggle-btn" onclick="togglePassword()">
-                            <i class="fas fa-eye" id="toggleIcon"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="remember-forgot">
-                    <label class="remember-me">
-                        <input type="checkbox" name="remember_me" id="remember_me">
-                        <span>Se souvenir de moi</span>
-                    </label>
-                    <a href="{% url 'accounts:password_reset' %}" class="forgot-link">Mot de passe oublié ?</a>
-                </div>
-
-                <button type="submit" class="auth-submit">
-                    <i class="fas fa-sign-in-alt"></i>
-                    Se connecter
-                </button>
-            </form>
-
-            <div class="auth-loading" id="loadingSpinner">
-                <div class="spinner"></div>
-                <p style="margin-top: 12px; color: var(--text-secondary); font-size: 13px;">Connexion en cours...</p>
-            </div>
-
-            <div class="auth-footer">
-                Besoin d'aide ? <a href="mailto:support@lonab.com">Contactez le support</a>
-            </div>
+        <div class="auth-feature">
+          <div class="auth-feature-icon"><i class="fas fa-qrcode"></i></div>
+          <span>QR codes sécurisés</span>
         </div>
+        <div class="auth-feature">
+          <div class="auth-feature-icon"><i class="fas fa-chart-line"></i></div>
+          <span>Suivi en temps réel</span>
+        </div>
+        <div class="auth-feature">
+          <div class="auth-feature-icon"><i class="fas fa-shield-alt"></i></div>
+          <span>Sécurisé & confidentiel</span>
+        </div>
+      </div>
+
+      <div class="auth-brand">
+        <div style="width:32px;height:32px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;">
+          <i class="fas fa-leaf"></i>
+        </div>
+        <span class="auth-brand-text">Burkina Faso — LONAB © {{ annee_courante }}</span>
+      </div>
     </div>
+
+    <!-- Form -->
+    <div class="auth-form-container">
+      <div class="auth-form-header">
+        <h2>Connexion</h2>
+        <p>Accédez à votre espace personnel</p>
+      </div>
+
+      {% if messages %}
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">
+        <i class="fas fa-{% if 'error' in message.tags %}exclamation-circle{% elif 'success' in message.tags %}check-circle{% else %}info-circle{% endif %}"></i>
+        {{ message }}
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      <form method="post" action="{% url 'accounts:login' %}" id="loginForm">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label class="form-label" for="email">Email ou matricule</label>
+          <div class="input-icon-wrap">
+            <i class="fas fa-user input-icon"></i>
+            <input type="text" id="email" name="email" class="form-control"
+              placeholder="email@lonab.bf ou matricule" required autocomplete="username"
+              value="{{ request.POST.email }}">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Mot de passe</label>
+          <div class="password-wrap">
+            <div class="input-icon-wrap">
+              <i class="fas fa-lock input-icon"></i>
+              <input type="password" id="password" name="password" class="form-control"
+                placeholder="••••••••" required autocomplete="current-password">
+            </div>
+            <button type="button" class="password-toggle-btn" onclick="togglePassword()" title="Voir le mot de passe">
+              <i class="fas fa-eye" id="toggleIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="remember-forgot">
+          <label class="remember-me">
+            <input type="checkbox" name="remember_me" id="remember_me">
+            <span>Se souvenir de moi</span>
+          </label>
+          <a href="{% url 'accounts:password_reset' %}" class="forgot-link">Mot de passe oublié ?</a>
+        </div>
+
+        <button type="submit" class="auth-submit" id="submitBtn">
+          <i class="fas fa-sign-in-alt"></i>
+          <span id="submitText">Se connecter</span>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        Besoin d'aide ? <a href="mailto:support@lonab.com">Contactez le support</a>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    function togglePassword() {
-        const passwordInput = document.getElementById('password');
-        const toggleIcon = document.getElementById('toggleIcon');
+function togglePassword() {
+  const input = document.getElementById('password');
+  const icon = document.getElementById('toggleIcon');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.classList.replace('fa-eye','fa-eye-slash');
+  } else {
+    input.type = 'password';
+    icon.classList.replace('fa-eye-slash','fa-eye');
+  }
+}
 
-        if (passwordInput.type === 'password') {
-            passwordInput.type = 'text';
-            toggleIcon.classList.remove('fa-eye');
-            toggleIcon.classList.add('fa-eye-slash');
-        } else {
-            passwordInput.type = 'password';
-            toggleIcon.classList.remove('fa-eye-slash');
-            toggleIcon.classList.add('fa-eye');
-        }
-    }
+document.getElementById('loginForm').addEventListener('submit', function() {
+  const btn = document.getElementById('submitBtn');
+  const text = document.getElementById('submitText');
+  btn.disabled = true;
+  text.textContent = 'Connexion en cours…';
+  document.querySelector('#submitBtn i').classList.add('fa-spin');
+});
 
-    // Form submission handling
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        loadingSpinner.classList.add('active');
-    });
-
-    // Auto-hide alerts after 5 seconds
-    document.addEventListener('DOMContentLoaded', function() {
-        const alerts = document.querySelectorAll('.alert');
-        alerts.forEach(alert => {
-            setTimeout(() => {
-                alert.style.opacity = '0';
-                setTimeout(() => alert.remove(), 300);
-            }, 5000);
-        });
-    });
+// Auto-hide alerts
+document.querySelectorAll('.alert').forEach(alert => {
+  setTimeout(() => {
+    alert.style.transition = 'opacity .4s';
+    alert.style.opacity = '0';
+    setTimeout(() => alert.remove(), 400);
+  }, 5000);
+});
 </script>
 {% endblock %}

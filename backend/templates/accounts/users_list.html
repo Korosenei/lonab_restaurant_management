@@ -12,7 +12,6 @@
 {% endblock %}
 
 {% block page_content %}
-{# URLs résolues par Django #}
 <div id="user-urls"
      data-create="{% url 'accounts:user_create' %}"
      data-edit-base="{% url 'accounts:user_edit' pk=0 %}"
@@ -28,7 +27,8 @@
         <button class="export-btn export-btn-pdf" onclick="exportToPDF('usersTable','utilisateurs.pdf')" title="PDF">
             <i class="fas fa-file-pdf"></i>
         </button>
-        <button class="export-btn export-btn-excel" onclick="exportToExcel('usersTable','utilisateurs.xlsx')" title="Excel">
+        <button class="export-btn export-btn-excel" onclick="exportToExcel('usersTable','utilisateurs.xlsx')"
+                title="Excel">
             <i class="fas fa-file-excel"></i>
         </button>
         <button class="export-btn export-btn-csv" onclick="exportToCSV('usersTable','utilisateurs.csv')" title="CSV">
@@ -128,7 +128,8 @@
                     <td style="font-size:11px;">{{ u.direction.nom|default:"-" }}</td>
                     <td style="font-size:11px;">{{ u.agence.nom|default:"-" }}</td>
                     <td>
-                        <span class="badge {% if u.est_actif %}badge-success{% else %}badge-danger{% endif %}" style="font-size:10px;">
+                        <span class="badge {% if u.est_actif %}badge-success{% else %}badge-danger{% endif %}"
+                              style="font-size:10px;">
                             {% if u.est_actif %}<i class="fas fa-check"></i>{% else %}<i class="fas fa-times"></i>{% endif %}
                         </span>
                     </td>
@@ -158,32 +159,9 @@
                 {% endfor %}
                 </tbody>
             </table>
+            {% include 'components/pagination.html' with page_obj=page_obj label="ticket(s)" %}
         </div>
     </div>
-
-    {% if is_paginated %}
-    <div class="pagination-wrapper">
-        <div class="pagination-info">
-            Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
-        </div>
-        <div class="pagination">
-            {% if page_obj.has_previous %}
-            <button class="pagination-btn" onclick="window.location.href='?page={{ page_obj.previous_page_number }}'">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            {% endif %}
-            {% for num in page_obj.paginator.page_range %}
-            <button class="pagination-btn {% if page_obj.number == num %}active{% endif %}"
-                    onclick="window.location.href='?page={{ num }}'">{{ num }}</button>
-            {% endfor %}
-            {% if page_obj.has_next %}
-            <button class="pagination-btn" onclick="window.location.href='?page={{ page_obj.next_page_number }}'">
-                <i class="fas fa-chevron-right"></i>
-            </button>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
 </div>
 
 {% include 'accounts/modals/user_form.html' %}
@@ -192,49 +170,49 @@
 {% block dashboard_js %}
 <script src="{% static 'js/components.js' %}"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    initDataTable('usersTable');
-});
-
-function viewUser(id) {
-    var urls = document.getElementById('user-urls').dataset;
-    window.location.href = urls.detailBase.replace('/0/', '/' + id + '/');
-}
-
-function editUser(id) {
-    var urls = document.getElementById('user-urls').dataset;
-    fetch(urls.editBase.replace('/0/', '/' + id + '/'))
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-            document.getElementById('user_id').value            = data.id              || '';
-            document.getElementById('u_prenom').value           = data.prenom          || '';
-            document.getElementById('u_nom').value              = data.nom             || '';
-            document.getElementById('u_email').value            = data.email           || '';
-            document.getElementById('u_telephone').value        = data.telephone       || '';
-            document.getElementById('u_type_utilisateur').value = data.type_utilisateur|| '';
-            document.getElementById('u_genre').value            = data.genre           || '';
-            document.getElementById('u_matricule').value        = data.matricule       || '';
-            document.getElementById('u_departement').value      = data.departement     || '';
-            document.getElementById('u_poste').value            = data.poste           || '';
-            document.getElementById('u_direction').value        = data.direction_id    || '';
-            document.getElementById('u_agence').value           = data.agence_id       || '';
-            document.getElementById('u_adresse').value          = data.adresse         || '';
-            // Masquer info mdp en édition
-            var infoBox = document.getElementById('password_info_box');
-            if (infoBox) infoBox.style.display = 'none';
-            toggleUserFields(data.type_utilisateur);
-            document.getElementById('userModalTitle').textContent = 'Modifier l\'utilisateur';
-            openModal('userFormModal');
-        })
-        .catch(function () { showToast('Erreur lors du chargement', 'error'); });
-}
-
-function applyUserFilters() {
-    var params = new URLSearchParams();
-    document.querySelectorAll('.toolbar-filter select').forEach(function (sel) {
-        if (sel.name && sel.value) params.append(sel.name, sel.value);
+    document.addEventListener('DOMContentLoaded', function () {
+        initDataTable('usersTable');
     });
-    window.location.search = params.toString();
-}
+
+    function viewUser(id) {
+        var urls = document.getElementById('user-urls').dataset;
+        window.location.href = urls.detailBase.replace('/0/', '/' + id + '/');
+    }
+
+    function editUser(id) {
+        var urls = document.getElementById('user-urls').dataset;
+        fetch(urls.editBase.replace('/0/', '/' + id + '/'))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                document.getElementById('user_id').value            = data.id              || '';
+                document.getElementById('u_prenom').value           = data.prenom          || '';
+                document.getElementById('u_nom').value              = data.nom             || '';
+                document.getElementById('u_email').value            = data.email           || '';
+                document.getElementById('u_telephone').value        = data.telephone       || '';
+                document.getElementById('u_type_utilisateur').value = data.type_utilisateur|| '';
+                document.getElementById('u_genre').value            = data.genre           || '';
+                document.getElementById('u_matricule').value        = data.matricule       || '';
+                document.getElementById('u_departement').value      = data.departement     || '';
+                document.getElementById('u_poste').value            = data.poste           || '';
+                document.getElementById('u_direction').value        = data.direction_id    || '';
+                document.getElementById('u_agence').value           = data.agence_id       || '';
+                document.getElementById('u_adresse').value          = data.adresse         || '';
+                // Masquer info mdp en édition
+                var infoBox = document.getElementById('password_info_box');
+                if (infoBox) infoBox.style.display = 'none';
+                toggleUserFields(data.type_utilisateur);
+                document.getElementById('userModalTitle').textContent = 'Modifier l\'utilisateur';
+                openModal('userFormModal');
+            })
+            .catch(function () { showToast('Erreur lors du chargement', 'error'); });
+    }
+
+    function applyUserFilters() {
+        var params = new URLSearchParams();
+        document.querySelectorAll('.toolbar-filter select').forEach(function (sel) {
+            if (sel.name && sel.value) params.append(sel.name, sel.value);
+        });
+        window.location.search = params.toString();
+    }
 </script>
 {% endblock %}

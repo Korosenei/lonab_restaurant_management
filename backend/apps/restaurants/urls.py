@@ -4,17 +4,18 @@ from . import views
 app_name = 'restaurants'
 
 urlpatterns = [
-    # Admin + Caissier : Restaurants
+    # Restaurants
     path('', views.restaurants_list, name='restaurants_list'),
     path('create/', views.restaurant_create, name='restaurant_create'),
     path('<int:pk>/edit/', views.restaurant_edit, name='restaurant_edit'),
     path('<int:pk>/delete/', views.restaurant_delete, name='restaurant_delete'),
     path('<int:pk>/', views.restaurant_detail, name='restaurant_detail'),
 
-    # Menus
+    # Menus (plats)
     path('menus/', views.menus_list, name='menus_list'),
     path('menus/create/', views.menu_create, name='menu_create'),
     path('menus/duplicate/', views.menu_duplicate, name='menu_duplicate'),
+    path('menus/dates/', views.menus_dates, name='menus_dates'),
     path('menus/<int:pk>/edit/', views.menu_edit, name='menu_edit'),
     path('menus/<int:pk>/delete/', views.menu_delete, name='menu_delete'),
 
@@ -43,4 +44,5 @@ urlpatterns = [
 
     # Caissier
     path('caissier/planifier/', views.caissier_planifier_restaurant, name='caissier_planifier'),
+    path('caissier/restaurants/', views.caissier_restaurants, name='caissier_restaurants'),
 ]

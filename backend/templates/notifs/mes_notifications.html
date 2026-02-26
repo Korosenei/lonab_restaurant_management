@@ -1,0 +1,111 @@
+{% extends 'dashboards/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Mes Notifications{% endblock %}
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
+<style>
+    .dc{background:#fff;border-radius:7px;box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden;margin-bottom:8px;}
+    .dc-head{padding:8px 12px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#374151;}
+    .dc-head i{color:#28a745;font-size:10px;}
+    .notif-item{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border-bottom:1px solid #f9fafb;transition:background .1s;}
+    .notif-item:last-child{border-bottom:none;}
+    .notif-item.unread{background:#f0fdf4;}
+    .ni-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .ni-icon i{font-size:11px;}
+    .ni-t{font-size:11px;font-weight:600;color:#111827;margin-bottom:2px;}
+    .ni-m{font-size:10px;color:#6b7280;line-height:1.3;}
+    .ni-time{font-size:9px;color:#9ca3af;margin-top:3px;}
+    .unread-dot{width:7px;height:7px;border-radius:50%;background:#28a745;flex-shrink:0;margin-top:5px;}
+    .tp{font-size:9px;padding:1px 6px;border-radius:8px;font-weight:600;margin-left:4px;}
+    .tp-compte{background:#dbeafe;color:#1e40af;}
+    .tp-achat{background:#fef3c7;color:#92400e;}
+    .tp-conso{background:#ede7ff;color:#5b21b6;}
+    .tp-prog{background:#d1fae5;color:#065f46;}
+    .tp-menu{background:#fce7f3;color:#9d174d;}
+    .tp-sys{background:#f3f4f6;color:#374151;}
+    .pg{display:flex;gap:4px;justify-content:center;padding:8px;border-top:1px solid #f3f4f6;}
+    .pg a,.pg span{padding:3px 8px;border:1px solid #e5e7eb;border-radius:4px;font-size:10px;color:#374151;text-decoration:none;}
+    .pg a:hover{border-color:#28a745;color:#28a745;}
+</style>{% endblock %}
+
+{% block sidebar_menu %}
+{% if user.est_admin %}
+    {% include 'dashboards/sidebars/admin_sidebar.html' %}
+{% elif user.est_caissier %}
+    {% include 'dashboards/sidebars/caissier_sidebar.html' %}
+{% elif user.est_gestionnaire_restaurant %}
+    {% include 'dashboards/sidebars/gestionnaire_sidebar.html' %}
+{% else %}
+    {% include 'dashboards/sidebars/client_sidebar.html' %}
+{% endif %}
+{% endblock %}
+
+{% block page_content %}
+<div class="page-header" style="margin-bottom:12px;">
+    <h1 class="page-title" style="font-size:17px;">Mes Notifications</h1>
+    <p class="page-subtitle" style="font-size:11px;">{{ non_lues }} non lue(s)</p>
+</div>
+
+<div class="dc">
+    <div class="dc-head">
+        <i class="fas fa-bell"></i> Toutes mes notifications
+        {% if non_lues > 0 %}
+        <div style="margin-left:auto;">
+            <form method="post" action="{% url 'notifs:marquer_tout_lu' %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit"
+                        style="padding:3px 10px;font-size:10px;background:#28a745;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;">
+                    Tout marquer lu
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+
+    {% for n in notifs %}
+    <div class="notif-item {% if not n.est_lu %}unread{% endif %}">
+        {% if not n.est_lu %}
+        <div class="unread-dot"></div>
+        {% else %}
+        <div style="width:7px;flex-shrink:0;"></div>
+        {% endif %}
+        <div class="ni-icon"
+             style="background:{% if n.type_notification == 'ACHAT' %}#fef3c7{% elif n.type_notification == 'CONSOMMATION' %}#ede7ff{% elif n.type_notification == 'PROGRAMMATION' %}#d1fae5{% elif n.type_notification == 'MENU' %}#fce7f3{% else %}#f3f4f6{% endif %};">
+            <i class="fas fa-{% if n.type_notification == 'ACHAT' %}shopping-cart{% elif n.type_notification == 'CONSOMMATION' %}utensils{% elif n.type_notification == 'PROGRAMMATION' %}calendar-alt{% elif n.type_notification == 'MENU' %}list-alt{% else %}bell{% endif %}"
+               style="color:{% if n.type_notification == 'ACHAT' %}#e0a800{% elif n.type_notification == 'CONSOMMATION' %}#6f42c1{% elif n.type_notification == 'PROGRAMMATION' %}#28a745{% elif n.type_notification == 'MENU' %}#be185d{% else %}#6b7280{% endif %};"></i>
+        </div>
+        <div style="flex:1;min-width:0;">
+            <div class="ni-t">{{ n.titre }}</div>
+            <div class="ni-m">{{ n.message }}</div>
+            <div style="display:flex;align-items:center;margin-top:3px;">
+                <span class="ni-time">{{ n.cree_le|timesince }} ago</span>
+                <span class="tp tp-{% if n.type_notification == 'COMPTE' %}compte{% elif n.type_notification == 'ACHAT' %}achat{% elif n.type_notification == 'CONSOMMATION' %}conso{% elif n.type_notification == 'PROGRAMMATION' %}prog{% elif n.type_notification == 'MENU' %}menu{% else %}sys{% endif %}">{{ n.get_type_notification_display }}</span>
+            </div>
+        </div>
+        {% if not n.est_lu %}
+        <form method="post" action="{% url 'notifs:marquer_lu' n.id %}">{% csrf_token %}
+            <button type="submit"
+                    style="padding:3px 7px;font-size:9px;border:1px solid #e5e7eb;border-radius:4px;background:#fff;cursor:pointer;color:#28a745;"
+                    title="Marquer lu">
+                <i class="fas fa-check"></i>
+            </button>
+        </form>
+        {% endif %}
+    </div>
+    {% empty %}
+    <div style="text-align:center;padding:28px;color:#9ca3af;font-size:10px;">
+        <i class="fas fa-bell-slash" style="font-size:22px;display:block;margin-bottom:6px;opacity:.3;"></i>
+        Aucune notification
+    </div>
+    {% endfor %}
+
+    {% if page_obj.has_other_pages %}
+    <div class="pg">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">‹</a>{% endif %}
+        <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">›</a>{% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

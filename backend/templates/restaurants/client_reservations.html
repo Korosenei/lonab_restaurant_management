@@ -2,11 +2,12 @@
 {% load static %}
 
 {% block title %}Mes réservations{% endblock %}
-{% block dashboard_css %}<link rel="stylesheet" href="{% static 'css/components.css' %}">
+{% block dashboard_css %}
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
 <style>
-.res-row{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border-color);}
-.res-row:last-child{border-bottom:none;}
-.res-row:hover{background:var(--bg-light);}
+    .res-row{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border-color);}
+    .res-row:last-child{border-bottom:none;}
+    .res-row:hover{background:var(--bg-light);}
 </style>
 {% endblock %}
 
@@ -67,7 +68,8 @@
 
         <!-- Statut + action -->
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;">
-            <span class="badge {% if r.statut == 'EN_ATTENTE' %}badge-warning{% elif r.statut == 'CONFIRME' %}badge-success{% elif r.statut == 'TERMINE' %}badge-info{% else %}badge-secondary{% endif %}" style="font-size:10px;">
+            <span class="badge {% if r.statut == 'EN_ATTENTE' %}badge-warning{% elif r.statut == 'CONFIRME' %}badge-success{% elif r.statut == 'TERMINE' %}badge-info{% else %}badge-secondary{% endif %}"
+                  style="font-size:10px;">
                 {{ r.get_statut_display }}
             </span>
             {% if r.statut not in 'TERMINE,ANNULE' %}
@@ -84,9 +86,10 @@
         <i class="fas fa-calendar-times" style="font-size:36px;display:block;margin-bottom:12px;opacity:.2;"></i>
         Aucune réservation{% if filtre_actif %} avec ce statut{% endif %}
         {% if not filtre_actif %}
-        <br><a href="{% url 'restaurants:client_menus' %}" style="color:var(--primary-green);font-size:13px;font-weight:600;display:inline-block;margin-top:10px;">
-            <i class="fas fa-book-open"></i> Voir les menus du jour →
-        </a>
+        <br><a href="{% url 'restaurants:client_menus' %}"
+               style="color:var(--primary-green);font-size:13px;font-weight:600;display:inline-block;margin-top:10px;">
+        <i class="fas fa-book-open"></i> Voir les menus du jour →
+    </a>
         {% endif %}
     </div>
     {% endif %}
@@ -98,17 +101,17 @@
 {% block dashboard_js %}
 <script src="{% static 'js/components.js' %}"></script>
 <script>
-function annuler(id, btn) {
-    if (!confirm('Annuler cette réservation ?')) return;
-    var url = document.getElementById('page-urls').dataset.annulerBase.replace('/0/', '/' + id + '/');
-    btn.disabled = true;
-    fetch(url, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() } })
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-        if (d.success) { showSuccess(d.message); setTimeout(function(){ location.reload(); }, 600); }
-        else { showError(d.error || 'Erreur'); btn.disabled = false; }
-    })
-    .catch(function() { showError('Erreur réseau'); btn.disabled = false; });
-}
+    function annuler(id, btn) {
+        if (!confirm('Annuler cette réservation ?')) return;
+        var url = document.getElementById('page-urls').dataset.annulerBase.replace('/0/', '/' + id + '/');
+        btn.disabled = true;
+        fetch(url, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() } })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.success) { showSuccess(d.message); setTimeout(function(){ location.reload(); }, 600); }
+            else { showError(d.error || 'Erreur'); btn.disabled = false; }
+        })
+        .catch(function() { showError('Erreur réseau'); btn.disabled = false; });
+    }
 </script>
 {% endblock %}

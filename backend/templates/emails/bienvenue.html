@@ -1,114 +1,158 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bienvenue sur MUTRALO</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bienvenue sur MUTRALO — Vos identifiants</title>
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Segoe UI',Arial,sans-serif; background:#f4f7f3; color:#1a2332; }
+    .wrapper { max-width:580px; margin:0 auto; padding:30px 16px; }
+    .card { background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 4px 30px rgba(0,0,0,.1); }
+
+    /* Header */
+    .header { background:linear-gradient(135deg,#1a3a2a,#2d7a50); padding:36px 40px; text-align:center; }
+    .logo-circle { width:64px; height:64px; background:rgba(255,255,255,.15); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:16px; }
+    .logo-circle svg { width:32px; height:32px; fill:#fff; }
+    .header-title { color:#fff; font-size:22px; font-weight:700; }
+    .header-sub { color:rgba(255,255,255,.8); font-size:13px; margin-top:6px; }
+
+    /* Body */
+    .body { padding:36px 40px; }
+    .greeting { font-size:18px; font-weight:700; color:#1a3a2a; margin-bottom:8px; }
+    .intro { font-size:14px; color:#4b5563; line-height:1.6; margin-bottom:28px; }
+
+    /* Credentials box */
+    .creds-box { background:#f2faf5; border:1px solid #a7f3d0; border-radius:12px; padding:24px; margin-bottom:24px; }
+    .creds-title { font-size:12px; font-weight:700; color:#065f46; text-transform:uppercase; letter-spacing:.8px; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+    .cred-row { display:flex; align-items:center; padding:10px 0; border-bottom:1px solid #d1fae5; }
+    .cred-row:last-child { border-bottom:none; }
+    .cred-icon { width:32px; height:32px; background:#fff; border-radius:8px; display:flex; align-items:center; justify-content:center; margin-right:14px; flex-shrink:0; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+    .cred-label { font-size:11px; color:#6b7280; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+    .cred-value { font-size:14px; color:#1a2332; font-weight:600; margin-top:2px; }
+    .cred-value.mono { font-family:monospace; background:#fff; padding:3px 10px; border-radius:6px; border:1px solid #e5e7eb; font-size:15px; letter-spacing:.5px; }
+
+    /* Warning */
+    .warning-box { background:#fff8e1; border:1px solid #f59e0b; border-radius:10px; padding:14px 18px; margin-bottom:24px; display:flex; gap:12px; align-items:flex-start; }
+    .warning-icon { font-size:18px; flex-shrink:0; }
+    .warning-text { font-size:13px; color:#78350f; line-height:1.5; }
+
+    /* CTA button */
+    .cta-wrap { text-align:center; margin:28px 0; }
+    .cta-btn { display:inline-block; padding:14px 36px; background:linear-gradient(135deg,#1e5c3a,#3a9e6a); color:#fff; text-decoration:none; border-radius:10px; font-size:14px; font-weight:700; letter-spacing:.3px; box-shadow:0 4px 12px rgba(30,92,58,.3); }
+
+    /* Steps */
+    .steps-title { font-size:13px; font-weight:700; color:#1a3a2a; margin-bottom:14px; }
+    .step { display:flex; gap:14px; align-items:flex-start; margin-bottom:12px; }
+    .step-num { width:24px; height:24px; background:#1e5c3a; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; margin-top:2px; }
+    .step-text { font-size:13px; color:#4b5563; line-height:1.5; }
+
+    /* Footer */
+    .footer { background:#f9fafb; border-top:1px solid #e5e7eb; padding:24px 40px; text-align:center; }
+    .footer-logo { font-size:13px; font-weight:700; color:#1a3a2a; margin-bottom:6px; }
+    .footer-text { font-size:11px; color:#9ca3af; line-height:1.6; }
+    .footer-links { margin-top:12px; }
+    .footer-links a { color:#2d7a50; font-size:11px; text-decoration:none; margin:0 8px; }
+
+    @media (max-width:480px) {
+      .body, .header, .footer { padding-left:24px; padding-right:24px; }
+      .header-title { font-size:18px; }
+      .cred-row { flex-direction:column; align-items:flex-start; gap:6px; }
+    }
+  </style>
 </head>
-<body style="margin:0; padding:0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f4f6f8;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f8; padding: 40px 20px;">
-  <tr><td align="center">
-    <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; background:white; border-radius:12px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+<body>
+  <div class="wrapper">
+    <div class="card">
 
       <!-- Header -->
-      <tr>
-        <td style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); padding: 36px 40px; text-align:center;">
-          <h1 style="color:white; margin:0; font-size:22px; font-weight:800; letter-spacing:-0.5px;">🍽️ MUTRALO – LONAB</h1>
-          <p style="color:rgba(255,255,255,0.85); margin:6px 0 0; font-size:13px;">Plateforme de gestion des tickets repas</p>
-        </td>
-      </tr>
+      <div class="header">
+        <div class="logo-circle">
+          <svg viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
+        </div>
+        <div class="header-title">LONAB — MUTRALO</div>
+        <div class="header-sub">Système de Gestion des Tickets de Restauration</div>
+      </div>
 
       <!-- Body -->
-      <tr>
-        <td style="padding: 36px 40px;">
-          <p style="color:#2d3748; font-size:15px; margin:0 0 8px;">Bonjour <strong>{{ prenom }} {{ nom }}</strong>,</p>
-          <p style="color:#4a5568; font-size:14px; line-height:1.6; margin:0 0 24px;">
-            Votre compte a été créé avec succès sur la plateforme de gestion des tickets de restauration subventionnée <strong>MUTRALO/LONAB</strong>.
-          </p>
+      <div class="body">
+        <div class="greeting">Bonjour {{ prenom }} {{ nom }},</div>
+        <p class="intro">
+          Votre compte <strong>MUTRALO/LONAB</strong> a été créé avec succès.
+          Vous trouverez ci-dessous vos identifiants de connexion.
+        </p>
 
-          <!-- Credentials Box -->
-          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fff4; border:1.5px solid #c6f6d5; border-radius:8px; margin-bottom:24px;">
-            <tr>
-              <td style="padding: 20px 24px;">
-                <p style="color:#276749; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin:0 0 14px;">
-                  🔑 Vos identifiants de connexion
-                </p>
-                <table width="100%" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td style="padding: 6px 0; border-bottom:1px solid #bee3f8;">
-                      <span style="font-size:12px; color:#718096; font-weight:600;">Email</span>
-                    </td>
-                    <td style="padding: 6px 0; border-bottom:1px solid #bee3f8; text-align:right;">
-                      <code style="font-size:13px; color:#2d3748; background:#e2e8f0; padding:2px 8px; border-radius:4px;">{{ email }}</code>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 8px 0 0;">
-                      <span style="font-size:12px; color:#718096; font-weight:600;">Mot de passe temporaire</span>
-                    </td>
-                    <td style="padding: 8px 0 0; text-align:right;">
-                      <code style="font-size:14px; color:#28a745; background:#f0fff4; padding:3px 10px; border-radius:4px; font-weight:700; letter-spacing:1px;">{{ mot_de_passe }}</code>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
+        <!-- Credentials -->
+        <div class="creds-box">
+          <div class="creds-title">
+            🔑 Vos identifiants de connexion
+          </div>
+          <div class="cred-row">
+            <div class="cred-icon">📧</div>
+            <div>
+              <div class="cred-label">Email / Identifiant</div>
+              <div class="cred-value">{{ email }}</div>
+            </div>
+          </div>
+          <div class="cred-row">
+            <div class="cred-icon">🔒</div>
+            <div>
+              <div class="cred-label">Mot de passe temporaire</div>
+              <div class="cred-value mono">{{ mot_de_passe }}</div>
+            </div>
+          </div>
+          <div class="cred-row">
+            <div class="cred-icon">👤</div>
+            <div>
+              <div class="cred-label">Type de compte</div>
+              <div class="cred-value">{{ type_utilisateur }}</div>
+            </div>
+          </div>
+        </div>
 
-          <!-- Account Type -->
-          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f7fafc; border-radius:8px; margin-bottom:24px;">
-            <tr>
-              <td style="padding: 14px 20px;">
-                <p style="margin:0; font-size:12px; color:#718096;">
-                  <strong style="color:#2d3748;">Type de compte :</strong> {{ type_utilisateur }}
-                </p>
-              </td>
-            </tr>
-          </table>
+        <!-- Warning -->
+        <div class="warning-box">
+          <span class="warning-icon">⚠️</span>
+          <div class="warning-text">
+            <strong>Important :</strong> Ce mot de passe est temporaire. Pour la sécurité de votre compte,
+            veuillez le modifier dès votre première connexion dans la section <em>Mon Profil → Sécurité</em>.
+          </div>
+        </div>
 
-          <!-- Warning -->
-          <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffbeb; border:1px solid #f6e05e; border-radius:8px; margin-bottom:28px;">
-            <tr>
-              <td style="padding: 14px 20px;">
-                <p style="margin:0; font-size:12px; color:#744210; line-height:1.5;">
-                  ⚠️ <strong>Sécurité :</strong> Ce mot de passe est temporaire. Veuillez le modifier dès votre première connexion depuis votre profil.
-                </p>
-              </td>
-            </tr>
-          </table>
+        <!-- CTA -->
+        <div class="cta-wrap">
+          <a href="{{ url_connexion }}" class="cta-btn">Se connecter à MUTRALO →</a>
+        </div>
 
-          <p style="color:#4a5568; font-size:14px; line-height:1.6; margin:0 0 28px;">
-            Vous pouvez dès à présent vous connecter à votre espace personnel et accéder à vos tickets repas.
-          </p>
-
-          <!-- CTA Button -->
-          <table width="100%" cellpadding="0" cellspacing="0">
-            <tr>
-              <td align="center">
-                <a href="{{ url_connexion }}" style="display:inline-block; background:linear-gradient(135deg,#28a745,#20c997); color:white; text-decoration:none; padding:12px 32px; border-radius:8px; font-size:14px; font-weight:700;">
-                  Se connecter →
-                </a>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
+        <!-- Steps -->
+        <div class="steps-title">Comment commencer ?</div>
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">Cliquez sur le bouton ci-dessus ou rendez-vous sur <strong>{{ url_connexion }}</strong></div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">Connectez-vous avec votre email et le mot de passe temporaire fourni</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">Accédez à <strong>Mon Profil</strong> et modifiez votre mot de passe pour sécuriser votre compte</div>
+        </div>
+      </div>
 
       <!-- Footer -->
-      <tr>
-        <td style="background:#f7fafc; padding: 20px 40px; border-top:1px solid #e2e8f0; text-align:center;">
-          <p style="color:#a0aec0; font-size:11px; margin:0; line-height:1.5;">
-            Cet email a été envoyé automatiquement par le système MUTRALO/LONAB.<br>
-            Pour toute assistance, contactez votre administrateur.
-          </p>
-          <p style="color:#a0aec0; font-size:11px; margin:6px 0 0;">
-            © {{ annee }} LONAB – Loterie Nationale du Burkina Faso
-          </p>
-        </td>
-      </tr>
-
-    </table>
-  </td></tr>
-</table>
+      <div class="footer">
+        <div class="footer-logo">LONAB — MUTRALO © {{ annee }}</div>
+        <div class="footer-text">
+          Cet email a été envoyé automatiquement suite à la création de votre compte.<br>
+          Si vous n'êtes pas à l'origine de cette inscription, contactez le support.
+        </div>
+        <div class="footer-links">
+          <a href="mailto:support@lonab.com">Support</a>
+          <a href="{{ url_connexion }}">Connexion</a>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

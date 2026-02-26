@@ -6,41 +6,41 @@
 {% block dashboard_css %}
 <link rel="stylesheet" href="{% static 'css/components.css' %}">
 <style>
-/* ── Stat cards (compactes, copie du caissier) ─────────────────── */
-.stat-card {
-    display:flex; align-items:center; justify-content:space-between;
-    background:white; border-radius:12px; padding:16px 18px;
-    box-shadow:0 1px 6px rgba(0,0,0,.07);
-}
-.stat-icon {
-    width:44px; height:44px; border-radius:50%;
-    display:flex; align-items:center; justify-content:center;
-    font-size:19px; flex-shrink:0;
-}
-/* ── QR wrap — identique au caissier ─────────────────────────── */
-.qr-wrap {
-    background:linear-gradient(135deg,#1a472a 0%,#2d6a4f 100%);
-    border-radius:14px; padding:22px; color:white; text-align:center;
-}
-.qr-frame {
-    width:180px; height:180px; background:white; border-radius:12px;
-    margin:14px auto; padding:10px; box-sizing:border-box;
-    box-shadow:0 4px 16px rgba(0,0,0,.25);
-    display:flex; align-items:center; justify-content:center; overflow:hidden;
-}
-.qr-frame img { width:100%; height:100%; object-fit:contain; border-radius:6px; }
-.timer-display {
-    font-size:32px; font-weight:900; letter-spacing:2px;
-    margin:6px 0; font-variant-numeric:tabular-nums;
-}
-.btn-regen {
-    display:inline-flex; align-items:center; gap:6px;
-    padding:9px 18px; border-radius:8px; font-size:13px; font-weight:700;
-    background:rgba(255,255,255,.15); color:white;
-    border:1px solid rgba(255,255,255,.4); cursor:pointer; transition:.2s; margin-top:10px;
-}
-.btn-regen:hover  { background:rgba(255,255,255,.25); }
-.btn-regen:disabled { opacity:.6; cursor:not-allowed; }
+    /* ── Stat cards (compactes, copie du caissier) ─────────────────── */
+    .stat-card {
+        display:flex; align-items:center; justify-content:space-between;
+        background:white; border-radius:12px; padding:16px 18px;
+        box-shadow:0 1px 6px rgba(0,0,0,.07);
+    }
+    .stat-icon {
+        width:44px; height:44px; border-radius:50%;
+        display:flex; align-items:center; justify-content:center;
+        font-size:19px; flex-shrink:0;
+    }
+    /* ── QR wrap — identique au caissier ─────────────────────────── */
+    .qr-wrap {
+        background:linear-gradient(135deg,#1a472a 0%,#2d6a4f 100%);
+        border-radius:14px; padding:22px; color:white; text-align:center;
+    }
+    .qr-frame {
+        width:180px; height:180px; background:white; border-radius:12px;
+        margin:14px auto; padding:10px; box-sizing:border-box;
+        box-shadow:0 4px 16px rgba(0,0,0,.25);
+        display:flex; align-items:center; justify-content:center; overflow:hidden;
+    }
+    .qr-frame img { width:100%; height:100%; object-fit:contain; border-radius:6px; }
+    .timer-display {
+        font-size:32px; font-weight:900; letter-spacing:2px;
+        margin:6px 0; font-variant-numeric:tabular-nums;
+    }
+    .btn-regen {
+        display:inline-flex; align-items:center; gap:6px;
+        padding:9px 18px; border-radius:8px; font-size:13px; font-weight:700;
+        background:rgba(255,255,255,.15); color:white;
+        border:1px solid rgba(255,255,255,.4); cursor:pointer; transition:.2s; margin-top:10px;
+    }
+    .btn-regen:hover  { background:rgba(255,255,255,.25); }
+    .btn-regen:disabled { opacity:.6; cursor:not-allowed; }
 </style>
 {% endblock %}
 
@@ -147,25 +147,26 @@
         <!-- Cadre image -->
         <div class="qr-frame" id="qrFrame">
             {% if code_qr and code_qr.image_qr %}
-                <img src="{{ code_qr.image_qr.url }}" alt="QR Code" id="qrImg">
+            <img src="{{ code_qr.image_qr.url }}" alt="QR Code" id="qrImg">
             {% else %}
-                <div id="qrPlaceholder" style="text-align:center;color:#adb5bd;">
-                    <i class="fas fa-qrcode"
-                       style="font-size:60px;display:block;margin-bottom:8px;"></i>
-                    <div style="font-size:11px;">
-                        {% if nombre_tickets_disponibles > 0 %}
-                            Génération…
-                        {% else %}
-                            Aucun ticket
-                        {% endif %}
-                    </div>
+            <div id="qrPlaceholder" style="text-align:center;color:#adb5bd;">
+                <i class="fas fa-qrcode"
+                   style="font-size:60px;display:block;margin-bottom:8px;"></i>
+                <div style="font-size:11px;">
+                    {% if nombre_tickets_disponibles > 0 %}
+                    Génération…
+                    {% else %}
+                    Aucun ticket
+                    {% endif %}
                 </div>
+            </div>
             {% endif %}
         </div>
 
         <!-- Timer -->
         <div class="timer-display" id="timerDisplay"
-             style="display:{% if code_qr %}block{% else %}none{% endif %};">--:--</div>
+             style="display:{% if code_qr %}block{% else %}none{% endif %};">--:--
+        </div>
         {% if code_qr %}
         <div style="font-size:11px;opacity:.7;">Expire dans</div>
         {% endif %}
@@ -234,144 +235,144 @@
 <script src="{% static 'js/components.js' %}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
-(function () {
-'use strict';
-Chart.defaults.font.family = "'Inter','Segoe UI',sans-serif";
-Chart.defaults.font.size   = 12;
+    (function () {
+    'use strict';
+    Chart.defaults.font.family = "'Inter','Segoe UI',sans-serif";
+    Chart.defaults.font.size   = 12;
 
-/* ── Donut tickets ───────────────────────────────────────────── */
-var dispo = {{ nombre_tickets_disponibles|default:0 }};
-var conso = {{ nombre_tickets_consommes|default:0 }};
-var total = dispo + conso;
+    /* ── Donut tickets ───────────────────────────────────────────── */
+    var dispo = {{ nombre_tickets_disponibles|default:0 }};
+    var conso = {{ nombre_tickets_consommes|default:0 }};
+    var total = dispo + conso;
 
-new Chart(document.getElementById('ticketsDonut'), {
-    type: 'doughnut',
-    data: {
-        labels: ['Disponibles', 'Consommés'],
-        datasets: [{
-            data: total > 0 ? [dispo, conso] : [1, 0],
-            backgroundColor: total > 0
-                ? ['rgba(40,167,69,.85)', 'rgba(220,53,69,.7)']
-                : ['#e9ecef', '#e9ecef'],
-            borderWidth: 2,
-            borderColor: '#fff',
-        }]
-    },
-    options: {
-        responsive: true,
-        cutout: '68%',
-        plugins: {
-            legend: {
-                position: 'bottom',
-                labels: { boxWidth: 12, padding: 12, font: { size: 11 } }
-            },
-            tooltip: {
-                callbacks: {
-                    label: function (c) {
-                        return total > 0
-                            ? ' ' + c.label + ' : ' + c.parsed +
-                              ' (' + Math.round(c.parsed / total * 100) + '%)'
-                            : ' Aucun ticket';
+    new Chart(document.getElementById('ticketsDonut'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Disponibles', 'Consommés'],
+            datasets: [{
+                data: total > 0 ? [dispo, conso] : [1, 0],
+                backgroundColor: total > 0
+                    ? ['rgba(40,167,69,.85)', 'rgba(220,53,69,.7)']
+                    : ['#e9ecef', '#e9ecef'],
+                borderWidth: 2,
+                borderColor: '#fff',
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '68%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { boxWidth: 12, padding: 12, font: { size: 11 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (c) {
+                            return total > 0
+                                ? ' ' + c.label + ' : ' + c.parsed +
+                                  ' (' + Math.round(c.parsed / total * 100) + '%)'
+                                : ' Aucun ticket';
+                        }
                     }
                 }
             }
         }
-    }
-});
-
-/* ── Timer QR ────────────────────────────────────────────────── */
-var expiryEl = document.getElementById('qrExpiryData');
-var timerEl  = document.getElementById('timerDisplay');
-var timerInt = null;
-var expiry   = null;
-
-function majTimer() {
-    if (!expiry || !timerEl) return;
-    var diff = Math.max(0, Math.floor((expiry - new Date()) / 1000));
-    if (diff === 0) {
-        timerEl.textContent = 'Expiré';
-        timerEl.style.color = '#fca5a5';
-        clearInterval(timerInt);
-        return;
-    }
-    var m = Math.floor(diff / 60), s = diff % 60;
-    timerEl.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
-    timerEl.style.color = diff < 120 ? '#fca5a5' : 'white';
-}
-
-if (expiryEl && timerEl) {
-    expiry = new Date(JSON.parse(expiryEl.textContent));
-    timerEl.style.display = 'block';
-    majTimer();
-    timerInt = setInterval(majTimer, 1000);
-}
-
-/* ── Auto-génération QR si aucun actif ──────────────────────── */
-{% if not code_qr and nombre_tickets_disponibles > 0 %}
-(function autoGen() {
-    var url = document.getElementById('page-urls').dataset.genererUrl;
-    fetch(url, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() } })
-    .then(function (r) { return r.json(); })
-    .then(function (d) {
-        if (d.success && d.image_url) {
-            var frame = document.getElementById('qrFrame');
-            var ph    = document.getElementById('qrPlaceholder');
-            if (ph) ph.remove();
-            frame.innerHTML = '<img src="' + d.image_url + '" alt="QR Code" ' +
-                'style="width:100%;height:100%;object-fit:contain;border-radius:6px;">';
-            if (d.expire_le && timerEl) {
-                expiry = new Date(d.expire_le);
-                timerEl.style.display = 'block';
-                majTimer();
-                timerInt = setInterval(majTimer, 1000);
-            }
-        }
-    })
-    .catch(function () {});
-})();
-{% endif %}
-
-/* ── Régénérer QR ────────────────────────────────────────────── */
-var genUrl = document.getElementById('page-urls').dataset.genererUrl;
-
-window.regenererQR = function () {
-    var btn  = document.getElementById('btnRegen');
-    var icon = document.getElementById('regenIcon');
-    btn.disabled = true;
-    icon.className = 'fas fa-spinner fa-spin';
-
-    fetch(genUrl, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() } })
-    .then(function (r) { return r.json(); })
-    .then(function (d) {
-        btn.disabled = false;
-        icon.className = 'fas fa-sync-alt';
-        if (d.success) {
-            showSuccess(d.message || 'QR Code régénéré');
-            if (d.image_url) {
-                document.getElementById('qrFrame').innerHTML =
-                    '<img src="' + d.image_url + '" alt="QR Code" ' +
-                    'style="width:100%;height:100%;object-fit:contain;border-radius:6px;">';
-            }
-            if (d.expire_le && timerEl) {
-                expiry = new Date(d.expire_le);
-                timerEl.style.display = 'block';
-                clearInterval(timerInt);
-                majTimer();
-                timerInt = setInterval(majTimer, 1000);
-            } else {
-                setTimeout(function () { location.reload(); }, 800);
-            }
-        } else {
-            showError(d.error || 'Erreur lors de la régénération');
-        }
-    })
-    .catch(function () {
-        btn.disabled = false;
-        icon.className = 'fas fa-sync-alt';
-        showError('Erreur réseau');
     });
-};
 
-})();
+    /* ── Timer QR ────────────────────────────────────────────────── */
+    var expiryEl = document.getElementById('qrExpiryData');
+    var timerEl  = document.getElementById('timerDisplay');
+    var timerInt = null;
+    var expiry   = null;
+
+    function majTimer() {
+        if (!expiry || !timerEl) return;
+        var diff = Math.max(0, Math.floor((expiry - new Date()) / 1000));
+        if (diff === 0) {
+            timerEl.textContent = 'Expiré';
+            timerEl.style.color = '#fca5a5';
+            clearInterval(timerInt);
+            return;
+        }
+        var m = Math.floor(diff / 60), s = diff % 60;
+        timerEl.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+        timerEl.style.color = diff < 120 ? '#fca5a5' : 'white';
+    }
+
+    if (expiryEl && timerEl) {
+        expiry = new Date(JSON.parse(expiryEl.textContent));
+        timerEl.style.display = 'block';
+        majTimer();
+        timerInt = setInterval(majTimer, 1000);
+    }
+
+    /* ── Auto-génération QR si aucun actif ──────────────────────── */
+    {% if not code_qr and nombre_tickets_disponibles > 0 %}
+    (function autoGen() {
+        var url = document.getElementById('page-urls').dataset.genererUrl;
+        fetch(url, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() } })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (d.success && d.image_url) {
+                var frame = document.getElementById('qrFrame');
+                var ph    = document.getElementById('qrPlaceholder');
+                if (ph) ph.remove();
+                frame.innerHTML = '<img src="' + d.image_url + '" alt="QR Code" ' +
+                    'style="width:100%;height:100%;object-fit:contain;border-radius:6px;">';
+                if (d.expire_le && timerEl) {
+                    expiry = new Date(d.expire_le);
+                    timerEl.style.display = 'block';
+                    majTimer();
+                    timerInt = setInterval(majTimer, 1000);
+                }
+            }
+        })
+        .catch(function () {});
+    })();
+    {% endif %}
+
+    /* ── Régénérer QR ────────────────────────────────────────────── */
+    var genUrl = document.getElementById('page-urls').dataset.genererUrl;
+
+    window.regenererQR = function () {
+        var btn  = document.getElementById('btnRegen');
+        var icon = document.getElementById('regenIcon');
+        btn.disabled = true;
+        icon.className = 'fas fa-spinner fa-spin';
+
+        fetch(genUrl, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() } })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            btn.disabled = false;
+            icon.className = 'fas fa-sync-alt';
+            if (d.success) {
+                showSuccess(d.message || 'QR Code régénéré');
+                if (d.image_url) {
+                    document.getElementById('qrFrame').innerHTML =
+                        '<img src="' + d.image_url + '" alt="QR Code" ' +
+                        'style="width:100%;height:100%;object-fit:contain;border-radius:6px;">';
+                }
+                if (d.expire_le && timerEl) {
+                    expiry = new Date(d.expire_le);
+                    timerEl.style.display = 'block';
+                    clearInterval(timerInt);
+                    majTimer();
+                    timerInt = setInterval(majTimer, 1000);
+                } else {
+                    setTimeout(function () { location.reload(); }, 800);
+                }
+            } else {
+                showError(d.error || 'Erreur lors de la régénération');
+            }
+        })
+        .catch(function () {
+            btn.disabled = false;
+            icon.className = 'fas fa-sync-alt';
+            showError('Erreur réseau');
+        });
+    };
+
+    })();
 </script>
 {% endblock %}
