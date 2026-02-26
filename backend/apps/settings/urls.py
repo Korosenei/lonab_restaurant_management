@@ -9,7 +9,6 @@ urlpatterns = [
     path('jours-feries/create/', views.jour_ferie_create, name='jour_ferie_create'),
     path('jours-feries/<int:pk>/delete/', views.jour_ferie_delete, name='jour_ferie_delete'),
 
-    path('admin/overview/', views.admin_overview, name='admin_overview'),
     path('admin/reports/', views.admin_reports, name='admin_reports'),
 
     path('api/params/', views.api_params, name='api_params'),

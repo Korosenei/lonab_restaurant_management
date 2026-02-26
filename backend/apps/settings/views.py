@@ -251,119 +251,153 @@ def jour_ferie_delete(request, pk):
     except JourFerie.DoesNotExist:
         return JsonResponse({'error': 'Introuvable'}, status=404)
 
-
 # ════════════════════════════════════════════════════════════════
-@login_required
-def admin_overview(request):
-    if _admin_required(request):
-        messages.warning(request, 'Accès refusé.')
-        return redirect('accounts:dashboard')
-
-    try:
-        params = ParametresSysteme.charger()
-        mode_maintenance = params.mode_maintenance
-    except Exception:
-        mode_maintenance = False
-
-    ctx = _base_ctx(request)
-    ctx.update(_stats_base())
-    ctx['mode_maintenance'] = mode_maintenance
-
-    return render(request, 'settings/admin_overview.html', ctx)
-
 @login_required
 def admin_reports(request):
     if _admin_required(request):
         messages.warning(request, 'Accès refusé.')
         return redirect('accounts:dashboard')
 
+    from dateutil.relativedelta import relativedelta
+    from django.db.models import Sum, Count
     from apps.accounts.models import Agence
+
     aujourd_hui = timezone.now().date()
 
-    # Filtres
-    date_debut = request.GET.get('date_debut', aujourd_hui.replace(day=1).isoformat())
-    date_fin = request.GET.get('date_fin', aujourd_hui.isoformat())
-    agence_id = request.GET.get('agence', '')
-    type_rapport = request.GET.get('type', '')
+    # ── Filtres ──────────────────────────────────────────────────
+    date_debut = request.GET.get('date_debut', '').strip() or aujourd_hui.replace(day=1).isoformat()
+    date_fin   = request.GET.get('date_fin',   '').strip() or aujourd_hui.isoformat()
+    agence_id  = request.GET.get('agence',     '').strip()
+    type_rpt   = request.GET.get('type',       '').strip()
 
-    agences_qs = Agence.objects.filter(est_active=True)
+    agences_qs = Agence.objects.filter(est_active=True).order_by('nom')
 
-    # Rapport par agence
+    # ── Récapitulatif par agence ──────────────────────────────────
     rapport_agences = []
     try:
         from apps.tickets.models import Ticket
         from apps.transactions.models import TransactionTicket
         params = ParametresSysteme.charger()
 
-        for a in agences_qs:
+        qs_agences = agences_qs
+        if agence_id:
+            qs_agences = qs_agences.filter(pk=agence_id)
+
+        for a in qs_agences:
+            # Tickets achetés = créés dans la période pour les employés de cette agence
             tickets_achetes = Ticket.objects.filter(
                 proprietaire__agence=a,
-                date_achat__date__gte=date_debut,
-                date_achat__date__lte=date_fin
+                date_creation__date__gte=date_debut,
+                date_creation__date__lte=date_fin,
             ).count()
+
+            # Tickets consommés dans la période
             tickets_consommes = Ticket.objects.filter(
                 proprietaire__agence=a,
                 statut='CONSOMME',
                 date_consommation__date__gte=date_debut,
-                date_consommation__date__lte=date_fin
+                date_consommation__date__lte=date_fin,
             ).count()
-            txs = TransactionTicket.objects.filter(
-                client__agence=a,
-                statut='TERMINE',
-                date_transaction__date__gte=date_debut,
-                date_transaction__date__lte=date_fin
-            )
-            montant_total = sum(t.montant_total for t in txs)
-            subvention = tickets_consommes * float(params.subvention_ticket)
 
-            a.tickets_achetes = tickets_achetes
-            a.tickets_consommes = tickets_consommes
-            a.montant_total = montant_total
-            a.subvention = subvention
-            a.nb_employes = a.employes.filter(type_utilisateur='CLIENT', est_actif=True).count()
+            # Transactions terminées dans la période
+            txs_agg = TransactionTicket.objects.filter(
+                client__agence=a,
+                statut='TERMINEE',
+                date_transaction__date__gte=date_debut,
+                date_transaction__date__lte=date_fin,
+            ).aggregate(
+                montant=Sum('montant_total'),
+                subv=Sum('subvention_totale'),
+            )
+
+            a.tickets_achetes    = tickets_achetes
+            a.tickets_consommes  = tickets_consommes
+            a.montant_total      = txs_agg['montant']  or 0
+            a.subvention         = txs_agg['subv']     or 0
+            a.nb_employes        = a.employes.filter(type_utilisateur='CLIENT', est_actif=True).count()
             rapport_agences.append(a)
+
     except Exception:
         pass
 
-    # Données graphe mensuel (12 mois)
+    # ── Totaux globaux (période filtrée) ──────────────────────────
+    totaux = {'tickets': 0, 'consommes': 0, 'montant': 0, 'subvention': 0, 'employes': 0}
+    for a in rapport_agences:
+        totaux['tickets']    += a.tickets_achetes
+        totaux['consommes']  += a.tickets_consommes
+        totaux['montant']    += float(a.montant_total)
+        totaux['subvention'] += float(a.subvention)
+        totaux['employes']   += a.nb_employes
+
+    # ── Graphe 12 mois glissants ──────────────────────────────────
+    graph_labels          = []
     graph_mensuel_tickets = []
-    graph_mensuel_montants = []
+    graph_mensuel_montants= []
     try:
         from apps.tickets.models import Ticket
         from apps.transactions.models import TransactionTicket
-        debut_annee = aujourd_hui.replace(month=1, day=1)
-        for mois in range(1, 13):
-            debut_m = aujourd_hui.replace(month=mois, day=1)
-            fin_m = debut_m + relativedelta(months=1) - relativedelta(days=1)
-            nb = Ticket.objects.filter(date_achat__date__gte=debut_m, date_achat__date__lte=fin_m).count()
-            txs = TransactionTicket.objects.filter(statut='TERMINE', date_transaction__date__gte=debut_m, date_transaction__date__lte=fin_m)
-            montant = sum(t.montant_total for t in txs)
-            graph_mensuel_tickets.append(nb)
-            graph_mensuel_montants.append(float(montant))
+
+        debut_graph = aujourd_hui.replace(day=1) - relativedelta(months=11)
+        for i in range(12):
+            debut_m = debut_graph + relativedelta(months=i)
+            fin_m   = debut_m    + relativedelta(months=1) - relativedelta(days=1)
+
+            qs_t = Ticket.objects.filter(
+                date_creation__date__gte=debut_m,
+                date_creation__date__lte=fin_m,
+            )
+            qs_tx = TransactionTicket.objects.filter(
+                statut='TERMINEE',
+                date_transaction__date__gte=debut_m,
+                date_transaction__date__lte=fin_m,
+            )
+            if agence_id:
+                qs_t  = qs_t.filter(proprietaire__agence_id=agence_id)
+                qs_tx = qs_tx.filter(client__agence_id=agence_id)
+
+            agg = qs_tx.aggregate(montant=Sum('montant_total'))
+            graph_labels.append(debut_m.strftime('%b %Y'))
+            graph_mensuel_tickets.append(qs_t.count())
+            graph_mensuel_montants.append(float(agg['montant'] or 0))
+
     except Exception:
-        graph_mensuel_tickets = [0] * 12
+        graph_labels           = []
+        graph_mensuel_tickets  = [0] * 12
         graph_mensuel_montants = [0.0] * 12
 
-    ctx = _base_ctx(request)
-    ctx.update({
-        'agences': agences_qs,
-        'rapport_agences': rapport_agences,
+    # ── Top restaurants (consommations période) ───────────────────
+    top_restaurants = []
+    try:
+        from apps.transactions.models import LogConsommation
+        top_restaurants = (
+            LogConsommation.objects
+            .filter(
+                date_consommation__date__gte=date_debut,
+                date_consommation__date__lte=date_fin,
+            )
+            .values('restaurant__nom')
+            .annotate(nb=Count('id'))
+            .order_by('-nb')[:5]
+        )
+    except Exception:
+        pass
+
+    return render(request, 'settings/admin_reports.html', {
+        'agences':               agences_qs,
+        'rapport_agences':       rapport_agences,
+        'totaux':                totaux,
+        'top_restaurants':       top_restaurants,
+        'graph_labels':          graph_labels,
         'graph_mensuel_tickets': graph_mensuel_tickets,
-        'graph_mensuel_montants': graph_mensuel_montants,
-        'filtres': {'date_debut': date_debut, 'date_fin': date_fin, 'agence': agence_id, 'type': type_rapport},
-    })
-    return render(request, 'settings/admin_reports.html', ctx)
-
-@login_required
-def admin_audit(request):
-    if not request.user.is_superuser:
-        messages.warning(request, "Accès refusé.")
-        return redirect('accounts:dashboard')
-
-    audits = JournalAudit.objects.select_related('utilisateur').all()
-
-    return render(request, 'settings/admin_audit.html', {
-        'audits': audits
+        'graph_mensuel_montants':graph_mensuel_montants,
+        'filtres': {
+            'date_debut': date_debut,
+            'date_fin':   date_fin,
+            'agence':     agence_id,
+            'type':       type_rpt,
+        },
+        'notifications':              _get_notifs(request),
+        'unread_notifications_count': _count_unread(request),
     })
 
 # ════════════════════════════════════════════════════════════════
@@ -386,7 +420,6 @@ def api_params(request):
         'nom_entreprise': params.nom_entreprise,
         'nom_mutuelle': params.nom_mutuelle,
     })
-
 
 # ════════════════════════════════════════════════════════════════
 # Helpers

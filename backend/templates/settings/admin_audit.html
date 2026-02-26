@@ -2,120 +2,149 @@
 {% load static %}
 
 {% block title %}Journal d'Audit — Administration{% endblock %}
+
 {% block dashboard_css %}
 <link rel="stylesheet" href="{% static 'css/components.css' %}">
 <style>
-    .dc{background:#fff;border-radius:7px;box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden;margin-bottom:8px;}
-    .dc-head{padding:8px 12px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#374151;}
-    .dc-head i{color:#28a745;font-size:10px;}
-    .filter-bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:8px 12px;border-bottom:1px solid #f3f4f6;}
-    .filter-bar select,.filter-bar input{padding:4px 7px;border:1px solid #e5e7eb;border-radius:5px;font-size:10px;color:#374151;outline:none;}
-    .filter-bar select:focus,.filter-bar input:focus{border-color:#28a745;}
-    .btn-xs{padding:4px 10px;font-size:10px;border-radius:4px;border:none;cursor:pointer;font-weight:600;}
-    .btn-g{background:#28a745;color:#fff;} .btn-o{background:#fff;border:1px solid #e5e7eb;color:#374151;text-decoration:none;}
-    .ab{display:inline-flex;align-items:center;padding:2px 6px;border-radius:8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;}
-    .ab-cre{background:#d1fae5;color:#065f46;}
-    .ab-mod{background:#dbeafe;color:#1e40af;}
-    .ab-sup{background:#fee2e2;color:#991b1b;}
-    .ab-con{background:#f0fdf4;color:#166534;}
-    .ab-dec{background:#f3f4f6;color:#6b7280;}
-    .ab-ach{background:#fef3c7;color:#92400e;}
-    .ab-cso{background:#ede7ff;color:#5b21b6;}
-    .ab-def{background:#f3f4f6;color:#374151;}
-    .stat-pill{display:inline-flex;align-items:center;gap:4px;padding:5px 9px;background:#f9fafb;border:1px solid #f3f4f6;border-radius:5px;font-size:10px;}
-    .stat-pill strong{font-size:13px;font-weight:800;color:#111827;}
-    .mt{width:100%;border-collapse:collapse;}
-    .mt th{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#9ca3af;padding:6px 8px;border-bottom:1px solid #f3f4f6;text-align:left;}
-    .mt td{font-size:10px;padding:6px 8px;border-bottom:1px solid #fafafa;color:#374151;vertical-align:middle;}
-    .mt tr:last-child td{border-bottom:none;}
-    .mt tr:hover td{background:#fafafa;}
-    .pg{display:flex;gap:4px;justify-content:center;align-items:center;padding:8px;border-top:1px solid #f3f4f6;}
-    .pg a,.pg span{padding:3px 8px;border:1px solid #e5e7eb;border-radius:4px;font-size:10px;color:#374151;text-decoration:none;}
-    .pg a:hover{border-color:#28a745;color:#28a745;}
-</style>{% endblock %}
+.dc{background:#fff;border-radius:7px;box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden;margin-bottom:8px;}
+.dc-head{padding:8px 12px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#374151;}
+.dc-head i{color:#28a745;font-size:10px;}
+.filter-bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:8px 12px;border-bottom:1px solid #f3f4f6;}
+.filter-bar select,.filter-bar input{padding:4px 7px;border:1px solid #e5e7eb;border-radius:5px;font-size:11px;color:#374151;outline:none;}
+.filter-bar select:focus,.filter-bar input:focus{border-color:#28a745;}
+.btn-xs{padding:4px 10px;font-size:11px;border-radius:4px;border:none;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:4px;}
+.btn-g{background:#28a745;color:#fff;} .btn-g:hover{background:#218838;}
+.btn-o{background:#fff;border:1px solid #e5e7eb;color:#374151;text-decoration:none;} .btn-o:hover{background:#f9fafb;}
+.ab{display:inline-flex;align-items:center;padding:2px 7px;border-radius:8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;}
+.ab-cre{background:#d1fae5;color:#065f46;} .ab-mod{background:#dbeafe;color:#1e40af;}
+.ab-sup{background:#fee2e2;color:#991b1b;} .ab-con{background:#f0fdf4;color:#166534;}
+.ab-dec{background:#f3f4f6;color:#6b7280;} .ab-ach{background:#fef3c7;color:#92400e;}
+.ab-cso{background:#ede7ff;color:#5b21b6;} .ab-rem{background:#fce7f3;color:#9d174d;}
+.ab-def{background:#f3f4f6;color:#374151;}
+.stat-pills{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;}
+.stat-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:#fff;border:1px solid #f3f4f6;border-radius:6px;font-size:11px;color:#6b7280;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+.stat-pill strong{font-size:15px;font-weight:800;color:#111827;line-height:1;}
+.mt{width:100%;border-collapse:collapse;}
+.mt th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#9ca3af;padding:8px 10px;border-bottom:2px solid #f3f4f6;text-align:left;background:#fafafa;}
+.mt td{font-size:11px;padding:7px 10px;border-bottom:1px solid #fafafa;color:#374151;vertical-align:middle;}
+.mt tr:last-child td{border-bottom:none;} .mt tr:hover td{background:#fafafa;}
+.pg{display:flex;gap:4px;justify-content:center;align-items:center;padding:10px;border-top:1px solid #f3f4f6;}
+.pg a,.pg span{padding:4px 9px;border:1px solid #e5e7eb;border-radius:4px;font-size:11px;color:#374151;text-decoration:none;}
+.pg a:hover{border-color:#28a745;color:#28a745;background:#f0faf4;}
+.pg .current{background:#28a745;color:#fff;border-color:#28a745;font-weight:700;}
+</style>
+{% endblock %}
 
 {% block sidebar_menu %}{% include 'dashboards/sidebars/admin_sidebar.html' %}{% endblock %}
 
 {% block page_content %}
-<div class="page-header" style="margin-bottom:12px;">
-    <h1 class="page-title" style="font-size:17px;">Journal d'Audit</h1>
-    <p class="page-subtitle" style="font-size:11px;">Traçabilité complète des actions système</p>
+
+<div class="page-header-with-actions">
+    <div class="page-header">
+        <h1 class="page-title"><i class="fas fa-clipboard-list" style="color:var(--primary-green);margin-right:8px;"></i>Journal d'Audit</h1>
+        <p class="page-subtitle">Traçabilité complète des actions système</p>
+    </div>
 </div>
 
-<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px;">
-    <div class="stat-pill"><strong>{{ total_entrees|default:0 }}</strong> entrées totales</div>
-    <div class="stat-pill"><strong>{{ entrees_aujourd_hui|default:0 }}</strong> aujourd'hui</div>
-    <div class="stat-pill"><strong>{{ entrees_semaine|default:0 }}</strong> cette semaine</div>
-    <div class="stat-pill"><strong>{{ nb_utilisateurs_actifs|default:0 }}</strong> utilisateurs actifs</div>
+<div class="stat-pills">
+    <div class="stat-pill"><i class="fas fa-database" style="color:#28a745;"></i><strong>{{ total_entrees|default:0 }}</strong> entrées totales</div>
+    <div class="stat-pill"><i class="fas fa-calendar-day" style="color:#17a2b8;"></i><strong>{{ entrees_aujourd_hui|default:0 }}</strong> aujourd'hui</div>
+    <div class="stat-pill"><i class="fas fa-calendar-week" style="color:#ffc107;"></i><strong>{{ entrees_semaine|default:0 }}</strong> cette semaine</div>
+    <div class="stat-pill"><i class="fas fa-users" style="color:#6f42c1;"></i><strong>{{ nb_utilisateurs_actifs|default:0 }}</strong> utilisateurs actifs</div>
+    {% if page_obj %}<div class="stat-pill" style="margin-left:auto;"><i class="fas fa-filter" style="color:#6b7280;"></i><strong>{{ page_obj.paginator.count }}</strong> résultat{{ page_obj.paginator.count|pluralize }}</div>{% endif %}
 </div>
 
 <div class="dc">
     <div class="dc-head"><i class="fas fa-clipboard-list"></i> Entrées du journal</div>
+
     <form method="get">
         <div class="filter-bar">
-            <input type="text" name="search" value="{{ filtres.search|default:'' }}" placeholder="Rechercher..."
-                   style="min-width:160px;">
+            <input type="text" name="search" value="{{ filtres.search|default:'' }}" placeholder="Rechercher…" style="min-width:170px;">
             <select name="action">
                 <option value="">Toutes actions</option>
-                <option value="CREATION" {% if filtres.action == 'CREATION' %}selected{% endif %}>Création</option>
-                <option value="MODIFICATION" {% if filtres.action == 'MODIFICATION' %}selected{% endif %}>Modification</option>
-                <option value="SUPPRESSION" {% if filtres.action == 'SUPPRESSION' %}selected{% endif %}>Suppression</option>
-                <option value="CONNEXION" {% if filtres.action == 'CONNEXION' %}selected{% endif %}>Connexion</option>
-                <option value="DECONNEXION" {% if filtres.action == 'DECONNEXION' %}selected{% endif %}>Déconnexion</option>
-                <option value="ACHAT" {% if filtres.action == 'ACHAT' %}selected{% endif %}>Achat</option>
-                <option value="CONSOMMATION" {% if filtres.action == 'CONSOMMATION' %}selected{% endif %}>Consommation</option>
+                <option value="CREATION"      {% if filtres.action == 'CREATION' %}selected{% endif %}>Création</option>
+                <option value="MODIFICATION"  {% if filtres.action == 'MODIFICATION' %}selected{% endif %}>Modification</option>
+                <option value="SUPPRESSION"   {% if filtres.action == 'SUPPRESSION' %}selected{% endif %}>Suppression</option>
+                <option value="CONNEXION"     {% if filtres.action == 'CONNEXION' %}selected{% endif %}>Connexion</option>
+                <option value="DECONNEXION"   {% if filtres.action == 'DECONNEXION' %}selected{% endif %}>Déconnexion</option>
+                <option value="ACHAT"         {% if filtres.action == 'ACHAT' %}selected{% endif %}>Achat</option>
+                <option value="CONSOMMATION"  {% if filtres.action == 'CONSOMMATION' %}selected{% endif %}>Consommation</option>
+                <option value="REMBOURSEMENT" {% if filtres.action == 'REMBOURSEMENT' %}selected{% endif %}>Remboursement</option>
             </select>
             <select name="modele">
                 <option value="">Tous modèles</option>
-                <option value="Utilisateur" {% if filtres.modele == 'Utilisateur' %}selected{% endif %}>Utilisateur</option>
-                <option value="Ticket" {% if filtres.modele == 'Ticket' %}selected{% endif %}>Ticket</option>
-                <option value="Transaction" {% if filtres.modele == 'Transaction' %}selected{% endif %}>Transaction</option>
-                <option value="Restaurant" {% if filtres.modele == 'Restaurant' %}selected{% endif %}>Restaurant</option>
-                <option value="Menu" {% if filtres.modele == 'Menu' %}selected{% endif %}>Menu</option>
+                <option value="Utilisateur"        {% if filtres.modele == 'Utilisateur' %}selected{% endif %}>Utilisateur</option>
+                <option value="Ticket"             {% if filtres.modele == 'Ticket' %}selected{% endif %}>Ticket</option>
+                <option value="TransactionTicket"  {% if filtres.modele == 'TransactionTicket' %}selected{% endif %}>Transaction</option>
+                <option value="Restaurant"         {% if filtres.modele == 'Restaurant' %}selected{% endif %}>Restaurant</option>
+                <option value="Menu"               {% if filtres.modele == 'Menu' %}selected{% endif %}>Menu</option>
+                <option value="ParametresSysteme"  {% if filtres.modele == 'ParametresSysteme' %}selected{% endif %}>Paramètres</option>
             </select>
-            <input type="date" name="date_debut" value="{{ filtres.date_debut|default:'' }}">
-            <input type="date" name="date_fin" value="{{ filtres.date_fin|default:'' }}">
-            <button type="submit" class="btn-xs btn-g">Filtrer</button>
-            <a href="{% url 'settings:admin_audit' %}" class="btn-xs btn-o">Reset</a>
+            <input type="date" name="date_debut" value="{{ filtres.date_debut|default:'' }}" title="Date début">
+            <input type="date" name="date_fin"   value="{{ filtres.date_fin|default:'' }}"   title="Date fin">
+            <button type="submit" class="btn-xs btn-g"><i class="fas fa-search"></i> Filtrer</button>
+            <a href="{% url 'settings:admin_audit' %}" class="btn-xs btn-o"><i class="fas fa-times"></i> Reset</a>
         </div>
     </form>
 
     <div style="overflow-x:auto;">
         <table class="mt">
             <thead>
-            <tr>
-                <th>Date/Heure</th>
-                <th>Utilisateur</th>
-                <th>Action</th>
-                <th>Modèle</th>
-                <th>Description</th>
-                <th>IP</th>
-            </tr>
+                <tr>
+                    <th style="width:120px;">Date / Heure</th>
+                    <th>Utilisateur</th>
+                    <th style="width:110px;">Action</th>
+                    <th style="width:140px;">Modèle</th>
+                    <th>Description</th>
+                    <th style="width:100px;">IP</th>
+                </tr>
             </thead>
             <tbody>
             {% for e in entrees %}
             <tr>
-                <td style="white-space:nowrap;color:#9ca3af;">{{ e.cree_le|date:"d/m/Y H:i:s" }}</td>
-                <td style="font-weight:600;color:#111827;">
-                    {% if e.utilisateur %}{{ e.utilisateur.get_full_name|truncatechars:18 }}
-                    {% else %}<span style="color:#9ca3af;">Système</span>{% endif %}
+                <td style="white-space:nowrap;color:#9ca3af;font-family:monospace;font-size:10px;">
+                    {{ e.cree_le|date:"d/m/Y" }}<br><span style="font-size:9px;">{{ e.cree_le|date:"H:i:s" }}</span>
                 </td>
                 <td>
-                    <span class="ab ab-{% if e.action == 'CREATION' %}cre{% elif e.action == 'MODIFICATION' %}mod{% elif e.action == 'SUPPRESSION' %}sup{% elif e.action == 'CONNEXION' %}con{% elif e.action == 'DECONNEXION' %}dec{% elif e.action == 'ACHAT' %}ach{% elif e.action == 'CONSOMMATION' %}cso{% else %}def{% endif %}">
+                    {% if e.utilisateur %}
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <div style="width:22px;height:22px;background:var(--light-green);border-radius:50%;
+                                    display:flex;align-items:center;justify-content:center;
+                                    font-size:8px;font-weight:700;color:var(--primary-green);flex-shrink:0;">
+                            {{ e.utilisateur.prenom.0 }}{{ e.utilisateur.nom.0 }}
+                        </div>
+                        <div>
+                            <div style="font-weight:600;font-size:11px;color:#111827;">{{ e.utilisateur.get_full_name|truncatechars:22 }}</div>
+                            <div style="font-size:9px;color:#9ca3af;">{{ e.utilisateur.get_type_utilisateur_display }}</div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <span style="color:#9ca3af;font-size:10px;font-style:italic;"><i class="fas fa-cog"></i> Système</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="ab {% if e.action == 'CREATION' %}ab-cre{% elif e.action == 'MODIFICATION' %}ab-mod{% elif e.action == 'SUPPRESSION' %}ab-sup{% elif e.action == 'CONNEXION' %}ab-con{% elif e.action == 'DECONNEXION' %}ab-dec{% elif e.action == 'ACHAT' %}ab-ach{% elif e.action == 'CONSOMMATION' %}ab-cso{% elif e.action == 'REMBOURSEMENT' %}ab-rem{% else %}ab-def{% endif %}">
                         {{ e.get_action_display }}
                     </span>
                 </td>
-                <td style="color:#6b7280;">{{ e.modele }}</td>
-                <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
-                    title="{{ e.description }}">{{ e.description|truncatechars:55 }}
+                <td>
+                    <span style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:10px;color:#6b7280;">{{ e.modele }}</span>
+                    {% if e.objet_id %}<span style="font-size:9px;color:#d1d5db;"> #{{ e.objet_id }}</span>{% endif %}
                 </td>
-                <td style="font-family:monospace;color:#9ca3af;">{{ e.adresse_ip|default:"—" }}</td>
+                <td style="max-width:280px;">
+                    <span title="{{ e.description }}" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        {{ e.description|truncatechars:65 }}
+                    </span>
+                </td>
+                <td style="font-family:monospace;font-size:10px;color:#9ca3af;">{{ e.adresse_ip|default:"—" }}</td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="6" style="padding:20px;text-align:center;color:#9ca3af;font-size:10px;">
-                    <i class="fas fa-clipboard" style="font-size:18px;display:block;margin-bottom:5px;opacity:.3;"></i>
-                    Aucune entrée dans le journal
+                <td colspan="6" style="padding:32px;text-align:center;">
+                    <div class="empty-state">
+                        <i class="fas fa-clipboard"></i>
+                        <p>Aucune entrée{% if filtres.search %} pour « {{ filtres.search }} »{% endif %}</p>
+                    </div>
                 </td>
             </tr>
             {% endfor %}
@@ -126,15 +155,21 @@
     {% if page_obj.has_other_pages %}
     <div class="pg">
         {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}{% if filtres.search %}&search={{ filtres.search }}{% endif %}{% if filtres.action %}&action={{ filtres.action }}{% endif %}">‹
-            Préc.</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if filtres.search %}&search={{ filtres.search }}{% endif %}{% if filtres.action %}&action={{ filtres.action }}{% endif %}{% if filtres.modele %}&modele={{ filtres.modele }}{% endif %}{% if filtres.date_debut %}&date_debut={{ filtres.date_debut }}{% endif %}{% if filtres.date_fin %}&date_fin={{ filtres.date_fin }}{% endif %}">‹ Préc.</a>
         {% endif %}
-        <span style="border-color:transparent;font-size:10px;color:#6b7280;">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <span class="current">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?page={{ num }}{% if filtres.search %}&search={{ filtres.search }}{% endif %}{% if filtres.action %}&action={{ filtres.action }}{% endif %}{% if filtres.modele %}&modele={{ filtres.modele }}{% endif %}{% if filtres.date_debut %}&date_debut={{ filtres.date_debut }}{% endif %}{% if filtres.date_fin %}&date_fin={{ filtres.date_fin }}{% endif %}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        <span style="border:none;font-size:10px;color:#6b7280;">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
         {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}{% if filtres.search %}&search={{ filtres.search }}{% endif %}{% if filtres.action %}&action={{ filtres.action }}{% endif %}">Suiv.
-            ›</a>
+        <a href="?page={{ page_obj.next_page_number }}{% if filtres.search %}&search={{ filtres.search }}{% endif %}{% if filtres.action %}&action={{ filtres.action }}{% endif %}{% if filtres.modele %}&modele={{ filtres.modele }}{% endif %}{% if filtres.date_debut %}&date_debut={{ filtres.date_debut }}{% endif %}{% if filtres.date_fin %}&date_fin={{ filtres.date_fin }}{% endif %}">Suiv. ›</a>
         {% endif %}
     </div>
     {% endif %}
 </div>
+
 {% endblock %}

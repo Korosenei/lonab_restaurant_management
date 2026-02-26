@@ -557,4 +557,3 @@ window.exportToPDF    = exportToPDF;
 window.previewImage   = previewImage;
 window.getCookie      = getCookie;
 window.debounce       = debounce;
-
