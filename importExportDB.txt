@@ -12,3 +12,7 @@ Importer le fichier lonab_restaurant_db.sql
 
 Étape 2 : Importer le fichier lonab_restaurant_db.sql dans cette base
 & "C:\Program Files\PostgreSQL\15\bin\psql.exe" -U postgres -h localhost -p 5432 -d lonab_restaurant_db -f "C:\Users\$env:USERNAME\Documents\lonab_restaurant_db.sql"
+
+
+voici mon adresse distante render : postgresql://mutralo_db_user:UZRg2H8qmDo55LS6y5omGVlmvBYHgyzA@dpg-d6dgmta4d50c73apmtng-a.oregon-postgres.render.com/mutralo_db
+

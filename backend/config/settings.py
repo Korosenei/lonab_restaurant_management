@@ -101,12 +101,23 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # }
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=config('DATABASE_URL'),
-        conn_max_age=600,
-        ssl_require=not DEBUG
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'Kontama$lonab_restaurant_db',
+        'USER': 'Kontama',
+        'PASSWORD': 'fv9*FhGMP3@6L*G',
+        'HOST': 'Kontama.mysql.pythonanywhere-services.com',
+        'PORT': '3306',
+    }
 }
+
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=config('DATABASE_URL'),
+#         conn_max_age=600,
+#         ssl_require=not DEBUG
+#     )
+# }
 
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.Utilisateur'
